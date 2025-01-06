@@ -17,7 +17,7 @@ In this course, we will use Git and GitHub Enterprise. Git is one of several ver
 
 ### Work Flow
 
-You will use Markdown and GitHub to submit labs, homework assignments, projects, etc. You will obtain your homework assignment from my GitHub course page (my **stat528sp24** repository) and will submit them to your individual GitHub repository. Eventually this will all make sense and you will be comfortable with it!
+You will use Markdown and GitHub to submit labs, homework assignments, projects, etc. You will obtain your homework assignment from my GitHub course page (my **stat528sp25** repository) and will submit them to your individual GitHub repository. Eventually this will all make sense and you will be comfortable with it!
 
 
 ![](https://miro.medium.com/v2/resize:fit:600/0*VcMPr1unIjAIHw2j.jpg)

@@ -6,7 +6,7 @@ See the Syllabus for more details. See the notes directory for course notes.
 
 # News
 
-* Welcome to STAT 528
+* Welcome to STAT 528. Let's have a great semester!
 
 ## Cheatsheats
   + [dplyr](https://posit.co/wp-content/uploads/2022/10/data-transformation-1.pdf) for data transformation
@@ -187,7 +187,7 @@ You may be asked to present your homework solutions to the class.
 
 #### Exams
 
-There will be two exams in this class. A midterm examination will be due on Friday, 03/08 at 11:59 PM. The final examination will occur at the end of the semester, and it will be due on 05/10 at 11:59 PM. The final examination will be cumulative.
+There will be two exams in this class. A midterm examination will be due on Friday, 03/14 at 11:59 PM. The final examination will occur at the end of the semester, and it will be due on 05/15 at 11:59 PM. The final examination will be cumulative.
 
 ***
 
@@ -205,7 +205,7 @@ Email should largely be reserved for private matters. As much as possible, we wo
 
 ### Office Hours
 
-For Spring 2024, all office hours will be held **online** via Zoom as seen above. Time listed are Champaign local time. The office hour schedule is always subject to change, but the times above are the general expectation. As such, the dates and times will be posted each week along with the course materials.
+For Spring 2025, all office hours will be held **online** via Zoom as seen above. Time listed are Champaign local time. The office hour schedule is always subject to change, but the times above are the general expectation. As such, the dates and times will be posted each week along with the course materials.
 
 Office hours are by far our preferred forum for discussing individual specific questions. In office hours, our response time will be literally instant. Also, since we are both present in the same physical location (or together on Zoom), follow-up is both expected, and easy. Using asynchronous forms of communication such as the discussion forum or email will have a slower response rate and a much lower communication bandwidth. In other words, please come to office hours!
 
@@ -218,7 +218,7 @@ If you would like to schedule a private meeting outside of regular office hours,
 
 #### Discussion Forum
 
-This course will use [**Ed**](https://edstem.org/) as our discussion forum. Here is the link to join: https://edstem.org/us/join/2XDtGp
+This course will use [**Ed**](https://edstem.org/) as our discussion forum. Here is the link to join: https://edstem.org/us/join/uda3g8
 
 Ed access and login information was sent via email.
 

@@ -60,14 +60,15 @@ See the Syllabus for more details. See the notes directory for course notes.
 **Office hours**: 11am - 12pm Champaign time on Fridays 
 
 Zoom link: https://illinois.zoom.us/j/84926133768?pwd=Q7YXsHNW7eSCTJVfNcxqXsOISeeybR.1
+
 Passcode: 754150
+
 
 **TA**: TBD
 
 **TA Office hours**: TBD
 
 **Course website**: 
-
 
 My course website is a GitHub repository. You can click  [here](https://github.com/illinois-stat528/stat528sp25) to access this website. Note that this Syllabus is a Markdown document. Open the .md file to view the basic Markdown syntax used to build your Syllabus.
 

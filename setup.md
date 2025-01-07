@@ -7,7 +7,7 @@ Welcome to STAT 528, let's have a productive semester!
 
 This document will go through GitHub, computational resources, software, and overall course organization. This will be a valuable resource for you as you become familiar with this course's GitHub based organization in which every student will submit assignments by pushing to an individual GitHub repository that resides within my course's GitHub organization.
 
-You should have downloaded this document from the course website https://github.com/illinois-stat528/stat528sp24 or some other source. 
+You should have downloaded this document from the course website https://github.com/illinois-stat528/stat528sp25 or some other source. 
 
 
 ### Version Control 
@@ -37,7 +37,7 @@ RStudio is an interface for R that is relatively user-friendly, visually suffici
 
 Repositories (**repos** for short) are essentially project folders where you intend to store a set of files in the same location, much like a folder. These repositories are constantly being updated and are in need of version of control. This is where GitHub and other Git platforms come in. GitHub allows you to make your edits to a project locally and save them remotely while keeping all previous versions to your project intact. You do not need to constantly change file names to indicate new versions, just push your edits to GitHub. GitHub will store the previous versions and a detailed record of the changes made. GitHub and other version control platforms are fundamentally important for collaboration.
 
-We will now start the setup of your individual student **GitHub repositories**. Each student should click on this link https://edu.cs.illinois.edu/create-gh-repo/sp24_stat528 in order to create your student repo. Your personal repo is where you will keep your assignment files. The idea is that:  
+We will now start the setup of your individual student **GitHub repositories**. Each student should click on this link https://edu.cs.illinois.edu/create-gh-repo/sp25_stat528 in order to create your student repo. Your personal repo is where you will keep your assignment files. The idea is that:  
 - you will work on your assignments from your repo, updating it often to ensure you're working on the correct file(s)  
 - you will obtain course resources, including homework assignments, from my **stat528sp25** course repo.  
 
@@ -55,7 +55,7 @@ See [Chapter 11](https://happygitwithr.com/push-pull-github) in Happy Git and Gi
 You can clone your repo this by first changing *YourNetID.git* to your actual netid .git in the following and then coping the command into the terminal/shell (make sure the working directory is in the place you desire)
 
 ```
-git clone git@github.com:illinois-stat528/sp24_stat528_YourNetID.git
+git clone git@github.com:illinois-stat528/sp25_stat528_YourNetID.git
 ```
 
 When you type the above you may get something like the following error message:
@@ -83,7 +83,7 @@ If you do get this error message, you may need to generate an [SSH key](https://
 You can also clone my repo by directly typing the following into your terminal:
 
 ```
-git clone git@github.com:illinois-stat528/stat528sp24.git
+git clone git@github.com:illinois-stat528/stat528sp25.git
 ```
 
 When you type the above you may get something like the following error message:
@@ -150,7 +150,7 @@ This will download all files that are currently in my remote **stat528sp25** Git
 3. **push files to your virtual repos**. We will now discuss what to do when you have edited a file on your computer and are ready to upload (push) it to Github. First, you will need to get your terminal or shell in the local directory containing your personal repository. If you followed my recommendations then this directory has the following path on a Mac:
 
 ```
-~/Desktop/stat528/sp24_stat528_YourNetID
+~/Desktop/stat528/sp25_stat528_YourNetID
 ```
 
 The ~/ is a placeholder for /Users/danieleck/ on my machine. On my machine the root directory is danieleck and Desktop is in my root directory.

@@ -72,7 +72,7 @@ Passcode: 754150
 
 My course website is a GitHub repository. You can click  [here](https://github.com/illinois-stat528/stat528sp25) to access this website. Note that this Syllabus is a Markdown document. Open the .md file to view the basic Markdown syntax used to build your Syllabus.
 
-**Create your own repository within my course organization**: https://edu.cs.illinois.edu/create-gh-repo/sp24_stat528
+**Create your own repository within my course organization**: https://edu.cs.illinois.edu/create-gh-repo/sp25_stat528
 
 
 ***

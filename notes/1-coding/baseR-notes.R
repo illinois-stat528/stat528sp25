@@ -4,11 +4,17 @@
 ## R basics
 
 ### Calculator 
+3 + 5
+3 * 8
 
 ### Basic objects (global environment)
+x = 5
+a = "A"
+z = 5L
 
 ### Generate random data 
-
+set.seed(528)
+y = rnorm(n = 1)
 
 ### Logical operators
 
@@ -16,6 +22,7 @@
 x = TRUE
 x == TRUE
 x == FALSE
+x != FALSE
 3 == 3
 (6 <= 3) & (4 <= 7)
 (6 <= 3) | (4 <= 7)
@@ -23,40 +30,61 @@ x == FALSE
 ## Vectors 
 
 ### Atomic vectors 
+x = c(1,2,3,4)
 
 #### numeric
+x = 1:4
 
 #### logical
+x = c(TRUE, FALSE, TRUE)
 
 #### character
+x = letters
 
 #### Type and length 
 typeof(3)
 typeof(3L)
+typeof(x)
+length(x)
 
 #### Coercion 
 
 ##### explicit coercion
+y = c("1","2","3","47")
+typeof(y)
+z = as.double(y)
 
 ##### implicit coercion
 TRUE & 1
 TRUE & 0
 
 ##### length coercion
-cbind(b, 1)
+x = rnorm(n = 10)
+cbind(1, x)
 
 
 ### Generic vectors 
 
 #### Lists 
-
+z = list(a = 1:10, 
+         b = letters[1:5],
+         c = c(TRUE, FALSE))
+length(z)
 
 #### Data frames 
+z = list(a = 1:10, 
+         b = rnorm(10),
+         c = rep(TRUE, 10))
+length(z)
+as.data.frame(z)
+typeof(z$b)
 
 #### Data frames in packages
-install.packages("Lahman")
+#install.packages("Lahman")
 library(Lahman)
 ?Batting
+Batting
+
 
 #### Model objects
 

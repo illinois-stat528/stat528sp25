@@ -161,7 +161,7 @@ and so on. A grade of A+ will be granted to students who earn 980 points, and su
 
 #### Attendance 
 
-Attendance will be recorded in STAT 528 and your attendance will count towards your final grade. There will be 50 points allocated towards attendance. As currently stated, STAT 528 will meet 27 times. Each class will be worth 2 attendance points. This leaves you with 2 free absences that will not count against you. Additional absences can be granted provided the course instructor approves them. Requests for additional absences must be made at least 48 hours before the absence date. 
+Attendance will be recorded in STAT 528 and your attendance will count towards your final grade. There will be 50 points allocated towards attendance. As currently stated, STAT 528 will meet 27 times. Each class will be worth 2 attendance points. This leaves you with 2 free absences that will not count against you. Additional absences can be granted provided the course instructor approves them. Requests for additional absences must be made at least 48 hours before the absence date. Everyone on the course roster will receive attendance points for the first day of class. 
 
 Each student will sign their name and netid on a sign-in sheet provided by the course instruction to verify their attendance. This sign-in sheet must be signed within 30 minutes of class starting. Students who are late by more than 30 minutes will be considered absent. Students who leave class early will be counted as absent unless the early absence is excused. An absence may be given to students who do not participate in discussions in a manner deemed satisfactory by your instructor. 
 

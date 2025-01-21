@@ -1,18 +1,14 @@
 
-# Week 1: Thursday
+# Week 1: Tuesday
 
 ## R basics
 
 ### Calculator 
-3 + 4
-8 * 5 
 
 ### Basic objects (global environment)
-x = 8
-print(x)
 
 ### Generate random data 
-rnorm(3)
+
 
 ### Logical operators
 
@@ -27,102 +23,66 @@ x == FALSE
 ## Vectors 
 
 ### Atomic vectors 
-x = c(1, 2, 5, 7)
-x
-y = c(TRUE, FALSE)
-y
-z = c("a", "b", "c")
-z
+
+#### numeric
+
+#### logical
+
+#### character
 
 #### Type and length 
-a = c(TRUE, FALSE)
-b = 1:10
-d = c(b, 10.5)
-e = letters
-typeof(a)
-typeof(b)
-typeof(d)
-typeof(e)
-
 typeof(3)
 typeof(3L)
 
 #### Coercion 
 
 ##### explicit coercion
-as.character(a)
-as.character(d)
 
 ##### implicit coercion
-c(a, b)
-c(b, d)
-c(d, e)
-e = c(e, "afierhfo")
-
 TRUE & 1
 TRUE & 0
 
 ##### length coercion
-b
-length(b)
-
 cbind(b, 1)
-cbind(b, c(1, 2))
-cbind(b, c(1, 2, 3))
+
 
 ### Generic vectors 
 
 #### Lists 
-x = list(A = a, 
-     B = b, 
-     D = d, 
-     E = e)
-length(x)
+
 
 #### Data frames 
-y = data.frame(
-  x1 = rnorm(n = 10), 
-  x2 = rnorm(n = 10),
-  x3 = rnorm(n = 10)
-)
-typeof(y)
 
+#### Data frames in packages
+install.packages("Lahman")
+library(Lahman)
+?Batting
 
 #### Model objects
-z = data.frame(
-  y = rnorm(n = 10),
-  x1 = rnorm(n = 10), 
-  x2 = rnorm(n = 10),
-  x3 = rnorm(n = 10)
-)
-z
-
-mod = lm(y ~ ., data = z)
-typeof(mod)
-mod
-names(mod)
 
 
 #### Subsetting 
-mod$coefficients
 
+##### Logical subsetting
+
+##### Extracting elements from generic vector (list)
 x = list(a = 1:10, 
          b = letters, 
          c = c(TRUE, FALSE))
 x[1]
 x[[1]]
 
-#### Logical subsetting
-?iris
-iris[, 2] 
-iris[, 2] >= 3.5
-iris[iris[, 2] >= 3.5, ]
+##### Extracting elements from named generic vector (list)
+
+##### model object
 
 
 ## Functions 
 
 ### Built-in functions 
 log(5)
+
+### Vectorization 
 log(b)
 
 #### Calculate proportion (logical subsetting)
@@ -135,20 +95,14 @@ library(MASS)
 ?geyser
 ?bcv
 bcv(geyser$duration)
-bcv(geyser$duration,n = 10)
+bcv(geyser$duration, nb = 10)
 
-?stepAIC
-quine.hi <- lm(log(Days + 2.5) ~ .^4, quine)
-quine.nxt <- update(quine.hi, . ~ . - Eth:Sex:Age:Lrn)
-quine.stp <- stepAIC(quine.nxt,
-                     scope = list(upper = ~Eth*Sex*Age*Lrn, lower = ~1),
-                     trace = FALSE)
 
 ### Write your own functions 
-f = function(x) {
-  x ^ 2
-}
-f(x = 10)
+
+#### Basic example
+
+
 
 ## Logical control flow 
 
@@ -178,14 +132,12 @@ if(x >= 12) {
 }
 
 
-### lapply 
-b = 1:10
-y = lapply(b, FUN = f)
-unlist(y)
+### apply functions
 ?lapply
-sapply(b, FUN = f)
+?sapply
 
-#### Model objects
+
+#### data frame example
 n = 100 
 z = data.frame(
   y = rnorm(n = n),
@@ -199,6 +151,7 @@ foo = split(z, as.factor(z$x4))
 lapply(foo, FUN = function(x){
   mean(x[, 2])
 } )
+
 
 ### Loops 
 
@@ -230,32 +183,30 @@ while(x <= 10) {
 }
 
 ### ifelse
-iris$Size = ifelse(iris$Sepal.Width >= 3.2, "Big", "Small")
-iris
 
-## Basic optimization
-f(6)
+
+## Very basic optimization
+g = function(x) {
+  (x - 5)^2 + x
+}
 ?optim
-optim(par = 4, fn = f)
-optim(par = 4, fn = f, method = "Brent", lower = -10, upper = 10)
+optim(par = 4, fn = g)
+optim(par = g, fn = g, method = "Brent", lower = -10, upper = 10)
 
 
 ## Basic plots 
 
-###iris Sepal Length; Petal Length
-?plot
+### plot
 
-plot(iris$Sepal.Length, iris$Petal.Length)
-points(iris$Sepal.Length, iris$Petal.Length, col = "red", pch = 19)
 
-plot(iris$Sepal.Length, iris$Petal.Length)
-table(iris$Species)
-iris_setosa = iris[iris$Species == "setosa", ]
-## ...
+### histogram
+Batting_fulltime = Batting[Batting$AB >= 400, ]
 
-iris_species = split(iris, f = as.factor(iris$Species))
-points(iris_species[[1]][, c("Sepal.Length", "Petal.Length")], col = "blue", pch = 19)
-points(iris_species[[2]][, c("Sepal.Length", "Petal.Length")], col = "green", pch = 19)
+hist(Batting_fulltime[Batting_fulltime$yearID == 2019, ]$HR)
+
+hist(Batting_fulltime[Batting_fulltime$yearID == 2019, ]$HR, 
+     main = "Histogram of Home Runs in 2019", 
+     xlab = "Home Runs")
 
 
 

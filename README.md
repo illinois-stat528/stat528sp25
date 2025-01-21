@@ -289,6 +289,7 @@ A list of the designated University employees who, as counselors, confidential a
   + Syllabus, course overview 
   + Git/GitHub and R Markdown
   + **Reading**: setup.md
+  + **Reading**: R scripts
   + **Reading/Videos**: [Atomic Vectors](https://deck13.github.io/stat385-fa2023/week-03.html)
   + **Reading/Videos**: [Generic Vectors](https://deck13.github.io/stat385-fa2023/week-04.html)
   + **Reading/Videos**: [Logic and Control Flow](https://deck13.github.io/stat385-fa2023/week-05.html)

@@ -290,16 +290,16 @@ A list of the designated University employees who, as counselors, confidential a
   + Git/GitHub and R Markdown
   + **Reading**: setup.md
   + **Reading**: R scripts
-  + **Reading/Videos**: [Atomic Vectors](https://deck13.github.io/stat385-fa2023/week-03.html)
-  + **Reading/Videos**: [Generic Vectors](https://deck13.github.io/stat385-fa2023/week-04.html)
-  + **Reading/Videos**: [Logic and Control Flow](https://deck13.github.io/stat385-fa2023/week-05.html)
-  + **Reading/Videos**: [Functions](https://deck13.github.io/stat385-fa2023/week-08.html)
+  + **Reading/Videos**: [Atomic Vectors](https://fa24.stat385.org/week-03.html)
+  + **Reading/Videos**: [Generic Vectors](https://fa24.stat385.org/week-04.html)
+  + **Reading/Videos**: [Logic and Control Flow](https://fa24.stat385.org/week-05.html)
+  + **Reading/Videos**: [Functions](https://fa24.stat385.org/week-08.html)
 
 * Week 2 [01/27 - 01/31]
   + Git/GitHub, R Markdown, data transformation, statistical programming, and visualization
-  + **Reading/Videos**: [Data Transformation I](https://deck13.github.io/stat385-fa2023/week-09.html): Visualization with ggplot2 and transformation with dplyr
-  + **Reading/Videos**: [Data Transformation II](https://deck13.github.io/stat385-fa2023/week-10.html): Transform data with tidyr
-  + **Reading/Videos**: [Data Transformation III](https://deck13.github.io/stat385-fa2023/week-11.html): Factors and dates and times in the tidyverse
+  + **Reading/Videos**: [Data Transformation I](https://fa24.stat385.org/week-09.html): Visualization with ggplot2 and transformation with dplyr
+  + **Reading/Videos**: [Data Transformation II](https://fa24.stat385.org/week-10.html): Transform data with tidyr
+  + **Reading/Videos**: [Data Transformation III](https://fa24.stat385.org/week-11.html): Factors and dates and times in the tidyverse
   + Homework 1 due on Friday, 01/31 at 11:59 PM 
   
 * Week 3 [02/03 - 02/07] 

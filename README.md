@@ -39,7 +39,7 @@ See the Syllabus for more details. See the notes directory for course notes.
 ### Greetings 
 
 
-<img src="https://stat.illinois.edu/sites/default/files/styles/directory_profile/public/profile-photos/dje13.png.jpg?itok=QU1pv9Tt" 
+<img src="https://stat.illinois.edu/sites/default/files/styles/directory_profile/public/profile-photos/dje13.png.jpg?itok=47ODgnc8" 
      width="150" 
      height="150"
      hspace="25"

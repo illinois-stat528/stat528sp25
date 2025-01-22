@@ -64,7 +64,7 @@ Zoom link: https://illinois.zoom.us/j/84926133768?pwd=Q7YXsHNW7eSCTJVfNcxqXsOISe
 Passcode: 754150
 
 
-**TA**: Arjama Das
+**TA**: **Arjama Das**
 
 **TA Office hours**: 1-3pm Champaign time on Wednesdays 
 
@@ -74,7 +74,6 @@ Meeting ID: 819 940 2015
 
 Password: 155236
 
-Passcode: 
 
 **Course website**: 
 

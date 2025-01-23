@@ -86,23 +86,30 @@ library(Lahman)
 Batting
 
 
-#### Model objects
+
+#### Basic subsetting 
 
 
-#### Subsetting 
+#### Logical subsetting
 
-##### Logical subsetting
 
-##### Extracting elements from generic vector (list)
+#### Extracting elements from generic vector (list)
 x = list(a = 1:10, 
          b = letters, 
          c = c(TRUE, FALSE))
 x[1]
 x[[1]]
+x[1:2]
+x[[1:2]]
 
-##### Extracting elements from named generic vector (list)
+#### Extracting elements from named generic vector (list)
 
-##### model object
+
+#### Model objects
+
+
+#### Calculate proportion (logical subsetting)
+mean(Batting$HR >= 30)
 
 
 ## Functions 
@@ -111,11 +118,10 @@ x[[1]]
 log(5)
 
 ### Vectorization 
-log(b)
+log(x[1])
+log(x[[1]])
 
-#### Calculate proportion (logical subsetting)
-mean(iris[, 2] >= 3.5)
-?mean
+
 
 ### Functions in packages 
 # install.packages("MASS")
@@ -188,19 +194,25 @@ for(i in 1:6) {
   print(mean(1:i))
 }
 
-n = 1e6
-x = double(length = n)
-for(i in seq_along(x)) {
-  x[i] = i
-}
-x
+n = 3e4
+system.time({
+  y = double(length = n)
+  for(i in seq_along(y)) {
+    y[i] = i
+  }
+  print(y)
+})
+
 
 #### Do not grow vector 
-x = 1
-for(i in 2:1e6) {
-  x = c(x, i)
-}
-x
+y2 = 1
+system.time({
+  for(i in 2:n) {
+    y2 = c(y2, i)
+  }
+})
+
+all.equal(y, y2)
 
 
 #### While loop 

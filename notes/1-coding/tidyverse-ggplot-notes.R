@@ -21,24 +21,32 @@ library(ggridges)
 ?Batting
 
 ## tibble
-Batting
-as_tibble(Batting)
-as_tibble(People)
+Batting = as_tibble(Batting)
+People = as_tibble(People)
 
 ## dplyr 
 
 ### select
+select(Batting, HR)
 
 ### filter 
+filter(Batting, yearID == 2013)x
 
 ### arrange 
+arrange(Batting, HR)
+arrange(Batting, desc(HR))
 
 ### mutate 
-
+mutate(Batting, is_30 = HR >= 30)
+View(mutate(Batting, is_30 = HR >= 30))
 
 ### pipe operator
 
 #### did a player hit at least 30 HR in their MLB stint?
+Batting %>% 
+  select(playerID, yearID, stint, HR) %>% 
+  mutate(is_30 = HR >= 30) %>% 
+  arrange(desc(HR))
 
 
 ### group_by/summarize 
@@ -46,7 +54,13 @@ summarise(Batting, meanHR = mean(HR), mean(HR))
 
 
 #### average home runs per player/year combination
+Batting %>% 
+  group_by(playerID) %>% 
+  summarise(meanHR = mean(HR)) %>% 
+  arrange(desc(meanHR))
 
+
+## Week 2: Tuesday
 
 ### left_join 
 

@@ -6,7 +6,18 @@ See the Syllabus for more details. See the notes directory for course notes.
 
 # News
 
-* Welcome to STAT 528. Let's have a great semester!
+* TA information and office hours now posted!
+
+* Course reading materials
+  + **Reading**: setup.md
+  + **Reading**: R scripts
+  + **Reading/Videos**: [Atomic Vectors](https://fa24.stat385.org/week-03.html)
+  + **Reading/Videos**: [Generic Vectors](https://fa24.stat385.org/week-04.html)
+  + **Reading/Videos**: [Logic and Control Flow](https://fa24.stat385.org/week-05.html)
+  + **Reading/Videos**: [Functions](https://fa24.stat385.org/week-08.html)
+  + **Reading/Videos**: [Data Transformation I](https://fa24.stat385.org/week-09.html): Visualization with ggplot2 and transformation with dplyr
+  + **Reading/Videos**: [Data Transformation II](https://fa24.stat385.org/week-10.html): Transform data with tidyr
+  + **Reading/Videos**: [Data Transformation III](https://fa24.stat385.org/week-11.html): Factors and dates and times in the tidyverse
 
 ## Cheatsheats
   + [dplyr](https://posit.co/wp-content/uploads/2022/10/data-transformation-1.pdf) for data transformation

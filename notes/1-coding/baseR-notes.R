@@ -86,29 +86,42 @@ library(Lahman)
 Batting
 
 
+# Week 1: Thursday
+
 
 #### Basic subsetting 
-
+x[1:6]
 
 #### Logical subsetting
-
+x[x > 0]
 
 #### Extracting elements from generic vector (list)
 x = list(a = 1:10, 
          b = letters, 
          c = c(TRUE, FALSE))
 x[1]
+typeof(x[1])
 x[[1]]
+typeof(x[[1]])
 x[1:2]
 x[[1:2]]
 
-#### Extracting elements from named generic vector (list)
+x[[2]]
 
+#### Extracting elements from named generic vector (list)
+x$a
 
 #### Model objects
+x2 = rnorm(10)
+y = 3*x2 + rnorm(10)
+m1 = lm(y ~ x2)
+names(m1)
+m1$coef
 
 
 #### Calculate proportion (logical subsetting)
+Batting
+View(Batting)
 mean(Batting$HR >= 30)
 
 
@@ -128,6 +141,7 @@ log(x[[1]])
 library(MASS)
 ?geyser
 ?bcv
+plot(geyser$duration, geyser$waiting)
 bcv(geyser$duration)
 bcv(geyser$duration, nb = 10)
 
@@ -135,8 +149,12 @@ bcv(geyser$duration, nb = 10)
 ### Write your own functions 
 
 #### Basic example
+f = function(x) {
+  x ^ 2
+}
 
-
+f(3)
+f(x[[1]])
 
 ## Logical control flow 
 
@@ -146,7 +164,7 @@ if(x > 10) {
   print("Big")
 } else {
   print("medium")
-}
+} 
 
 # notice that the following chain breaks 
 # as soon as the first TRUE is supplied
@@ -169,6 +187,9 @@ if(x >= 12) {
 ### apply functions
 ?lapply
 ?sapply
+lapply(1:10, FUN = log)
+log(1:10)
+
 
 
 #### data frame example
@@ -180,8 +201,10 @@ z = data.frame(
   x3 = rnorm(n = n), 
   x4 = c("a","b")
 )
+z
 
 foo = split(z, as.factor(z$x4))
+foo
 lapply(foo, FUN = function(x){
   mean(x[, 2])
 } )
@@ -195,6 +218,12 @@ for(i in 1:6) {
 }
 
 n = 3e4
+y = double(length = n)
+for(i in seq_along(y)) {
+  y[i] = i
+}
+
+y = double(length = n)
 system.time({
   y = double(length = n)
   for(i in seq_along(y)) {
@@ -223,7 +252,8 @@ while(x <= 10) {
 }
 
 ### ifelse
-
+x = rnorm(20)
+ifelse(x > 0, "big", "small")
 
 ## Very basic optimization
 g = function(x) {
@@ -231,13 +261,22 @@ g = function(x) {
 }
 ?optim
 optim(par = 4, fn = g)
-optim(par = g, fn = g, method = "Brent", lower = -10, upper = 10)
+optim(par = g, fn = g, method = "Brent", lower = -10, 
+      upper = 10)
 
 
 ## Basic plots 
 
 ### plot
+View(Batting)
 
+
+
+plot(Batting[Batting$yearID == 2023, ]$AB, 
+     Batting[Batting$yearID == 2023, ]$HR, 
+     xlab = "AB", 
+     ylab = "HR", 
+     main = "A plot of Home Runs and At Bats")
 
 ### histogram
 Batting_fulltime = Batting[Batting$AB >= 400, ]

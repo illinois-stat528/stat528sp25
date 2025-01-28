@@ -64,14 +64,16 @@ Batting %>%
 
 ### left_join 
 
+#### player names
+
 
 ## readr
 
 ### data from: 
 ### Yan, Burgos Jr, Kinson, and Eck (2025) Comparing baseball players across eras 
 ### via novel Full House Modeling. Annals of Applied Statistics, forthcoming
-era_adjusted_HR = read_csv(file = "stat528sp25/notes/1-coding/era_adjusted_HR.csv")
-era_adjusted_HR
+season_eHR = read_csv(file = "stat528sp25/notes/1-coding/season_eHR.csv")
+season_eHR
 
 ## write_csv
 ### create the above
@@ -79,72 +81,60 @@ era_adjusted_HR
 #foo = bat_season %>% 
 #  select(playerID, year, HR, AB)
 #foo
-#write_csv(foo, file = "stat528sp25/notes/1-coding/era_adjusted_HR.csv")
+#write_csv(foo, file = "stat528sp25/notes/1-coding/season_eHR.csv")
 
 
 ## Examples 
 
 ### career home runs (arranged from high to low)
 ### add final year and career at bats
+### add player names
+career_HR 
 
+### career home runs and career era-adjusted home runs (left_join)
+career_eHR
 
-### career home runs and career era-adjusted home runs 
-
-dat = career_HR %>% left_join(career_eHR)
-dat
+datHR = career_HR %>% 
+  left_join(career_eHR, by = "playerID")
+datHR
 
 
 ## ggplot2 
-ggplot(career_HR)
 
 ### add aesthetic
-ggplot(career_HR) + 
-  aes(x = finalYear, y = HR) 
-
 ### add geometry
-ggplot(career_HR) + 
-  aes(x = finalYear, y = HR) + 
-  geom_point()
-
-### career home runs by final year 
 ### add a theme
-ggplot(career_HR) + 
-  aes(x = finalYear, y = HR) + 
-  geom_smooth() + 
-  theme_classic()
+### add a title and axes labels
 
 
 ### career home runs vs era-adjusted home runs by final year (min 1000 AB)
 
+
+
 #### get common playerIDs in these data sets
 ?intersect
 playerIDs = intersect(career_HR$playerID, 
-                      career_era_adjusted_HR$playerID)
+                      career_eHR$playerID)
 
 ### continue with comparison of career home runs vs era-adjusted home runs
-ggplot(career_HR %>% filter(playerID %in% playerIDs)) + 
-  aes(x = finalYear, y = HR) + 
-  geom_point() + 
-  geom_smooth()
 
-ggplot(career_era_adjusted_HR %>% filter(playerID %in% playerIDs)) + 
-  aes(x = finalYear, y = HR) + 
-  geom_point() + 
-  geom_smooth()
 
 
 #### make larger data set with original and era-adjusted 
 #### HR counts
 ?bind_rows
-dat = 
+datHR_binded = 
 #mutate(id = ifelse(id == 1, "original", "era-adjusted"))
 
 
+#### pivot
+  
+  
 #### separate trend lines (col in aes)
 
 
 #### better plot
-ggplot(dat) + 
+ggplot(datHR_binded) + 
   aes(x = finalYear, y = HR, col = id) + 
   geom_smooth() + 
   annotate("text", x = c(2005.25), 
@@ -160,13 +150,12 @@ ggplot(dat) +
   theme_minimal()
 
 #### facet_wrap
-ggplot(dat) +
-  aes(x = finalYear, y = HR, col = id) + 
+ggplot(datHR) +
+  aes(x = finalYear, y = HR, col = id) 
 
 
 
 ### single season HR by position 1982-1993 (minimum 100 AB)
-
 
 
 #### Notes: 

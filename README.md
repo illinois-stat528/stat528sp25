@@ -6,6 +6,8 @@ See the Syllabus for more details. See the notes directory for course notes.
 
 # News
 
+* Daniel's office hour changed to 12-1pm
+
 * TA information and office hours now posted!
 
 * Course reading materials
@@ -68,7 +70,7 @@ See the Syllabus for more details. See the notes directory for course notes.
 	
 **Course location:** 137 Henry Administration Bldg
 
-**Office hours**: 11am - 12pm Champaign time on Fridays 
+**Office hours**: 12-1pm Champaign time on Fridays 
 
 Zoom link: https://illinois.zoom.us/j/84926133768?pwd=Q7YXsHNW7eSCTJVfNcxqXsOISeeybR.1
 

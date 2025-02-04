@@ -1,0 +1,74 @@
+---
+title: "Homework 2: problems about exponential families"
+author: "your name"
+date: "Due: February 14th at 11:59 PM"
+output: pdf_document
+header-includes: 
+ - \usepackage{amsthm}
+ - \usepackage{amsmath}
+ - \usepackage{amsfonts}
+ - \usepackage{amscd}
+ - \usepackage{amssymb}
+ - \usepackage[sectionbib]{natbib}
+ - \usepackage{url}
+ - \usepackage{graphicx}
+ - \usepackage{tikz-cd}
+ - \usepackage{pgfplots}
+ - \usepackage{geometry}
+ - \usepackage{bm}
+ - \usepackage{array,epsfig,fancyheadings,rotating}
+ - \usepackage{multirow}
+urlcolor: blue 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+\newcommand{\R}{\mathbb{R}}
+
+This homework set will cover problems concerning exponential family theory. All derivations must be typed. Screenshots of work done with pen and paper will not be accepted. 
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 1} [10 points]: Verify that displayed equation 7 in the exponential family notes holds for the binomial distribution, the Poisson distribution, and the normal distribution with both $\mu$ and $\sigma^2$ unknown.
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 2} [20 points]: This problem concerns the proof of Theorem 3 in the exponential family notes. Do the following: 
+
+- **part a** [10 points]: Show that the second derivative of the map $h$ is equal to $-\nabla^2 c(\theta)$ and justify that this matrix is negative definite when the exponential family model is identifiable.
+- **part b** [10 points]: Finish the proof of Theorem 3.
+
+Note that part a will be referenced later in this course. Hence, it is treated as its own sub-problem.
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 3} [20 points]:  Let $y \in \R$ be a regular full exponential family with canonical parameter $\theta \in \R$. Do the following: 
+
+- **part a** [15 points]: Verify that $y$ is sub-exponential.
+- **part b** [5 points]: In the notes it was claimed that the scalar products of $\sum_{i=1}^n\{y_i - \nabla c(\theta)\}$ are sub-exponential (see the "Finite sample concentration of MLE" section in the exponential family notes). Verify that this is true when $y_i$ are iid realizations from a regular full exponential family.
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 4} [10 points]: Derive the MLEs of the canonical parameters of the binomial distribution, and the normal distribution with both $\mu$ and $\sigma^2$ unknown.
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 5} [10 points]: Derive the asymptotic distribution for $\hat\tau$, the MLE of the submodel mean value parameter vector. Hint: use the [Delta method](https://en.wikipedia.org/wiki/Delta_method).
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 6} [20 points]: Do the following:  
+
+- **part a** [10 points]: Prove Lemma 1 in the exponential family notes.
+- **part b** [10 points]: Provide a brief explanation of why this Lemma is important without using any mathematical symbols.
+
+\vspace*{1cm} 
+ 
+The above six problems are worth 90 points in total. 10 points will be allocated for presentation and correct submission of the homework.
+
+\vspace*{1cm}
+
+
+

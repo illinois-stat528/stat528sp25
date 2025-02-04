@@ -112,7 +112,7 @@ Nelder goes on to state:
 
 The objective of statistics according to Nelder is stated in the first sentence of the abstract of his Presidential Address: 
 
-> "**Statistics is seen as being primarily concerned with the theory and practice of the matching of theory to data by research worker.**"
+> "**Statistics is seen as being primarily concerned with the theory and practice of the matching of theory to data by research workers.**"
 
 As alluded to previously in this introduction, this course will primarily be concerned with the theory and practice of the matching of theory to data by research worker. 
 
@@ -436,6 +436,8 @@ Note that the log likelihood in the definition above is the same as \eqref{expol
 <!--     &= -n\log(1-p). -->
 <!-- \end{align*} -->
 <!-- This cumulant function is a bijective mapping with continuous inverse function $1 - \exp(-z/n)$ (where we set $z = c(\theta)$ in the above and solve for $p$), and thus maps open sets to open sets. Therefore, $\Theta$ is open and the full exponential family is also regular. \qed -->
+
+\vspace{0.5cm}\noindent {\bf Example (Normal distribution)}: Done in class.
 
 
 ## Identifiability and directions of constancy

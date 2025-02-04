@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.11.7)  4 FEB 2025 08:54
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.11.7)  4 FEB 2025 10:40
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1046,11 +1046,11 @@ LaTeX Font Warning: Font shape `T1/lmtt/bx/it' in size <10> not available
 
 Package amsmath Warning: Foreign command \atopwithdelims;
 (amsmath)                \frac or \genfrac should be used instead
-(amsmath)                 on input line 793.
+(amsmath)                 on input line 797.
 
 [9] [10]
 LaTeX Font Info:    Trying to load font information for TS1+lmtt on input line 
-917.
+921.
 (/usr/local/texlive/2022/texmf-dist/tex/latex/lm/ts1lmtt.fd
 File: ts1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [11] [12] [13] [14] [15] (./expfamnotes.bbl [16]) [17] (./expfamnotes.aux) ) 
@@ -1089,7 +1089,7 @@ ts/type1/public/lm/lmtko10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/
 public/lm/lmtt10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/
 lmtti10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/sym
 bols/msbm10.pfb>
-Output written on expfamnotes.pdf (17 pages, 496179 bytes).
+Output written on expfamnotes.pdf (17 pages, 496031 bytes).
 PDF statistics:
  466 PDF objects out of 1000 (max. 8388607)
  393 compressed objects within 4 object streams

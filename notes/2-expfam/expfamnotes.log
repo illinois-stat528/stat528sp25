@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.11.7)  4 FEB 2025 07:46
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.11.7)  4 FEB 2025 08:54
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1046,53 +1046,53 @@ LaTeX Font Warning: Font shape `T1/lmtt/bx/it' in size <10> not available
 
 Package amsmath Warning: Foreign command \atopwithdelims;
 (amsmath)                \frac or \genfrac should be used instead
-(amsmath)                 on input line 779.
+(amsmath)                 on input line 793.
 
 [9] [10]
 LaTeX Font Info:    Trying to load font information for TS1+lmtt on input line 
-903.
+917.
 (/usr/local/texlive/2022/texmf-dist/tex/latex/lm/ts1lmtt.fd
 File: ts1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-) [11] [12] [13] [14] [15] (./expfamnotes.bbl) [16] (./expfamnotes.aux) ) 
+) [11] [12] [13] [14] [15] (./expfamnotes.bbl [16]) [17] (./expfamnotes.aux) ) 
 Here is how much of TeX's memory you used:
- 36626 strings out of 478268
- 837428 string characters out of 5846347
- 1247452 words of memory out of 5000000
+ 36627 strings out of 478268
+ 837435 string characters out of 5846347
+ 1247453 words of memory out of 5000000
  53833 multiletter control sequences out of 15000+600000
  579628 words of font info for 226 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  98i,16n,94p,1008b,609s stack positions out of 10000i,1000n,20000p,200000b,200000s
-{/usr/
-local/texlive/2022/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}{/usr/local/texl
-ive/2022/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{/usr/local/texlive/2022/texmf
--dist/fonts/enc/dvips/lm/lm-ts1.enc}{/usr/local/texlive/2022/texmf-dist/fonts/e
-nc/dvips/lm/lm-ec.enc}{/usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/lm/lm
--mathit.enc}{/usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/lm/lm-mathex.en
-c}</usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></usr/lo
-cal/texlive/2022/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/local/texliv
-e/2022/texmf-dist/fonts/type1/public/lm/lmbxi10.pfb></usr/local/texlive/2022/te
-xmf-dist/fonts/type1/public/lm/lmex10.pfb></usr/local/texlive/2022/texmf-dist/f
-onts/type1/public/lm/lmmi10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1
-/public/lm/lmmi5.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/
-lmmi7.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmr10.pfb><
-/usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmr12.pfb></usr/local/
-texlive/2022/texmf-dist/fonts/type1/public/lm/lmr17.pfb></usr/local/texlive/202
-2/texmf-dist/fonts/type1/public/lm/lmr5.pfb></usr/local/texlive/2022/texmf-dist
-/fonts/type1/public/lm/lmr6.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1
-/public/lm/lmr7.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/l
-mr8.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmri10.pfb></
-usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></usr/local/
-texlive/2022/texmf-dist/fonts/type1/public/lm/lmsy5.pfb></usr/local/texlive/202
-2/texmf-dist/fonts/type1/public/lm/lmsy7.pfb></usr/local/texlive/2022/texmf-dis
-t/fonts/type1/public/lm/lmtk10.pfb></usr/local/texlive/2022/texmf-dist/fonts/ty
-pe1/public/lm/lmtko10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/publi
-c/lm/lmtt10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmtti
-10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/symbols/
-msbm10.pfb>
-Output written on expfamnotes.pdf (16 pages, 496008 bytes).
+{
+/usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}{/usr/local
+/texlive/2022/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{/usr/local/texlive/2022/
+texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}{/usr/local/texlive/2022/texmf-dist/fo
+nts/enc/dvips/lm/lm-ec.enc}{/usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/
+lm/lm-mathit.enc}{/usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/lm/lm-math
+ex.enc}</usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></u
+sr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/local/t
+exlive/2022/texmf-dist/fonts/type1/public/lm/lmbxi10.pfb></usr/local/texlive/20
+22/texmf-dist/fonts/type1/public/lm/lmex10.pfb></usr/local/texlive/2022/texmf-d
+ist/fonts/type1/public/lm/lmmi10.pfb></usr/local/texlive/2022/texmf-dist/fonts/
+type1/public/lm/lmmi5.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/publi
+c/lm/lmmi7.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmr10.
+pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmr12.pfb></usr/l
+ocal/texlive/2022/texmf-dist/fonts/type1/public/lm/lmr17.pfb></usr/local/texliv
+e/2022/texmf-dist/fonts/type1/public/lm/lmr5.pfb></usr/local/texlive/2022/texmf
+-dist/fonts/type1/public/lm/lmr6.pfb></usr/local/texlive/2022/texmf-dist/fonts/
+type1/public/lm/lmr7.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public
+/lm/lmr8.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmri10.p
+fb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></usr/l
+ocal/texlive/2022/texmf-dist/fonts/type1/public/lm/lmsy5.pfb></usr/local/texliv
+e/2022/texmf-dist/fonts/type1/public/lm/lmsy7.pfb></usr/local/texlive/2022/texm
+f-dist/fonts/type1/public/lm/lmtk10.pfb></usr/local/texlive/2022/texmf-dist/fon
+ts/type1/public/lm/lmtko10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/
+public/lm/lmtt10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/
+lmtti10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/sym
+bols/msbm10.pfb>
+Output written on expfamnotes.pdf (17 pages, 496179 bytes).
 PDF statistics:
- 462 PDF objects out of 1000 (max. 8388607)
- 390 compressed objects within 4 object streams
- 93 named destinations out of 1000 (max. 500000)
+ 466 PDF objects out of 1000 (max. 8388607)
+ 393 compressed objects within 4 object streams
+ 94 named destinations out of 1000 (max. 500000)
  57501 words of extra memory for PDF output out of 61914 (max. 10000000)
 

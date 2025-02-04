@@ -184,9 +184,10 @@ Here,
 We use the convention that terms that do not contain the parameter vector can be dropped from a log likelihood; otherwise additional terms also appear in \eqref{expolog}. When the log likelihood can be expressed as \eqref{expolog} we say that $y$ is the *canonical statistic* and $\theta$ is the *canonical parameter*. We will often refer to the log likelihood \eqref{expolog} as being in canonical form. 
 
 Although we usually say "the" canonical statistic, "the" canonical parameter, and "the" cumulant function, these are not uniquely defined: 
--  any one-to-one [affine function](https://mathworld.wolfram.com/AffineFunction.html) of a canonical statistic vector is another canonical statistic vector,
--  any one-to-one affine function of a canonical parameter vector is another canonical parameter vector, and
--  any real-valued affine function plus a cumulant function is another cumulant function.
+
+- any one-to-one [affine function](https://mathworld.wolfram.com/AffineFunction.html) of a canonical statistic vector is another canonical statistic vector,
+- any one-to-one affine function of a canonical parameter vector is another canonical parameter vector, and
+- any real-valued affine function plus a cumulant function is another cumulant function.
 
 These possible changes of statistic, parameter, or cumulant function are not algebraically independent. Changes to one may require changes to the others to keep a log likelihood of the form \eqref{expolog}. Usually no fuss is made about this nonuniqueness. One fixes a choice of canonical statistic, canonical parameter, and cumulant function and leaves it at that.
 
@@ -317,7 +318,6 @@ Our definition of a log likelihood for an exponential family did not specify a p
 \end{equation}
 define a *full* exponential family. Many commonly used statistical models are full exponential families. There is literature about so-called *curved exponential families* and other non-full exponential families, but we will not discuss them. With parameter space \eqref{parmspace}, we now have a log likelihood \eqref{expolog} and density \eqref{expodens} for all $\theta \in \Theta$.  
 
-
 \vspace{0.5cm}\noindent {\bf Example (Binomial distribution)}: Done in class 
 
 <!-- The Binomial distribution Bin($n$, $p$) can be parameterized as a full exponential family when the success probability is taken to be $0 < p < 1$. We have already demonstrated that the log likelihood for Binomial distribution can be written as an exponential family in canonical form. This demonstration required us to specify that  -->
@@ -329,6 +329,8 @@ define a *full* exponential family. Many commonly used statistical models are fu
 <!--   c(\theta) = n\log\left(1 + e^\theta\right). -->
 <!-- $$ -->
 <!-- The specification that $0 < p < 1$ implies that $\theta \in (-\infty,\infty)$ which in turn implies that $c(\theta) < \infty$. Therefore, $\Theta = \{\theta : c(\theta) < \infty\}$, and the exponential family is full. \qed -->
+
+\vspace{0.5cm}\noindent {\bf Example (Normal distribution)}: Done in class.
 
 
 We now state a mathematical properties of cumulant functions that hold when an exponential family is either full or possesses a parameter space that is a subset of \eqref{parmspace}. First, some preliminary definitions.

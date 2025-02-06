@@ -745,13 +745,13 @@ where $(\lambda_*,b_*)$ are as defined in the previous lemma.
 \end{prop}
 
 
-Our finiteness argument will be demonstrated in the case when $Y$ is a scalar canonical statistic full regular exponential family with canonical parameter $\theta$ (although we will still use the $\nabla$ to denote derivatives). \textbf{It is a problem for the reader to show that $Y$ is a sub-exponential random variable}. Now let $\hat\theta$ be the MLE for the canonical parameter $\theta$. We now show that the MLE of an exponential family obeys sub-exponential concentration. Consider a Taylor expansion of the score function of an exponential family evaluated at the MLE
+Our finiteness argument will be demonstrated in the scalar case where $Y$ is the canonical statistic of a full regular exponential family with canonical parameter $\theta$ (although we will still use the $\nabla$ to denote derivatives). \textbf{It is a problem for the reader to show that $Y$ is a sub-exponential random variable}. Now let $\hat\theta$ be the MLE for the canonical parameter $\theta$. We now show that the MLE of an exponential family obeys sub-exponential concentration. Consider a Taylor expansion of the score function of an exponential family evaluated at the MLE
 \begin{align*}
   0 = \nabla l_n(\hat\theta) &= \nabla l_n(\theta) 
     + \nabla^2l_n(\theta)(\hat\theta - \theta) + R_n	\\
     &= \sum_{i=1}^n\{y_i - \nabla c(\theta)\} + \nabla^2l_n(\theta)(\hat\theta - \theta) + R_n,
 \end{align*}
-where $\nabla^2l_n(\theta) = -n\nabla^2 c(\theta) = -nI(\theta)$ and $R_n = o_P(n^{-1/2})$. Notice that $\sum_{i=1}^n\{y_i - \nabla c(\theta)\}$ is a sum of mean zero sub-exponential random variables, and is also sub-exponential by Proposition \ref{lem:subexpo}. Furthermore, scalar products of $\sum_{i=1}^n\{y_i - \nabla c(\theta)\}$ are also sub-exponential. After rearranging terms in the above displayed equation we see that 
+where $\nabla^2l_n(\theta) = -n\nabla^2 c(\theta) = -nI(\theta)$ and $R_n = o_P(n^{-1/2})$ (see [here](https://www.stat.umn.edu/geyer/8112/notes/ohpee.pdf) for an explanation of $o_P$ notation). Notice that $\sum_{i=1}^n\{y_i - \nabla c(\theta)\}$ is a sum of mean zero sub-exponential random variables, and is also sub-exponential by Proposition \ref{lem:subexpo}. Furthermore, scalar products of $\sum_{i=1}^n\{y_i - \nabla c(\theta)\}$ are also sub-exponential. After rearranging terms in the above displayed equation we see that 
 $$
   (\hat\theta - \theta) = n^{-1}I^{-1}(\theta)\sum_{i=1}^n\{y_i - \nabla c(\theta)\} + \widetilde R_n,
 $$

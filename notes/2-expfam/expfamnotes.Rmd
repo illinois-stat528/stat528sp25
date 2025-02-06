@@ -474,7 +474,7 @@ The direction $sv$ along a vector $v$ in the parameter space such that $\theta$ 
 
 In the same vein as \eqref{Radon}, we obtain the identity
 \begin{equation} \label{cumident}
-	c(\theta) = c(\psi) + \log\left(\mathrm{E}_{\psi}\left(e^{\inner{Y, \theta - \psi}}\right)\right)
+	c(\theta) = c(\psi) + \log\left(\mathrm{E}_{\psi}\left(e^{\inner{Y, \theta - \psi}}\right)\right).
 \end{equation}
 Then \eqref{cumident} gives
 \begin{align*}
@@ -489,13 +489,13 @@ where the last equality follows from the multinomial theorem. Then \eqref{Radon}
     &= {n \choose y} \left(\prod_{i=1}^d\left[p_ie^{\theta_i-\psi_i}\right]^{y_i}\right)\left(\sum_{i=1}^d p_ie^{\theta_i-\psi_i}\right)^{-n} \\
     &= {n \choose y} \prod_{i=1}^d \left(\frac{p_ie^{\theta_i-\psi_i}}{\sum_{j=1}^dp_je^{\theta_j-\psi_j}}\right)^{y_i}.
 \end{align*}
-We simplify the above by choosing $p$ to be the vector with all components $1/d$ and $\psi$ to be the zero vector. We will also choose $c(\psi) = n\log(d)$, so that
+We simplify the above by choosing $p$ to be the vector with all components $1/d$ and $\psi$ to be the zero vector (which follows from our choice of $p$). We will also choose $c(\psi) = n\log(d)$, so that
 $$
   c(\theta) = n\log\left(\sum_{i=1}^d e^{\theta_i}\right).
 $$
 Thus,
 $$
-  f_{\theta}(y) = {n \choose y}\prod_{i=1}^d \left(\frac{e^{\theta_i}}{\sum_{j=1}^d e^{\theta_j}}\right)^{y_i}
+  f_{\theta}(y) = {n \choose y}\prod_{i=1}^d \left(\frac{e^{\theta_i}}{\sum_{j=1}^d e^{\theta_j}}\right)^{y_i},
 $$
 and this is the PMF of the multinomial distribution with sample size $n$ and probability vector having components
 $$
@@ -542,7 +542,7 @@ We will refer to $g(\theta)$ as the change-of-parameter map (or change-of-parame
 
 
 \begin{thm} \label{thm-mvp}
-For a full regular exponential family, the change-of-parameter from canonical to mean value parameter is invertible if the model is identifiable. Moreover both the change-of-parameter and its inverse are infinitely differentiable.
+For a full regular exponential family, the change-of-parameter from canonical to mean value parameter is invertible if the model is identifiable. Moreover, both the change-of-parameter and its inverse are infinitely differentiable.
 \end{thm}
 
 Note that some aspects of this proof are left to the reader. To prove this theorem we will let $\mu$ be a possible value of the mean value parameter (that is, $\mu = g(\theta)$ for some $\theta$) and consider the function
@@ -565,11 +565,11 @@ $$
 
 ## Multivariate monotonicity
 
-A mapping from $g : \R^d \to \R^d$ is multivariate monotone (Definition 12.1 in \cite{rockafellar2009variational}) if
+Here we explore a monotonicity relationship between canonical and mean-value parameters. A mapping from $g : \R^d \to \R^d$ is multivariate monotone (Definition 12.1 in \cite{rockafellar2009variational}) if
 \begin{equation} \label{multimono}
   \left[g(x_1) - g(x_2)\right]^T(x_1 - x_2) \geq 0, \qquad \text{for} \; x_1 \; \text{and} \; x_2 \in \R^d,
 \end{equation}
-and strictly multivariate monotone if \eqref{multimono} holds with strict inequality whenever $x_1 \neq x_2$. If $g$ is differentiable, then by Proposition 12.3 in \cite{rockafellar2009variational} it is multivariate monotone if and only if the symmetric part of the Jacobian matrix $\nabla g$ is positive-semidefinite for each $x$. A sufficient but not necessary condition for $g$ to be strictly multivariate monotone is that the symmetric part of $\nabla g$ be positive definite for each $x$.
+and strictly multivariate monotone if \eqref{multimono} holds with strict inequality whenever $x_1 \neq x_2$. If $g$ is differentiable, then by Proposition 12.3 in \cite{rockafellar2009variational} it is multivariate monotone if and only if the symmetric part of the Jacobian matrix $\nabla g$ is positive-semidefinite for each $x$. A sufficient, but not necessary, condition for $g$ to be strictly multivariate monotone is that the symmetric part of $\nabla g$ be positive definite for each $x$.
 
 Let $g$ be the change-of-parameters mapping from canonical to mean value parameters \eqref{mvp} then we showed in the previous section that its Jacobian matrix is positive semidefinite in general and strictly positive definite when the model is identifiable. Thus this change-of-parameter is multivariate monotone in general and strictly multivariate monotone when the model is identifiable.
 
@@ -591,7 +591,7 @@ Here is another rewrite of \eqref{multiparm} that preserves its full force. Fix 
 $$
   \left[g(\theta + sv) - g(\theta)\right]^Tv > 0, \qquad \text{for} \; s \neq 0.
 $$
-Differentiate with respect to $s$ and set $s = 0$, which gives the so-called directional derivative of $g$ in the direction $v$ at the point $\theta$
+Differentiate with respect to $s$ and set $s = 0$, which gives the so-called directional derivative of $g$ in the direction $v$ at the point $\theta$ given by
 \begin{equation} \label{directderiv}
   \nabla g(\theta; v) = v^T\left[\nabla g(\theta)\right]v = v^T\left[\nabla^2 c(\theta)\right]v.
 \end{equation}
@@ -614,10 +614,12 @@ Hence observed Fisher information (the Hessian matrix of the log likelihood) and
 \begin{equation} \label{FI}
 	I(\theta) = \nabla^2 c(\theta).
 \end{equation}
-Fisher information measures the expected curvature of the log likelihood around the true parameter value. If the likelihood is sharply curved around $\theta$ -- the expected information $I(\theta)$ is large -- then a small change in $\theta$ can lead to a drastic decrease in the likelihood. Conversely, if $I(\theta)$ is small then small changes in $\theta$ will not affect the likelihood that much. These heuristics are important when we cover separation and non-identifiability.
+Fisher information measures the expected curvature of the log likelihood around the true parameter value. If the likelihood is sharply curved around $\theta$ then the expected information $I(\theta)$ is large and a small change in $\theta$ can lead to a drastic decrease in the likelihood. Conversely, if $I(\theta)$ is small then small changes in $\theta$ will not affect the likelihood that much. These heuristics are important when we cover separation and non-identifiability.
 
 
-When the model is identifiable, the canonical statistic vector $Y$ is not concentrated on a hyperplane, the second derivative is negative definite everywhere, hence the log likelihood is strictly concave, hence the maximum likelihood estimate is unique if it exists. Under this setup, $y = \nabla c(\hat{\theta})$ arises from setting the first derivative of the log likelihood to zero and rearranging terms. This implies that the maximum likelihood estimator (MLE) for $\theta$ is
+When the model is identifiable, the canonical statistic vector $Y$ is not concentrated on a hyperplane, the second derivative is negative definite everywhere. Hence the log likelihood is strictly concave, and the maximum likelihood estimate is unique if it exists. 
+
+Under this setup, $y = \nabla c(\hat{\theta})$ arises from setting the first derivative of the log likelihood to zero and rearranging terms. This implies that the maximum likelihood estimator (MLE) for $\theta$ is
 $$
   \hat{\theta} = g^{-1}(y),
 $$
@@ -628,7 +630,7 @@ where $g$ is the change-of-parameter from canonical to mean value parameters.
 
 ## Nonexistence of the MLE
 
-Unlike our proof of Theorem \ref{thm-mvp} where we assumed the existence of a solution, we cannot prove the maximum likelihood estimate (for the canonical parameter) exists. Consider the binomial distribution. The MLE for the usual parameterization is $\hat p = y/n$. The canonical parameter is $\theta = \text{logit}(p)$. But $\hat \theta = \text{logit}(\hat p)$ does not exist when $\hat p = 0$ or $\hat p = 1$, which is when we observe zero successes or when we observe $n$ successes in $n$ trials. We will revisit this topic later in the course.
+Unlike our proof of Theorem \ref{thm-mvp} where we assumed the existence of a solution, we cannot prove the maximum likelihood estimate (for the canonical parameter) exists. Consider the binomial distribution. The MLE for the usual parameterization is $\hat p = y/n$. The canonical parameter is $\theta = \text{logit}(p)$. But $\hat \theta = \text{logit}(\hat p)$ does not exist when $\hat p = 0$ or $\hat p = 1$, which is when we observe zero successes or when we observe $n$ successes in $n$ trials. Thus, the MLE for $p$ is on the boundary of the canonical parameter space, and the MLE for $\theta$ does not exist.
 
 
 ## Observed equals expected
@@ -682,11 +684,11 @@ By the multivariate central limit theorem (CLT)
 $$
   \sqrt{n}\left(\bar y_n - \mu\right) \to N\left(0, I(\theta)\right)
 $$
-and we know that $g^{-1}$ is differentiable (Theorem~\ref{thm-mvp}) with the derivative given by
+and we know that $g^{-1}$ is differentiable (Theorem \ref{thm-mvp}) with the derivative given by
 $$
   \nabla g^{-1}(\theta) = \left[\nabla g(\theta)\right]^{-1}, \qquad \text{where} \; \mu = g(\theta) \; \text{and} \; \theta = g^{-1}(\mu).
 $$
-So the usual asymptotics of maximum likelihood
+Therefore, in the context of full regular exponential families, the usual asymptotics of maximum likelihood
 \begin{equation} \label{asymptoticsMLE}
 	\sqrt{n}\left(\hat\theta_n - \theta\right) \to N\left(0, I(\theta)^{-1}\right)
 \end{equation}

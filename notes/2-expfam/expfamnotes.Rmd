@@ -525,6 +525,10 @@ Y = 1 + M %*% beta + rnorm(n)
 # add perfect collinearity to the model matrix
 M = cbind(M, 2*M[, 1] + M[, 2])
 
+# hyperplane in model matrix
+b = c(2,1,0,-1)
+unique(as.numeric(M %*% b))
+
 # fit linear regression model and produce model summary table
 m1 = lm(Y ~ M)
 summary(m1)
@@ -630,7 +634,7 @@ where $g$ is the change-of-parameter from canonical to mean value parameters.
 
 ## Nonexistence of the MLE
 
-Unlike our proof of Theorem \ref{thm-mvp} where we assumed the existence of a solution, we cannot prove the maximum likelihood estimate (for the canonical parameter) exists. Consider the binomial distribution. The MLE for the usual parameterization is $\hat p = y/n$. The canonical parameter is $\theta = \text{logit}(p)$. But $\hat \theta = \text{logit}(\hat p)$ does not exist when $\hat p = 0$ or $\hat p = 1$, which is when we observe zero successes or when we observe $n$ successes in $n$ trials. Thus, the MLE for $p$ is on the boundary of the canonical parameter space, and the MLE for $\theta$ does not exist.
+Unlike our proof of Theorem \ref{thm-mvp} where we assumed the existence of a solution, we cannot prove the maximum likelihood estimate (for the canonical parameter) exists. Consider the binomial distribution. The MLE for the usual parameterization is $\hat p = y/n$. The canonical parameter is $\theta = \text{logit}(p)$. But $\hat \theta = \text{logit}(\hat p)$ does not exist when $\hat p = 0$ or $\hat p = 1$, which is when we observe zero successes or when we observe $n$ successes in $n$ trials. Thus, the MLE is on the boundary of its parameter space, and regularity of model the model means the boundary is empty.
 
 
 ## Observed equals expected

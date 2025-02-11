@@ -868,6 +868,134 @@ A concise presentation of the various model parameterizations and how they are r
 \end{figure}
 
 
+## Optimization
+
+In this section we discuss optimization routines for estimating parameters in canonical exponential family linear submodels. The goal will be to find
+\begin{equation} \label{optim}
+  \text{argmax}_{\beta} l(\beta)
+    \quad = \quad \text{argmax}_{\beta}\left[\inner{M^Ty,\beta} - c(M\beta)\right]
+\end{equation}
+in identifiable models. Note that we will blend our notation with the notation in Chapter 4 of \cite{agresti2013cat} when we define the Newton-Raphson, Fisher scoring, and iteratively reweighted least squares (IRLS) algorithms.
+
+### Newton-Raphson algorithm
+
+A classic algorithm for handling iterative solutions of nonlinear systems of equations is the \emph{Newton-Raphson algorithm}. This algorithm begins with an initial guess $\beta_0$ for the solution. It obtains a second guess by approximating the function to be maximized in a neighborhood of the initial guess by a second-degree polynomial and then finding the location of the polynomial's maximum value. This process is repeated iteratively until the discrepancy in successive evaluations of the objective function evaluate along the sequence of iterates is smaller than some convergence threshold. The sequence of iterates that this algorithm generates converge to a solution $\hat\beta$ when the optimization function is suitable (full rank properly conditioned Fisher Information matrix) and/or the initial guess is good.
+
+We now explain the Newton-Raphson algorithm formally. Let $U(\beta) = \nabla l(\beta)$ be the score function corresponding to the log likelihood of a canonical linear exponential family submodel, and let $H(\beta) = \nabla^2 l(\beta)$ denote the Hessian matrix. At iteration $k$, consider the following second order Taylor series approximation of $l(\beta)$,
+\begin{equation} \label{NR}
+  l(\beta) \approx l(\beta_k) + U(\beta_k)^T(\beta - \beta_k)
+    + \frac{(\beta-\beta_k)^TH(\beta_k)(\beta - \beta_k)}{2}.
+\end{equation}
+Now solving
+$$
+  U(\beta) \approx U(\beta_k) + H(\beta_k)(\beta - \beta_k) = 0
+$$
+for $\beta$ yields a guess for the maximizer of the above second order Taylor series approximation. That guess is
+\begin{equation} \label{NRupdates}
+	\beta_{k+1} = \beta_k - H(\beta_k)^{-1}U(\beta_k).
+\end{equation}
+This algorithm is fast and exhibits [quadratic convergence](https://en.wikipedia.org/wiki/Rate_of_convergence), provided that it converges. Convergence is likely in identifiable models where $H(\beta_{0})$ is positive definite. However, the Newton-Raphson method can be quite sensitive to the choice of starting values $\beta_{0}$. More details, including a graphical demonstration of the algorithm, is given in Section 4.6 of \cite{agresti2013cat}.
+
+For many identifiable GLMs, including Poisson models with log link and binomial models with logit link, with full rank model matrices the Hessian is negative definite and the log likelihood is a strictly concave function. The maximum likelihood estimators of model parameters exist and are unique under quite general conditions \citep{wedderburn1976existence}. Thus Newton Raphson should exhibit solid performance for finding MLEs of the submodel canonical parameter vector.
+
+
+### Fisher scoring algorithm
+
+The \emph{Fisher scoring algorithm} is an alternative method for solving systems of equations. It resembles the Newton-Raphson algorithm, the distinction being with the Hessian matrix used in the Newton updates. Fisher scoring uses the expected Fisher information matrix instead of the Hessian which is the observed Fisher information matrix.
+
+We will let $\Hcal$ be the expected information matrix so that $\Hcal(\beta) = -\E\left\{\nabla^2 l(\beta)\right\}$. The Newton update step for the Fisher scoring method is
+\begin{equation} \label{FSNewton}
+  \beta_{k+1} = \beta_k + \left\{\Hcal(\beta_k)\right\}^{-1} U(\beta_k).
+\end{equation}
+For GLMs with canonical link (the entirety of these notes thus far), we have that the observed and expected information are the same so that Fisher scoring and Newton-Raphson are the same in our context. 
+
+For noncanonical link models (which we see later), these quantities are not the same and Fisher scoring has advantages over Newton Raphson in that it produces the asymptotic covariance matrix as a by-product, the expected information is necessarily nonnegative definite, and as seen next, it is closely related to weighted least-squares methods for ordinary linear models. However, it need have quadratic convergence, and for complex models the observed information is often easier to calculate.
+
+
+### Iteratively reweighted least squares (IRLS)
+
+We now derive the IRLS algorithm from Fisher scoring. Take the Newton update of the Fisher scoring algorithm \eqref{FSNewton} and right multiply by the Hessian matrix so that
+\begin{equation} \label{FS}
+  \Hcal(\beta_k)\beta_{k+1} = \Hcal(\beta_k)\beta_k + U(\beta_k).
+\end{equation}
+The chain rule and an appeal to Figure \ref{Fig1:parameterizations} allows us to write $\Hcal(\beta) = M^TW(\beta)M$ where
+$$
+  W(\beta) = \left\{\nabla_\theta^2 c(\theta^*)\right\}|_{\theta^* = M\beta}.
+$$
+The estimated asymptotic covariance matrix $\Hcal^{-1}$ of $\hat{\beta}$ occurs as a by-product of this algorithm as $\left\{\Hcal(\beta_k)\right\}^{-1}$ where $k$ is an iteration number at which convergence is deemed to have occurred.
+
+For both Fisher scoring and Newton-Raphson, the score function $U(\beta)$ can be written as
+\begin{align*}
+  U(\beta) &= \nabla l(\beta) \\
+    &= M^T\left(Y - \nabla_\theta c(\theta^*)|_{\theta^* = M\beta}\right) \\
+    &= M^T\left(Y - \mu(\beta)\right),
+\end{align*}
+where $\mu(\beta)$ is the saturated model mean value parameter expressed as function of $\beta$. With this setup we can see that the right-hand side of \eqref{FS} can be written as
+\begin{align*}
+  \Hcal(\beta_k)\beta_k + U(\beta_k) &= M^TW(\beta_k)M \beta_k + M^T(Y - \mu(\beta_k)) \\
+    &= M^TW(\beta_k)\left(M \beta_k + W(\beta_k)^{-1}(Y - \mu(\beta_k))\right),
+\end{align*}
+and the left-hand side of \eqref{FS} can be written as
+$$
+  \Hcal(\beta_k)\beta_{k+1} = M^TW(\beta_k)M\beta_{k+1}.
+$$
+Putting this together and solving for the update $\beta_{k+1}$ yields
+$$
+  \beta_{k+1} = \left(M^TW(\beta_k)M\right)^{-1}M^TW(\beta_k)\left(M \beta_k + W(\beta_k)^{-1}(Y - \mu(\beta_k))\right).
+$$
+Now let
+$$
+  z(\beta_k) = M \beta_k + W(\beta_k)^{-1}(Y - \mu(\beta_k)).
+$$
+Then we see that the update is given as
+$$
+  \beta_{k+1} = \left(M^TW(\beta_k)M\right)^{-1}M^TW(\beta_k)z(\beta_k).
+$$
+This update step is the same as a [weighted least squares](https://en.wikipedia.org/wiki/Weighted_least_squares) regression of $z(\beta_k)$ on $M$ with weights $W(\beta_k)$. Hence the name iteratively reweighted least squares.
+
+The R programming language's fitting function for generalized linear models \texttt{glm.fit} implements an IRLS algorithm to compute $\hat{\beta}$. Although it should be noted that \texttt{glm.fit}'s actual IRLS algorithm implementation uses C code.
+
+
+### Other optimization methods
+
+We will close this section on optimization by briefly discussing Quasi-Newton methods which are appropriate when the Hessian matrix used in a Newton update \eqref{NRupdates} are not available, and stochastic gradient descent. These optimization methods are important in practice when models are large. However, our primary focus will be on the above optimization methods in this course.
+
+#### Quasi-Newton methods
+
+Quasi-Newton methods are modifications of \eqref{NRupdates}, where the Hessian matrix is approximated (by the secant method for example), typically because an explicit formula for the Hessian matrix is not available or cumbersome to compute. One such Quasi-Newton method is the Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm for solving unconstrained nonlinear optimization problems. We present the steps for the BFGS algorithm in our optimization context \eqref{optim} where $l$ is a differentiable scalar function.
+
+The algorithm begins at a user-specified initial value (initial estimate for the optimal value) $\beta_{k=0}$ and an initial guess $B_0$. Then proceed iteratively to get a better estimate of $\beta$ at each stage. The steps are:
+\begin{enumerate}
+	\item Obtain a direction $x_k$ by solving $B_kx_k = \nabla_\beta l(\beta_k)$.
+	\item Perform a one-dimensional optimization (line search) to find an acceptable stepsize $\alpha_k$ to be made in the direction $x_k$, so that $x_k = \text{arg min} -l(\beta_k + \alpha x_k)$.
+	\item Set $s_k = \alpha_k x_k$ and update $\beta_{k+1} = \beta_k + s_k$.
+	\item Set $y_k = \nabla_{\beta}(\beta_k) - \nabla_{\beta}(\beta_{k+1})$.
+	\item Update
+	$$
+	  B_{k+1} = B_k + \frac{y_ky_k^T}{y_k^Ts_k} - \frac{B_ks_ks_k^TB_k^T}{s_k^TB_k s_k}.
+	$$
+\end{enumerate}
+The BFGS algorithm is a possible optimization method in R's \text{optim} function. There is also a variant of BFGS in R called L-BFGS-B. This algorithm extends a limited memory variant of BFGS to handle bound constraints in the domain space of $l(\beta)$.  Bound constraints are of the form $l_i \leq \beta_i \leq u_i$ where $\beta_i$ is one component of the canonical parameter vector $\beta$.
+
+
+
+#### Stochastic Gradient Decent (SGD)
+
+The SGD algorithm with averaging \citep{polyak1992acceleration} is a computationally fast, and scalable optimization method that is applicable in large scale applications with applications in [online learning](https://en.wikipedia.org/wiki/Online_machine_learning). We will consider SGD in our context for estimating $\hat\beta$ in exponential family models. The SGD algorithm only requires use of one (or relatively few) data points at each iteration, which makes it computationally superior to other optimization routines. Conventional implementations average over all iterations to derive the final estimator. Consistency and asymptotic normality properties of SGD have been verified in \cite{polyak1992acceleration} for both parameter estimation. In addition to these results, \cite{rakhlin2011making} derived the optimal rates of $O(1/n)$ for the objective function under smoothness and strong convexity assumptions. These assumptions hold in our modeling context.
+
+We will suppose that we have data $D_n = Z_1,\ldots,Z_n$ drawn as iid copies of $Z = (y,x)$. In this case we assume that the both the response and the predictors are random from some common generative process. We will suppose that the conditional distribution of interest $y|x$ can then be parameterized as an exponential family with log likelihood \eqref{subloglike} where the matrix $M$ has rows $x_i^T$, $i = 1,\ldots,n$. The SGD algorithm updates as follows:
+$$
+  \hat{\beta}_{k} = \hat\beta_{k-1} + \eta_{k}\nabla l(\hat\beta_{k-1}; Z_{k})
+$$
+for $k = 1,\ldots,n$ where $\eta$ is called the learning rate. We set the learning rate to be $\eta_k = Ck^{-\alpha}$ for some $\alpha \in (0, 1)$. The final SGD estimators is then
+$$
+  \hat\beta = \frac{1}{n}\sum_{k=1}^n \hat{\beta}_{k}.
+$$
+
+
+\noindent We will revisit optimization when we discuss specific generalized linear models.
+
+
 ## Asymptotics and inference
 
 An asymptotic distribution for the MLE of the submodel canonical parameter vector follows directly from exponential family theory that we have already covered. The submodel log likelihood \eqref{subloglike} takes the form
@@ -1020,135 +1148,6 @@ In short,
  * use AIC when we do not want to assume this.
 
 A shorthand often used is "sparsity".  The *sparsity* assumption is that the true unknown model has only a few parameters and is one of the models under consideration.  Under sparsity, BIC does consistent model selection. If you do not want to assume sparsity, then use AIC.
-
-
-## Optimization
-
-In this section we discuss optimization routines for estimating parameters in canonical exponential family linear submodels. The goal will be to find
-\begin{equation} \label{optim}
-  \text{argmax}_{\beta} l(\beta)
-    \quad = \quad \text{argmax}_{\beta}\left[\inner{M^Ty,\beta} - c(M\beta)\right]
-\end{equation}
-in identifiable models. Note that we will blend our notation with the notation in Chapter 4 of \cite{agresti2013cat} when we define the Newton-Raphson, Fisher scoring, and iteratively reweighted least squares (IRLS) algorithms.
-
-### Newton-Raphson algorithm
-
-A classic algorithm for handling iterative solutions of nonlinear systems of equations is the \emph{Newton-Raphson algorithm}. This algorithm begins with an initial guess $\beta_0$ for the solution. It obtains a second guess by approximating the function to be maximized in a neighborhood of the initial guess by a second-degree polynomial and then finding the location of the polynomial's maximum value. This process is repeated iteratively until the discrepancy in successive evaluations of the objective function evaluate along the sequence of iterates is smaller than some convergence threshold. The sequence of iterates that this algorithm generates converge to a solution $\hat\beta$ when the optimization function is suitable (full rank properly conditioned Fisher Information matrix) and/or the initial guess is good.
-
-We now explain the Newton-Raphson algorithm formally. Let $U(\beta) = \nabla l(\beta)$ be the score function corresponding to the log likelihood of a canonical linear exponential family submodel, and let $H(\beta) = \nabla^2 l(\beta)$ denote the Hessian matrix. At iteration $k$, consider the following second order Taylor series approximation of $l(\beta)$,
-\begin{equation} \label{NR}
-  l(\beta) \approx l(\beta_k) + U(\beta_k)^T(\beta - \beta_k)
-    + \frac{(\beta-\beta_k)^TH(\beta_k)(\beta - \beta_k)}{2}.
-\end{equation}
-Now solving
-$$
-  U(\beta) \approx U(\beta_k) + H(\beta_k)(\beta - \beta_k) = 0
-$$
-for $\beta$ yields a guess for the maximizer of the above second order Taylor series approximation. That guess is
-\begin{equation} \label{NRupdates}
-	\beta_{k+1} = \beta_k - H(\beta_k)^{-1}U(\beta_k).
-\end{equation}
-This algorithm is fast and exhibits [quadratic convergence](https://en.wikipedia.org/wiki/Rate_of_convergence), provided that it converges. Convergence is likely in identifiable models where $H(\beta_{0})$ is positive definite. However, the Newton-Raphson method can be quite sensitive to the choice of starting values $\beta_{0}$. More details, including a graphical demonstration of the algorithm, is given in Section 4.6 of \cite{agresti2013cat}.
-
-For many identifiable GLMs, including Poisson models with log link and binomial models with logit link, with full rank model matrices the Hessian is negative definite and the log likelihood is a strictly concave function. The maximum likelihood estimators of model parameters exist and are unique under quite general conditions \citep{wedderburn1976existence}. Thus Newton Raphson should exhibit solid performance for finding MLEs of the submodel canonical parameter vector.
-
-
-### Fisher scoring algorithm
-
-The \emph{Fisher scoring algorithm} is an alternative method for solving systems of equations. It resembles the Newton-Raphson algorithm, the distinction being with the Hessian matrix used in the Newton updates. Fisher scoring uses the expected Fisher information matrix instead of the Hessian which is the observed Fisher information matrix.
-
-We will let $\Hcal$ be the expected information matrix so that $\Hcal(\beta) = -\E\left\{\nabla^2 l(\beta)\right\}$. The Newton update step for the Fisher scoring method is
-\begin{equation} \label{FSNewton}
-  \beta_{k+1} = \beta_k + \left\{\Hcal(\beta_k)\right\}^{-1} U(\beta_k).
-\end{equation}
-For GLMs with canonical link (the entirety of these notes thus far), we have that the observed and expected information are the same so that Fisher scoring and Newton-Raphson are the same in our context. This is a consequence of the observed equals expected property $\hat{\mu} = y$ that is presented in our notes above. 
-
-For noncanonical link models (which we see later), these quantities are not the same and Fisher scoring has advantages over Newton Raphson in that it produces the asymptotic covariance matrix as a by-product, the expected information is necessarily nonnegative definite, and as seen next, it is closely related to weighted least-squares methods for ordinary linear models. However, it need have quadratic convergence, and for complex models the observed information is often easier to calculate.
-
-
-### Iteratively reweighted least squares (IRLS)
-
-We now derive the IRLS algorithm from Fisher scoring. Take the Newton update of the Fisher scoring algorithm \eqref{FSNewton} and right multiply by the Hessian matrix so that
-\begin{equation} \label{FS}
-  \Hcal(\beta_k)\beta_{k+1} = \Hcal(\beta_k)\beta_k + U(\beta_k).
-\end{equation}
-The chain rule and an appeal to Figure \ref{Fig1:parameterizations} allows us to write $\Hcal(\beta) = M^TW(\beta)M$ where
-$$
-  W(\beta) = \left\{\nabla_\theta^2 c(\theta^*)\right\}|_{\theta^* = M\beta}.
-$$
-The estimated asymptotic covariance matrix $\Hcal^{-1}$ of $\hat{\beta}$ occurs as a by-product of this algorithm as $\left\{\Hcal(\beta_k)\right\}^{-1}$ where $k$ is an iteration number at which convergence is deemed to have occurred.
-
-For both Fisher scoring and Newton-Raphson, the score function $U(\beta)$ can be written as
-\begin{align*}
-  U(\beta) &= \nabla l(\beta) \\
-    &= M^T\left(Y - \nabla_\theta c(\theta^*)|_{\theta^* = M\beta}\right) \\
-    &= M^T\left(Y - \mu(\beta)\right),
-\end{align*}
-where $\mu(\beta)$ is the saturated model mean value parameter expressed as function of $\beta$. With this setup we can see that the right-hand side of \eqref{FS} can be written as
-\begin{align*}
-  \Hcal(\beta_k)\beta_k + U(\beta_k) &= M^TW(\beta_k)M \beta_k + M^T(Y - \mu(\beta_k)) \\
-    &= M^TW(\beta_k)\left(M \beta_k + W(\beta_k)^{-1}(Y - \mu(\beta_k))\right),
-\end{align*}
-and the left-hand side of \eqref{FS} can be written as
-$$
-  \Hcal(\beta_k)\beta_{k+1} = M^TW(\beta_k)M\beta_{k+1}.
-$$
-Putting this together and solving for the update $\beta_{k+1}$ yields
-$$
-  \beta_{k+1} = \left(M^TW(\beta_k)M\right)^{-1}M^TW(\beta_k)\left(M \beta_k + W(\beta_k)^{-1}(Y - \mu(\beta_k))\right).
-$$
-Now let
-$$
-  z(\beta_k) = M \beta_k + W(\beta_k)^{-1}(Y - \mu(\beta_k)).
-$$
-Then we see that the update is given as
-$$
-  \beta_{k+1} = \left(M^TW(\beta_k)M\right)^{-1}M^TW(\beta_k)z(\beta_k).
-$$
-This update step is the same as a [weighted least squares](https://en.wikipedia.org/wiki/Weighted_least_squares) regression of $z(\beta_k)$ on $M$ with weights $W(\beta_k)$. Hence the name iteratively reweighted least squares.
-
-The R programming language's fitting function for generalized linear models \texttt{glm.fit} implements an IRLS algorithm to compute $\hat{\beta}$. Although it should be noted that \texttt{glm.fit}'s actual IRLS algorithm implementation uses C code.
-
-
-### Other optimization methods
-
-We will close this section on optimization by briefly discussing Quasi-Newton methods which are appropriate when the Hessian matrix used in a Newton update \eqref{NRupdates} are not available, and stochastic gradient descent. These optimization methods are important in practice when models are large. However, our primary focus will be on the above optimization methods in this course.
-
-#### Quasi-Newton methods
-
-Quasi-Newton methods are modifications of \eqref{NRupdates}, where the Hessian matrix is approximated (by the secant method for example), typically because an explicit formula for the Hessian matrix is not available or cumbersome to compute. One such Quasi-Newton method is the Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm for solving unconstrained nonlinear optimization problems. We present the steps for the BFGS algorithm in our optimization context \eqref{optim} where $l$ is a differentiable scalar function.
-
-The algorithm begins at a user-specified initial value (initial estimate for the optimal value) $\beta_{k=0}$ and an initial guess $B_0$. Then proceed iteratively to get a better estimate of $\beta$ at each stage. The steps are:
-\begin{enumerate}
-	\item Obtain a direction $x_k$ by solving $B_kx_k = \nabla_\beta l(\beta_k)$.
-	\item Perform a one-dimensional optimization (line search) to find an acceptable stepsize $\alpha_k$ to be made in the direction $x_k$, so that $x_k = \text{arg min} -l(\beta_k + \alpha x_k)$.
-	\item Set $s_k = \alpha_k x_k$ and update $\beta_{k+1} = \beta_k + s_k$.
-	\item Set $y_k = \nabla_{\beta}(\beta_k) - \nabla_{\beta}(\beta_{k+1})$.
-	\item Update
-	$$
-	  B_{k+1} = B_k + \frac{y_ky_k^T}{y_k^Ts_k} - \frac{B_ks_ks_k^TB_k^T}{s_k^TB_k s_k}.
-	$$
-\end{enumerate}
-The BFGS algorithm is a possible optimization method in R's \text{optim} function. There is also a variant of BFGS in R called L-BFGS-B. This algorithm extends a limited memory variant of BFGS to handle bound constraints in the domain space of $l(\beta)$.  Bound constraints are of the form $l_i \leq \beta_i \leq u_i$ where $\beta_i$ is one component of the canonical parameter vector $\beta$.
-
-
-
-#### Stochastic Gradient Decent (SGD)
-
-The SGD algorithm with averaging \citep{polyak1992acceleration} is a computationally fast, and scalable optimization method that is applicable in large scale applications with applications in [online learning](https://en.wikipedia.org/wiki/Online_machine_learning). We will consider SGD in our context for estimating $\hat\beta$ in exponential family models. The SGD algorithm only requires use of one (or relatively few) data points at each iteration, which makes it computationally superior to other optimization routines. Conventional implementations average over all iterations to derive the final estimator. Consistency and asymptotic normality properties of SGD have been verified in \cite{polyak1992acceleration} for both parameter estimation. In addition to these results, \cite{rakhlin2011making} derived the optimal rates of $O(1/n)$ for the objective function under smoothness and strong convexity assumptions. These assumptions hold in our modeling context.
-
-We will suppose that we have data $D_n = Z_1,\ldots,Z_n$ drawn as iid copies of $Z = (y,x)$. In this case we assume that the both the response and the predictors are random from some common generative process. We will suppose that the conditional distribution of interest $y|x$ can then be parameterized as an exponential family with log likelihood \eqref{subloglike} where the matrix $M$ has rows $x_i^T$, $i = 1,\ldots,n$. The SGD algorithm updates as follows:
-$$
-  \hat{\beta}_{k} = \hat\beta_{k-1} + \eta_{k}\nabla l(\hat\beta_{k-1}; Z_{k})
-$$
-for $k = 1,\ldots,n$ where $\eta$ is called the learning rate. We set the learning rate to be $\eta_k = Ck^{-\alpha}$ for some $\alpha \in (0, 1)$. The final SGD estimators is then
-$$
-  \hat\beta = \frac{1}{n}\sum_{k=1}^n \hat{\beta}_{k}.
-$$
-
-
-\noindent We will revisit optimization when we discuss specific generalized linear models.
-
 
 
 # Miscellaneous topics and concluding remarks

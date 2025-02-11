@@ -6,12 +6,9 @@ See the Syllabus for more details. See the notes directory for course notes.
 
 # News
 
-* Week 3 begins topic of exponential families. First part of lecture notes now posted.
+* Second part of lecture notes now posted.
 
 * HW2 posted. It is due on February 14 at 11:59 PM Champaign time.
-
-* Daniel's office hour changed to 12-1 PM.
-
 
 
 ## Cheatsheats

@@ -782,6 +782,556 @@ $$
     = O\left(n^{-\frac{a^2I^2(\theta)}{2\lambda}}\right).
 $$
 
+# Introduction to generalized linear models
+
+We now present generalized linear models (GLMs) within the context of exponential theory. We will not yet discuss specific examples of GLMs, such as logistic or Poisson regression, or extensions beyond canonical representations. These topics will be covered in the not-too-distant future. Before we begin our presentation on GLMs we note the difference between a saturated model and a submodel. A saturated model is a model that has one parameter per observation. It is a perfect fitting model that has little predictive power. On the other hand, a submodel has fewer parameters than the number of observations.
+
+We first present canonical affine submodels of an exponential family. A canonical affine submodel of an exponential family is a submodel having parameterization
+$$
+  \theta = a + M\beta,
+$$
+where $\theta \in \R^n$, $n$ being the sample size, is the canonical parameter vector corresponding to the original exponential family, $\beta \in \R^p$, $p < n$, is the canonical parameter vector for the submodel, $a$ is known offset vector, and $M$ is a known matrix. The matrix $M$ is usually called the \emph{model matrix} in the terminology used by the \texttt{R} functions \texttt{lm} and \texttt{glm}. The vector $a$ is called the offset vector in the terminology used by the \texttt{R} functions \texttt{lm} and \texttt{glm}.
+
+
+In most applications the offset vector is not used. Removal of the offset vector from consideration yields the familiar linear parameterization
+$$
+  \theta = M\beta.
+$$
+Submodels with the above parametrization are refered to as \emph{canonical linear submodels}. We will restrict attention to the canonical linear submodel in this course unless explicitly stated otherwise. The log likelihood for the canonical linear submodel arises directly from the saturated model log likelihood,
+\begin{equation} \label{subloglike}
+\begin{split}
+  l(\theta) &= \inner{y,\theta} - c(\theta) \\
+    &= \inner{y,M\beta} - c(M\beta) \\
+    &= \inner{M^Ty,\beta} - c(M\beta) \\
+    &= \inner{M^Ty,\beta} - c_{\text{sub}}(\beta) \\
+    &= l(\beta).
+\end{split}
+\end{equation}
+and we see that we again have an exponential family with
+\begin{itemize}
+	\item canonical statistic $M^Ty$,
+	\item cumulant function $c_{\text{sub}}(\beta) = c(M\beta)$, and
+	\item submodel canonical parameter vector $\beta$.
+\end{itemize}
+If $\theta$ varies freely (over a whole vector space), then $\beta$ also varies freely (over a whole vector space of lower dimension, $p < n$). But if the originally given full canonical parameter space was $\Theta$, then the full submodel canonical parameter space is
+$$
+  B = \{\beta : M\beta \in \Theta\}.
+$$
+Thus a canonical linear submodel gives us a new exponential family, with lower-dimensional canonical parameter and statistic. The submodel exponential family is full if the original exponential family was full. Notice that $\Theta$ and $B$ are defined through the column space of $M$, not the particular model matrix $M$, the particular $\beta$ value does not determine the submodel uniquely.
+
+
+To distinguish between the submodel and the originally given exponential family, we often call the latter the \emph{saturated model}. Now we have four parameters: the saturated model canonical and mean value parameters, respectively, $\theta$ and $\mu$, and the submodel canonical and mean value parameters, respectively, $\beta$ and $\tau$. The submodel mean-value paratmeter is defined as
+$$
+   \tau = \E_\theta(M^TY).
+$$
+Relations between these parameterizations are given in Figure \ref{Fig1:parameterizations}. The observed equals expected property applied to the submodel gives
+\begin{equation} \label{submodelmvp}
+	\hat\tau = M^T\hat\mu.
+\end{equation}
+Here, $\hat\mu$ is estimated using the submodel with model matrix $\beta$. 
+
+We cannot actually solve for $\hat\mu$ from $\hat\tau$ because the mapping $\mu \to M^T\mu$ is usually not one-to-one (the $n > p$ case where $M \in \R^{n \times p}$ and is full column rank). The only way to determine the MLE for all parameters is to maximize the log likelihood \eqref{subloglike} for $\beta$ to obtain $\hat\beta$ and then $\hat\theta = M\hat\beta$ and $\hat\mu = \nabla c(\hat\theta)$ and $\hat\tau = M^T\hat\mu$.
+
+\vspace{0.5cm}Recall that the saturated model canonical parameter vector $\theta$ is "linked" to the saturated model mean value parameter vector through the change-of-parameter mappings $g(\theta)$. We can reparameterize $\theta = M\beta$ and write
+$$
+ \mu = \E_\theta(Y) = g(M\beta)
+$$
+which implies that we can write
+$$
+  g^{-1}\left(\E_\theta(Y)\right) = M\beta.
+$$
+Therefore, a linear function of the canonical submodel parameter vector is linked to the mean of the exponential family through the inverse change-of-parameter mapping $g^{-1}$. This is the basis of exponential family generalized linear models with link function $g^{-1}$. Note that most treatments of GLMs will present $g$ as the link function. Instead we motivated $g$ as a change of parameters mapping from canonical to mean value parameters.
+
+
+A concise presentation of the various model parameterizations and how they are related to each other is given in Figure \ref{Fig1:parameterizations}.
+
+
+\begin{figure}[t]
+\begin{center}
+\begin{tikzpicture}[descr/.style={fill=white},text height=1.5ex, text depth=0.25ex]
+\node (a) at (0,0) {$\theta$};
+\node (b) at (4,0) {$\beta$};
+\node (c) at (0,-4) {$\mu$};
+\node (d) at (4,-4) {$\tau$};
+\path[->,font=\scriptsize]
+([yshift= -5pt]b.west) edge node[below] {$\theta = M\beta$} ([yshift= -5pt]a.east)
+([yshift=  5pt]a.east) edge node[above] {} ([yshift= 5pt]b.west)
+([xshift=  5pt]a.south) edge node[right] {$\mu = \nabla c(\theta)$} ([xshift= 5pt]c.north)
+([xshift= -5pt]c.north) edge node[right] {} ([xshift= -5pt]a.south)
+([xshift= -5pt]d.north) edge node[left] {} ([xshift= -5pt]b.south)
+([xshift=  5pt]b.south) edge node[right] {$\tau = \nabla_{\beta}c_{\text{sub}}(\beta)$} ([xshift= 5pt]d.north)
+([yshift=  5pt]c.east) edge node[above] {$\tau = M^T\mu$} ([yshift= 5pt]d.west)
+([yshift= -5pt]d.west) edge node[below] {} ([yshift= -5pt]c.east);
+\end{tikzpicture}
+\end{center}
+\caption{A depiction of the transformations necessary to change between parameterizations. Arrows going in opposite directions specify transformations and their inverses. $M$ is a known model matrix of full column rank, and $c$ is the cumulant function for the exponential family model.}\label{Fig1:parameterizations}
+\end{figure}
+
+
+## Asymptotics and inference
+
+An asymptotic distribution for the MLE of the submodel canonical parameter vector follows directly from exponential family theory that we have already covered. The submodel log likelihood \eqref{subloglike} takes the form
+$$
+	l(\beta) = \inner{M^Ty,\beta} - c_{\text{sub}}(\beta).
+$$
+From invariance of maximum likelihood estimation derived in \eqref{asymptoticsMLE} or direct arguments, we have that the asymptotic distribution of the MLE $\hat\beta$ takes the form
+\begin{equation} \label{betahat}
+  \sqrt{n}\left(\hat\beta - \beta\right) \overset{d}{\to} N(0, \Sigma^{-1}),
+\end{equation}
+where $\Sigma = \E\left(-\nabla^2 l(\beta)\right)$ is the Fisher information matrix corresponding to the canonical linear submodel. The explicit form of $-\nabla^2 l(\beta)$ follows from the chain rule
+\begin{align*}
+  -\nabla^2 l(\beta) &= \nabla_{\beta}^2 c_{\text{sub}}(\beta) \\
+    &= \nabla_\beta^2 c(M\beta) \\
+    &= M^T \left( \nabla_\theta c(\theta)|_{\theta = M\beta} \right) M.
+\end{align*}
+
+
+An asymptotic distribution for $\hat\beta$ \eqref{betahat} allows for us to make asymptotic statistical inferences for $\beta$ and individual components of $\beta$. First, let $\widehat\Sigma$ be estimated $\Sigma$ using the MLE $\hat\beta$ in place of $\beta$. In particular, the $j$th element $\hat\beta_j$ of $\hat\beta$ is asymptotically normal with asymptotic variance being the $j$th diagonal element of $\widehat\Sigma$. We will define a [Wald $Z$ statistic](https://en.wikipedia.org/wiki/Wald_test) for testing $H_o:\beta_j = \beta_{jo}$ as
+$$
+  z_W = \frac{\hat\beta_j - \beta_{jo}}{\text{se}(\hat\beta_j)} \quad \overset{H_o}{\sim} \quad N(0,1),
+$$
+where se$(\hat\beta_j) = \sqrt{\widehat{\Var}(\hat\beta_j)}$ and $\overset{H_o}{\sim}$ means distributed as assuming the null hypothesis. It is often of interest to test whether or not $\beta_j = 0$ in which the above Wald $Z$ statistic reduces to
+$$
+  \frac{\hat\beta_j}{\text{se}(\hat\beta_j)} \quad \overset{H_o}{\sim} \quad N(0,1).
+$$
+The above distributional result allows for one to statistically test whether or not a component of $\beta$ differs from 0. Such a test can be performed using a p-value of the form
+$$
+  2 - 2\Phi \left(\left|\frac{\hat\beta_j}{\text{se}(\hat\beta_j)}\right|\right),
+$$
+where $\Phi$ is the distribution function for the standard normal distribution. This p-value is then compared with a selected error tolerance. If the p-value is smaller than the error tolerance, then one may conclude that the modeling variable corresponding to the $j$th element of $\beta$ is statistically significant at the level of the error tolerance. This is very important for applications, although one has to be careful in presenting conclusions. One needs to keep in mind the differences between statistical and practical significance, the differences between association and causation, and multiple testing issues.
+
+Similar to the p-value above, we can also construct $(1-\alpha)\times 100\%$ Wald based confidence intervals of the form
+$$
+  \hat\beta_j \pm z_{1-\alpha/2}\text{se}(\hat\beta_j),
+$$
+where $z_{1-\alpha/2}$ is the $(1-\alpha/2)$th quantile of the standard normal distribution where $\alpha \in (0,1)$ is a chosen error tolerance.
+
+
+## Deviance, goodness of fit, and likelihood ratios
+
+It is important for us to evaluate the fit of competing statistical models. In our exponential family regression model context, we will use likelihood ratio tests based on the deviance statistic to evaluate competing submodels. We will also compare submodels to the saturated model using likelihood ratio tests to determine if the submodel in question offers a dimension reduction that offers better fit than assuming one parameter per observation.
+
+To motivate the deviance of a statistical model we will revisit the mean value parameter vector $\mu$ and rewrite the log likelihood in the notation of this parameterization as $l(\mu;y)$. From the observed equals expected property we have that the unrestricted MLE of $\mu$ is $y$. Now consider a canonical submodel (GLM) of the form $\theta = M\beta$. Let $\hat\mu$ be the MLE of $\mu$ restricted to an identifiable canonical submodel ($\hat{\mu} = \nabla c(\hat\theta)$ where $\hat\theta = M\hat\beta$). It follows that
+$$
+  l(y;y) \geq l(\hat\mu; y).
+$$
+We refer to the unrestricted case, in which each observation has its own mean ($\hat\mu = y$), is called the \emph{saturated model}.
+
+With all of this in mind, the \emph{deviance} of the GLM is
+$$
+  D(y;\hat\mu) = -2\left(l(\hat\mu;y) - l(y;y)\right).
+$$
+We see that the deviance statistic is a function of a ratio of two likelihoods, one corresponding to the canonical submodel and one corresponding to the saturated model. The deviance statistic has approximate distribution
+$$
+  D(y;\hat\mu) \; \overset{H_o}{\sim} \; \chi^2_{n-p},
+$$
+where $H_o$ is that the canonical submodel is correct and the alternative test is that the canonical submodel is incorrect but the saturated model is correct, $n$ is the sample size, and $p$ is the number of parameters in the canonical submodel. So we reject correctness of the canonical submodel when
+$$
+  D(y;\hat\mu) \; > \: \chi^2_{n-p}(\alpha).
+$$
+Note that the $\chi^2$ approximation can be poor in practice.
+
+We can use deviance based testing to nested models. Let $\mathcal{M}_0$ and $\mathcal{M}_1$ both be canonical submodels. We say that $\mathcal{M}_0$ is \emph{nested} within $\mathcal{M}_1$  when every distribution in $\mathcal{M}_0$ is also in $\mathcal{M}_1$ but not vice-versa. That is, $\mu$ is more restricted under $\mathcal{M}_0$ than under $\mathcal{M}_1$. Let $\hat\mu_0$ be the MLE of $\mu$ under $\mathcal{M}_0$, and let $\hat\mu_1$ be the MLE of $\mu$ under $\mathcal{M}_1$. We can use this framework for testing
+$$
+  H_0:\mathcal{M}_0 \; \text{true} \qquad H_a:\mathcal{M}_1 \; \text{true, but not} \; \mathcal{M}_0
+$$
+using the likelihood ratio $\chi^2$ statistic given by
+\begin{align*}
+ -2\left[l(\hat\mu_0;y) - l(\hat\mu_1;y)\right] &= -2\left[l(\hat\mu_0;y) - l(y;y)\right]
+   - \left\{-2\left[l(\hat\mu_1;y) - l(y;y)\right]\right\} \\
+   &= D(y;\hat\mu_0) - D(y;\hat\mu_1) \\
+   &\approx \chi^2_{p_1 - p_0},
+\end{align*}
+where $p_1$ is the number of parameters in $\mathcal{M}_1$, and $p_0$ is the number of parameters in $\mathcal{M}_0$. (Note that the $\chi^2$ approximation is often adequate here even it is not adequate for the saturated model provided that $\mathcal{M}_1$ is not too close to saturated.)
+
+
+## Information criteria
+
+Most of the details in this section on information criteria can be found in Charles Geyer's lecture notes for his [categorical data analysis class]((https://www.stat.umn.edu/geyer/5421/notes/glmbb.html)).
+
+### AIC
+
+In the early 1970's Akaike proposed the first information criterion. Later many others were proposed, so Akaike's is now called the [Akaike information criterion
+(AIC)](https://en.wikipedia.org/wiki/Akaike_information_criterion).
+
+The "information" in AIC is [Kullback-Leibler information](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence), which is the concept of [Shannon information](https://en.wikipedia.org/wiki/Entropy_(information_theory)) imported into statistics, which in turn is the concept of entropy imported from statistical physics into communications theory. It is expected log likelihood, which is what the maximized value of the log likelihood is trying to estimate. See also the maximum entropy section of these notes on exponential families.
+
+What Akaike discovered is that the maximized value of the log likelihood is a biased estimate of Kullback-Leibler information. It overestimates it by $p$, the dimension of the model (number of parameters). Or, what is the same thing, the likelihood ratio test (LRT) statistic, which is minus twice the (maximized value of the) log likelihood, underestimates its expectation by $2 p$.  So
+$$
+   \text{AIC} = -2l(\hat\mu;y) + 2 p.
+$$
+All of this is a "large sample size" result based on the "usual" asymptotics of maximum likelihood, which is not valid for all statistical models. But it is always valid for exponential family models in general and categorical data analysis in particular (when sample size is "large").
+
+### AIC Versus Hypothesis Tests
+
+The [central dogma of hypothesis testing](http://users.stat.umn.edu/~geyer/101b.pdf#page=13) is "do only one test" or if you do more than one test, you must
+[correct $P$-values to account for doing more than one test](http://users.stat.umn.edu/~geyer/101b.pdf#page=24). So the theory of hypothesis tests is the [Wrong Thing](http://www.catb.org/jargon/html/W/Wrong-Thing.html) for comparing many models. And AIC is the [Right Thing](http://www.catb.org/jargon/html/R/Right-Thing.html) or at least *a* Right Thing.
+
+Approaches based on hypothesis testing, such as that implemented by R function `step` come with no guarantees of doing anything correct. Also, hypothesis tests comparing fitted models like those above require that the models being compared be nested. AIC does not have any such requirement.
+
+### BIC
+
+In the late 1970's Schwarz proposed another information criterion, which is now usually called the [Bayesian information criterion (BIC)](https://en.wikipedia.org/wiki/Bayesian_information_criterion). Its formula is
+$$
+   \text{BIC} = -2l(\hat\mu;y) + \log(n) \cdot p
+$$
+Since $\log(n) \ge 2$ for $n \ge 8$, BIC penalizes larger models more than AIC.
+BIC always selects smaller models than AIC.
+
+The reason BIC is called "Bayesian" is that, if $\mathop{\rm BIC}(m)$
+denotes the BIC for model $m$ and $g(m)$ denotes the prior probability
+for model $m$, then
+$$
+   \Pr(m \mid \text{data})
+   \approx
+   \frac{\exp\bigl(- \tfrac{1}{2} \mathop{\rm BIC}(m) \bigr) g(m)}
+   {\sum_{m^* \in \mathcal{M}}
+   \exp\bigl(- \tfrac{1}{2} \mathop{\rm BIC}(m^*) \bigr) g(m^*)}
+$$
+where $\mathcal{M}$ is the class of models under consideration.
+
+This is a "large sample size" result based on the "usual" asymptotics of Bayesian inference ([the Bernstein-von Mises theorem](https://en.wikipedia.org/wiki/Bernstein%E2%80%93von_Mises_theorem)), which is not valid for all statistical models. But it is always valid for exponential family models in general and categorical data analysis in particular (when sample size is "large").
+
+When we use a flat prior ($g$ is a constant function of $m$), the prior $g$ cancels out of the formula, and we obtain
+$$
+   \mathop{\rm BIC}(m) \approx - 2 \log \Pr(m \mid \text{data})
+   + \text{a constant}
+$$
+Clearly, BIC is defined the way it is to be comparable to AIC, not to produce the simplest Bayesian formulas.
+
+
+### AIC Versus BIC
+
+In model selection AIC and BIC do two different jobs. No selection criterion can do both jobs \citep{yang2005can}:
+
+ * BIC provides consistent model selection when the true unknown model is among the models under consideration.
+
+ * AIC is minimax-rate optimal (details of minimax-rate optimality are beyond the scope of this course) for estimating the regression function and other probabilities and expectations.  It does not need the true unknown model to be among the models under consideration.
+
+Assuming the true unknown model to be among the models under consideration, and Bayesians have to assume this - not among the models under consideration means prior probability zero and posterior probability zero - selecting the model with smallest BIC will select the true unknown model with probability that goes to one as $n$ goes to infinity.  Of course, that does not mean BIC is guaranteed to select the correct model at any finite sample size.
+
+If we do not assume the true unknown model is among the models under consideration, then we only have AIC as an option. It generally does not do consistent model selection. However, it does give the best predictions of probabilities and expectations of random variables in the model.  It is using the models under consideration to give the best predictions of probabilities and expectations under the true unknown model (which need not be among the models under consideration).
+
+In short,
+
+ * use BIC when the true unknown model is assumed to be among the models under
+   consideration, but
+
+ * use AIC when we do not want to assume this.
+
+A shorthand often used is "sparsity".  The *sparsity* assumption is that the true unknown model has only a few parameters and is one of the models under consideration.  Under sparsity, BIC does consistent model selection. If you do not want to assume sparsity, then use AIC.
+
+
+## Optimization
+
+In this section we discuss optimization routines for estimating parameters in canonical exponential family linear submodels. The goal will be to find
+\begin{equation} \label{optim}
+  \text{argmax}_{\beta} l(\beta)
+    \quad = \quad \text{argmax}_{\beta}\left[\inner{M^Ty,\beta} - c(M\beta)\right]
+\end{equation}
+in identifiable models. Note that we will blend our notation with the notation in Chapter 4 of \cite{agresti2013cat} when we define the Newton-Raphson, Fisher scoring, and iteratively reweighted least squares (IRLS) algorithms.
+
+### Newton-Raphson algorithm
+
+A classic algorithm for handling iterative solutions of nonlinear systems of equations is the \emph{Newton-Raphson algorithm}. This algorithm begins with an initial guess $\beta_0$ for the solution. It obtains a second guess by approximating the function to be maximized in a neighborhood of the initial guess by a second-degree polynomial and then finding the location of the polynomial's maximum value. This process is repeated iteratively until the discrepancy in successive evaluations of the objective function evaluate along the sequence of iterates is smaller than some convergence threshold. The sequence of iterates that this algorithm generates converge to a solution $\hat\beta$ when the optimization function is suitable (full rank properly conditioned Fisher Information matrix) and/or the initial guess is good.
+
+We now explain the Newton-Raphson algorithm formally. Let $U(\beta) = \nabla l(\beta)$ be the score function corresponding to the log likelihood of a canonical linear exponential family submodel, and let $H(\beta) = \nabla^2 l(\beta)$ denote the Hessian matrix. At iteration $k$, consider the following second order Taylor series approximation of $l(\beta)$,
+\begin{equation} \label{NR}
+  l(\beta) \approx l(\beta_k) + U(\beta_k)^T(\beta - \beta_k)
+    + \frac{(\beta-\beta_k)^TH(\beta_k)(\beta - \beta_k)}{2}.
+\end{equation}
+Now solving
+$$
+  U(\beta) \approx U(\beta_k) + H(\beta_k)(\beta - \beta_k) = 0
+$$
+for $\beta$ yields a guess for the maximizer of the above second order Taylor series approximation. That guess is
+\begin{equation} \label{NRupdates}
+	\beta_{k+1} = \beta_k - H(\beta_k)^{-1}U(\beta_k).
+\end{equation}
+This algorithm is fast and exhibits [quadratic convergence](https://en.wikipedia.org/wiki/Rate_of_convergence), provided that it converges. Convergence is likely in identifiable models where $H(\beta_{0})$ is positive definite. However, the Newton-Raphson method can be quite sensitive to the choice of starting values $\beta_{0}$. More details, including a graphical demonstration of the algorithm, is given in Section 4.6 of \cite{agresti2013cat}.
+
+For many identifiable GLMs, including Poisson models with log link and binomial models with logit link, with full rank model matrices the Hessian is negative definite and the log likelihood is a strictly concave function. The maximum likelihood estimators of model parameters exist and are unique under quite general conditions \citep{wedderburn1976existence}. Thus Newton Raphson should exhibit solid performance for finding MLEs of the submodel canonical parameter vector.
+
+
+### Fisher scoring algorithm
+
+The \emph{Fisher scoring algorithm} is an alternative method for solving systems of equations. It resembles the Newton-Raphson algorithm, the distinction being with the Hessian matrix used in the Newton updates. Fisher scoring uses the expected Fisher information matrix instead of the Hessian which is the observed Fisher information matrix.
+
+We will let $\Hcal$ be the expected information matrix so that $\Hcal(\beta) = -\E\left\{\nabla^2 l(\beta)\right\}$. The Newton update step for the Fisher scoring method is
+\begin{equation} \label{FSNewton}
+  \beta_{k+1} = \beta_k + \left\{\Hcal(\beta_k)\right\}^{-1} U(\beta_k).
+\end{equation}
+For GLMs with canonical link (the entirety of these notes thus far), we have that the observed and expected information are the same so that Fisher scoring and Newton-Raphson are the same in our context. This is a consequence of the observed equals expected property $\hat{\mu} = y$ that is presented in our notes above. 
+
+For noncanonical link models (which we see later), these quantities are not the same and Fisher scoring has advantages over Newton Raphson in that it produces the asymptotic covariance matrix as a by-product, the expected information is necessarily nonnegative definite, and as seen next, it is closely related to weighted least-squares methods for ordinary linear models. However, it need have quadratic convergence, and for complex models the observed information is often easier to calculate.
+
+
+### Iteratively reweighted least squares (IRLS)
+
+We now derive the IRLS algorithm from Fisher scoring. Take the Newton update of the Fisher scoring algorithm \eqref{FSNewton} and right multiply by the Hessian matrix so that
+\begin{equation} \label{FS}
+  \Hcal(\beta_k)\beta_{k+1} = \Hcal(\beta_k)\beta_k + U(\beta_k).
+\end{equation}
+The chain rule and an appeal to Figure \ref{Fig1:parameterizations} allows us to write $\Hcal(\beta) = M^TW(\beta)M$ where
+$$
+  W(\beta) = \left\{\nabla_\theta^2 c(\theta^*)\right\}|_{\theta^* = M\beta}.
+$$
+The estimated asymptotic covariance matrix $\Hcal^{-1}$ of $\hat{\beta}$ occurs as a by-product of this algorithm as $\left\{\Hcal(\beta_k)\right\}^{-1}$ where $k$ is an iteration number at which convergence is deemed to have occurred.
+
+For both Fisher scoring and Newton-Raphson, the score function $U(\beta)$ can be written as
+\begin{align*}
+  U(\beta) &= \nabla l(\beta) \\
+    &= M^T\left(Y - \nabla_\theta c(\theta^*)|_{\theta^* = M\beta}\right) \\
+    &= M^T\left(Y - \mu(\beta)\right),
+\end{align*}
+where $\mu(\beta)$ is the saturated model mean value parameter expressed as function of $\beta$. With this setup we can see that the right-hand side of \eqref{FS} can be written as
+\begin{align*}
+  \Hcal(\beta_k)\beta_k + U(\beta_k) &= M^TW(\beta_k)M \beta_k + M^T(Y - \mu(\beta_k)) \\
+    &= M^TW(\beta_k)\left(M \beta_k + W(\beta_k)^{-1}(Y - \mu(\beta_k))\right),
+\end{align*}
+and the left-hand side of \eqref{FS} can be written as
+$$
+  \Hcal(\beta_k)\beta_{k+1} = M^TW(\beta_k)M\beta_{k+1}.
+$$
+Putting this together and solving for the update $\beta_{k+1}$ yields
+$$
+  \beta_{k+1} = \left(M^TW(\beta_k)M\right)^{-1}M^TW(\beta_k)\left(M \beta_k + W(\beta_k)^{-1}(Y - \mu(\beta_k))\right).
+$$
+Now let
+$$
+  z(\beta_k) = M \beta_k + W(\beta_k)^{-1}(Y - \mu(\beta_k)).
+$$
+Then we see that the update is given as
+$$
+  \beta_{k+1} = \left(M^TW(\beta_k)M\right)^{-1}M^TW(\beta_k)z(\beta_k).
+$$
+This update step is the same as a [weighted least squares](https://en.wikipedia.org/wiki/Weighted_least_squares) regression of $z(\beta_k)$ on $M$ with weights $W(\beta_k)$. Hence the name iteratively reweighted least squares.
+
+The R programming language's fitting function for generalized linear models \texttt{glm.fit} implements an IRLS algorithm to compute $\hat{\beta}$. Although it should be noted that \texttt{glm.fit}'s actual IRLS algorithm implementation uses C code.
+
+
+### Other optimization methods
+
+We will close this section on optimization by briefly discussing Quasi-Newton methods which are appropriate when the Hessian matrix used in a Newton update \eqref{NRupdates} are not available, and stochastic gradient descent. These optimization methods are important in practice when models are large. However, our primary focus will be on the above optimization methods in this course.
+
+#### Quasi-Newton methods
+
+Quasi-Newton methods are modifications of \eqref{NRupdates}, where the Hessian matrix is approximated (by the secant method for example), typically because an explicit formula for the Hessian matrix is not available or cumbersome to compute. One such Quasi-Newton method is the Broyden-Fletcher-Goldfarb-Shanno (BFGS) algorithm for solving unconstrained nonlinear optimization problems. We present the steps for the BFGS algorithm in our optimization context \eqref{optim} where $l$ is a differentiable scalar function.
+
+The algorithm begins at a user-specified initial value (initial estimate for the optimal value) $\beta_{k=0}$ and an initial guess $B_0$. Then proceed iteratively to get a better estimate of $\beta$ at each stage. The steps are:
+\begin{enumerate}
+	\item Obtain a direction $x_k$ by solving $B_kx_k = \nabla_\beta l(\beta_k)$.
+	\item Perform a one-dimensional optimization (line search) to find an acceptable stepsize $\alpha_k$ to be made in the direction $x_k$, so that $x_k = \text{arg min} -l(\beta_k + \alpha x_k)$.
+	\item Set $s_k = \alpha_k x_k$ and update $\beta_{k+1} = \beta_k + s_k$.
+	\item Set $y_k = \nabla_{\beta}(\beta_k) - \nabla_{\beta}(\beta_{k+1})$.
+	\item Update
+	$$
+	  B_{k+1} = B_k + \frac{y_ky_k^T}{y_k^Ts_k} - \frac{B_ks_ks_k^TB_k^T}{s_k^TB_k s_k}.
+	$$
+\end{enumerate}
+The BFGS algorithm is a possible optimization method in R's \text{optim} function. There is also a variant of BFGS in R called L-BFGS-B. This algorithm extends a limited memory variant of BFGS to handle bound constraints in the domain space of $l(\beta)$.  Bound constraints are of the form $l_i \leq \beta_i \leq u_i$ where $\beta_i$ is one component of the canonical parameter vector $\beta$.
+
+
+
+#### Stochastic Gradient Decent (SGD)
+
+The SGD algorithm with averaging \citep{polyak1992acceleration} is a computationally fast, and scalable optimization method that is applicable in large scale applications with applications in [online learning](https://en.wikipedia.org/wiki/Online_machine_learning). We will consider SGD in our context for estimating $\hat\beta$ in exponential family models. The SGD algorithm only requires use of one (or relatively few) data points at each iteration, which makes it computationally superior to other optimization routines. Conventional implementations average over all iterations to derive the final estimator. Consistency and asymptotic normality properties of SGD have been verified in \cite{polyak1992acceleration} for both parameter estimation. In addition to these results, \cite{rakhlin2011making} derived the optimal rates of $O(1/n)$ for the objective function under smoothness and strong convexity assumptions. These assumptions hold in our modeling context.
+
+We will suppose that we have data $D_n = Z_1,\ldots,Z_n$ drawn as iid copies of $Z = (y,x)$. In this case we assume that the both the response and the predictors are random from some common generative process. We will suppose that the conditional distribution of interest $y|x$ can then be parameterized as an exponential family with log likelihood \eqref{subloglike} where the matrix $M$ has rows $x_i^T$, $i = 1,\ldots,n$. The SGD algorithm updates as follows:
+$$
+  \hat{\beta}_{k} = \hat\beta_{k-1} + \eta_{k}\nabla l(\hat\beta_{k-1}; Z_{k})
+$$
+for $k = 1,\ldots,n$ where $\eta$ is called the learning rate. We set the learning rate to be $\eta_k = Ck^{-\alpha}$ for some $\alpha \in (0, 1)$. The final SGD estimators is then
+$$
+  \hat\beta = \frac{1}{n}\sum_{k=1}^n \hat{\beta}_{k}.
+$$
+
+
+\noindent We will revisit optimization when we discuss specific generalized linear models.
+
+
+
+# Miscellaneous topics and concluding remarks
+
+## Sufficiency
+
+A (possibly vector-valued) statistic is *sufficient* if the conditional distribution of the full data given this statistic does not depend on the parameter.
+
+The interpretation is that the full data provides no information about the parameter that is not already provided by the sufficient statistic. The principle of sufficiency follows: all inference should depend on the data only through sufficient statistics. The Fisher-Neyman factorization criterion \citep[Corollary 1 of Chapter 2]{lehmann1959testing} says that a statistic is sufficient if and only if the likelihood depends on the whole data only through that statistic.
+
+\begin{lem}
+The canonical statistic vector of an exponential family is a sufficient statistic.
+\end{lem}
+
+\noindent{\bf The proof of the above Lemma is left as an exercise for the reader.}
+
+\vspace{0.5cm} Sufficient dimension reduction is a whole field of study. However, the \emph{original} "sufficient dimension reduction" theory was about exponential families. The so-called Pitman-Koopman-Darmois theorem (proved independently by three different persons in 1935 and 1936) says that
+\begin{quote}
+when we have iid sampling from a statistical model, all distributions in the model have the same support which does not depend on the parameter, and all distributions in the model are continuous, then there is a sufficient statistic whose dimension does not depend on the parameter if and only if the statistical model is an exponential family of distributions.
+\end{quote}
+This theorem was responsible for the interest in exponential families early in the twentieth century. The condition of the Pitman-Koopman-Darmois theorem that the support does not depend on the parameter is essential. For IID sampling from the Uniform$(0,\theta)$ model the maximal order statistic $X_{(n)}$ is sufficient. Its dimension (one) does not depend on $n$. To show this note that the likelihood is
+\begin{align*}
+  L_n(\theta) &= \prod_{i=1}^n \frac{1}{\theta} I_{(0,\theta)}(X_i) \\
+    &= \frac{1}{\theta^n} \prod_{i=1}^n I_{(0,\theta)}(X_i) \\
+    &= \frac{1}{\theta^n} I_{(0,\theta)}(X_{(n)})
+\end{align*}
+because if $X_{(n)} < \theta$ then $X_i < \theta$ for all $i$,
+
+The condition that the statistical model has to be continuous is ugly. Many of the most important applications of exponential family theory (logistic and Poisson regression, log-linear models for categorical data) are discrete, and the theorem does not say anything about them. But later theorems that did cover discrete distributions need extra conditions that seem just there so the theorem can be proved.
+
+Interest in exponential families changed direction in the 1970’s with the invention of generalized linear models \citep{nelder1972generalized, wedderburn1974quasi} and log-linear models for categorical data \citep{bishop2007discrete} and with the publication of authoritative treatises \citep{barndorff2014information, brown1986fundamentals} which used the mathematics of convex analysis \citep{rockafellar1970convex}.
+
+In that context the sufficient dimension reduction for canonical linear submodels (exponential family regression models) became more important than the Pitman-Koopman-Darmois property. This is the relation between the canonical sufficient statistic $y$ of the saturated model and the canonical sufficient statistic $M^Ty$ of a canonical linear submodel. The former has the row dimension of $M$ and the latter has the column dimension of $M$, which is usually much smaller.
+
+
+## Maximum entropy
+
+Entropy is a physical quantity involved in the second law of thermodynamics, which says that the the total entropy of an isolated physical system is nondecreasing in any physical process. It has to do with the maximum possible efficiency of a heat engine or refrigerator, with which chemical reactions proceed spontaneously, and with many other things.
+
+Ludwig Boltzmann and Josiah Willard Gibbs figured out the connection between entropy and probability and between the thermodynamic properties of bulk matter and the motions and interactions of atoms and molecules.
+
+In this theory entropy is not certain to increase to its maximum possible value. It is only overwhelmingly probable to do so in any large system. In a very small system, such as a cubic micrometer of air, it is less probable that entropy will be near its maximum value. In such a small system the statistical fluctuations are large. This is the physical manifestation of the law of large numbers. The larger the sample size (the more molecules involved) the less stochastic variation. Boltzmann thought this discovery so important that he had $S = k\log W$ inscribed on his tombstone ($S$ is entropy, $W$ is probability, and $k$ is a constant of nature now known as Boltzmann’s constant).
+
+Claude Shannon imported entropy into information theory, using it to determine the maximum throughput of a noisy communication channel. Shannon information is negative entropy (minus log probability). Kullback and Leibler imported the same concept into statistics, where it is usually called \emph{Kullback-Leibler information}. It is expected log likelihood and hence what likelihood attempts to estimate.
+
+Edwin Jaynes, a physicist, introduced the ``maximum entropy formalism" that describes exponential families in terms of entropy. To keep the derivation simple, we will do the finite sample space case. The same idea can be extended to the infinite discrete case or the continuous case, although the math is harder.
+
+The \emph{relative entropy} of a distribution with PMF $f$ to a distribution with PMF $m$ is defined to be
+$$
+  -\sum_{x\in S} f(x)\log\left(\frac{f(x)}{m(x)}\right),
+$$
+where $S$ is the support of the distribution with PMF $m$. (It is the negative of this quantity that is Kullback-Leibler information of $f$ with respect to $m$.) It is actually not necessary that $m$ be a PMF; any positive function will do.
+
+
+Suppose we "know" the value of some expectations
+$$
+  \mu_j = \E\left(t_j(X)\right) = \sum_{x\in S} t_j(x)f(x), \qquad j \in J,
+$$
+and we want $f$ to maximize entropy subject to these constraints plus the constraints that $f$ is nonnegative and sums to one. That is, we want to solve the following optimization problem
+\begin{align*}
+	\text{maximize} \;& -\sum_{x \in S} f(x)\log\left(\frac{f(x)}{m(x)}\right) \\
+	\text{subject to} \;& \sum_{x\in S} t_j(x)f(x) = \mu_j, \qquad j \in J \\
+	&\sum_{x \in S} f(x) = 1 \\
+	&f(x) \geq 0, \qquad x \in S
+\end{align*}
+It turns out that the inequality constraints here are unnecessary. If we solve the problem without requiring $f$ be nonnegative, the solution happens to be nonnegative. But we do need to enforce the equality constraints.
+
+To do that, we use the method of Lagrange multipliers. Multiply each constraint function by a new parameter (Lagrange multiplier) and add to the objective function. This gives the Lagrangian function
+\begin{align*}
+	\mathcal{L}(f) &= -\sum_{x \in S} f(x)\log\left(\frac{f(x)}{m(x)}\right)
+	  + \sum_{j\in J}\theta_j \sum_{x\in S} t_j(x)f(x) + \psi\sum_{x \in S} f(x) \\
+	  &= -\sum_{x \in S} f(x)\left[\log\left(\frac{f(x)}{m(x)}\right) - \sum_{j\in J}\theta_j t_j(x) - \psi\right],
+\end{align*}
+where $\theta_j$ and $\psi$ are the Lagrange multipliers.
+
+Because the domain of $f$ is finite, we can think of it as a vector having components $f(x)$. The Lagrangian is maximized where its first derivative is zero, so we calculate the first partial derivatives as
+$$
+\frac{\partial \mathcal{L}(f)}{\partial f(x)} = -\log\left(\frac{f(x)}{m(x)}\right) + \sum_{j\in J}\theta_j t_j(x) + \psi - 1,
+$$
+setting this equal to zero and solving for $f(x)$ gives
+$$
+  f(x) = m(x)\exp\left(\sum_{j\in J}\theta_jt_j(x) + \psi - 1\right).
+$$
+We then have to find the value of the Lagrange multipliers that make all of the constraints satisfied. In aid of this, define $\theta$ to be the vector having components $\theta_j$ and $t(x)$ to be the vector having components $t_j(x)$, so that we can write
+$$
+  f(x) = m(x)\exp\left(t(x)^T\theta + \psi - 1\right).
+$$
+In order to satisfy the constraint that the probabilities sum to one we must
+have
+$$
+  e^{\psi - 1}\sum_{x\in S}m(x)e^{t(x)^T\theta} = 1
+$$
+or
+$$
+  1 - \psi = \log\left(\sum_{x\in S}m(x)e^{t(x)^T\theta}\right).
+$$
+Now define
+$$
+  c(\theta) = \log\left(\sum_{x\in S}m(x)e^{t(x)^T\theta}\right).
+$$
+Then,
+$$
+  f(x) = m(x)e^{t(x)^T\theta - c(\theta)},
+$$
+and this is the density of an exponential family! If we think of the Lagrange multipliers $\theta_j$ as unknown parameters rather than constants we still have to adjust, then we see that we have an exponential family with canonical statistic vector $t(x)$, canonical parameter vector $\theta$, and cumulant function $c(\theta)$.
+
+Define $\mu$ to be the vector with components $\mu_j$. Then we know from exponential family that
+$$
+  \mu = \nabla c(\theta) = g(\theta)
+$$
+and $g$ is a one-to-one function (if the exponential family is identifiable, which happens if there are no redundant constraints), so the Lagrange multiplier vector is
+$$
+  \theta = g^{-1}(\mu)
+$$
+and, although we do not have a closed form expression for $g^{-1}$, we can evaluate $g^{-1}(\mu)$ for any $\mu$ that is a possible mean value parameter vector found by optimization. Our use of the maximum entropy argument is a bit peculiar. First we said that we "knew" the expectations
+$$
+  \mu = \E\{t(X)\},
+$$
+and wanted to pick out one probability distribution that maximizes entropy and satisfies this constraint. Then we forgot about "knowing" this constraint and said as $\mu$ ranges over all possible values we get an exponential family of probability distributions. Also we have to choose a base measure.
+
+Despite this rather odd logic, the maximum entropy argument does say something important about exponential families. Suppose we have a big exponential family (think a saturated model) and are interested in submodels. Examples are Bernoulli regression, Poisson regression, or categorical data analysis. The maximum entropy argument says the canonical linear submodels are the submodels that, \emph{subject to constraining the means of their submodel canonical statistics, leave all other aspects of the data as random as possible}, where "as random as possible" means maximum entropy. Thus these models constrain the means of their canonical statistics and anti-constrain (leave as unconstrained as possible) everything else.
+
+In choosing a particular canonical linear submodel parameterization $\theta = M\beta$ we are, in effect, modeling only the the distribution of the submodel canonical statistic $t(y) = M^T y$, leaving all other aspects of the distribution of $y$ as random as possible given the control over the distribution of $t(y)$.
+
+
+## Overdispersion
+
+A common explanation for large deviance (or poor fit) is the presence of a few outliers. When large number of points are identified as outliers, they become unexceptional, and it may be the case that the error distribution is misspecified. When more outliers are observed than expected by a model, the variance may need to be adjusted to accommodate the outliers. This is referred to as overdispersion and it is often encountered in Possion regression.
+
+In the presence of misspecification in the form of overdispersion, the exponential family takes on a different functional form
+\begin{equation} \label{expofamdisp}
+  f(y|\theta,\phi) = \exp\left(\frac{\inner{y,\theta}- c(\theta)}{a(\phi)} - b(y,\phi) \right),
+\end{equation}
+where $y$ and $\theta$ are as before, $\phi$ is a dispersion parameter, and $b(y,\phi)$ is a function of the data $y$ and the dispersion parameter $\phi$. From the perspective of the canonical exponential families that we have motivated throughout, the function $b(y,\phi)$ is similar to the base measure $h$ that was dropped from consideration in log likelihood based arguments that focused on the parameters. Notice that the density \eqref{expofamdisp} is a generalization of the exponential family density which specifies that $a(\phi) = 1$ and $b(y,\phi) = \log(h(y))$. Note that the dispersion parameter can be estimated using
+$$
+  \hat{\phi} = \frac{\sum_{i=1}^n(y - \hat\mu_i)^2/\hat\mu_i}{n-p}.
+$$
+We will cover overdispersion in much more detail when we cover generalized linear models for count responses.
+
+## Concluding remarks
+
+So now we can put all of this together to discuss interpretation of regular full exponential families and their canonical linear submodels.
+
+The MLE is unique if it exists (from strict concavity). Existence is a complicated story, and non-existence results in complicated problems of interpretation, which we leave for now. We will revisit non-existence later.
+
+The MLE satisfies the observed equals expected property, either \eqref{obsequalsexp} for a saturated model or \eqref{submodelmvp} for a canonical linear submodel.
+
+The sufficient dimension reduction property and maximum entropy property say that $M^Ty$ is a sufficient statistic, hence captures all information about the parameter. All other aspects of the distribution of $y$ are left as random as possible; the canonical linear submodel does not constrain them in any way other than its constraints on the expectation of $M^Ty$.
+
+The same model can be specified by different formulas or different model matrices, so that a particular canonical parameter value does not specify a model uniquely. A quote from Charlie Geyer:
+\begin{quote}
+"Parameters are meaningless quantities. Only probabilities and expectations are meaningful."
+\end{quote}
+Of course, some parameters are probabilities and expectations, but most exponential family canonical parameters are not. Hence interpretations should focus on mean value parameters. This conclusion flies in the face the traditional way regression models are taught. In most courses, students are taught to "interpret" the equation $\theta = M\beta$, or, more precisely, since in lower level courses students aren’t assumed to know about matrices, students are taught to interpret this with the matrix multiplication written out explicitly, interpreting equations like
+$$
+  \theta_i = \beta_0 + \beta_1x_i + \beta_2 x_i^2, \qquad \text{where} \; i \; \text{runs over cases}.
+$$
+The model matrix $M$ determines two linear transformations
+\begin{align*}
+  \beta &\mapsto M\beta	\\
+  \mu &\mapsto M^T\mu
+\end{align*}
+The second equation, which takes saturated model canonical statistic to submodel canonical statistic and saturated model mean value parameter to submodel mean value parameter, is the more important of the two and should lead in interpretation, because the former is about canonical parameters (the meaningless ones) and the latter is about mean value parameters (the meaningful ones). This is especially so in light of the fact that $M^Ty = M^T\hat\mu$ (observed equals expected) is the only algebraically simple property of maximum likelihood that users can hang an interpretation on.
+
+When we do need to think about canonical parameters, the key concept is the multivariate monotone relationship \eqref{multiparm} between canonical and mean value parameters. Note that this holds not only for saturated model parameters but also for canonical linear submodel parameters. If, as before, we let $\tau = M^T\mu$ denote the submodel mean value parameter, and $\tau_1$ corresponds to $\beta_1$ and $\tau_2$ to $\beta_2$, then
+$$
+  (\tau_1 - \tau_2)^T(\beta_1 - \beta_2) > 0, \qquad \text{whenever} \; \tau_1 \neq \tau_2.
+$$
+
+By standard theory of maximum likelihood, MLEs of all parameters are consistent, efficient (have minimum asymptotic variance), and asymptotically normal, with easily calculated asymptotic variance (inverse Fisher information matrix). \eqref{FI} is Fisher information for the saturated model canonical parameter $\theta$;
+$$
+  \nabla^2_\beta c(M\beta) = M^T\left(\nabla c(M\beta)\right)M
+$$
+is Fisher information for the submodel canonical parameter $\beta$.
+
+The Delta method then gives asymptotic variance matrices for mean value parameters. If $\mu = h(\theta)$, then the asymptotic variance for $\hat\mu$ is
+$$
+  [\nabla h(\theta)]I(\theta)^{-1}[\nabla h(\theta)]^T = I(\theta)I(\theta)^{-1}I(\theta) = I(\theta)
+$$
+and $M^TI(\theta)M$ is the asymptotic variance for $\hat\tau$. These can be used for hypothesis tests and confidence intervals about these other parameters.
+
+We can obtain reliable estimates of modeling parameters via optimization routines. The \texttt{glm} package uses a carefully written IRLS routine to maximize $l(\beta)$ and obtain $\hat{\beta}$.
+
 
 \section*{Acknowledgments}
 These notes take materials from Charles Geyer's notes on exponential families, [model selection](https://www.stat.umn.edu/geyer/5421/notes/glmbb.html), and other topics. We also borrow materials from Trevor Park's STAT 426 notes and \cite{agresti2013cat}.

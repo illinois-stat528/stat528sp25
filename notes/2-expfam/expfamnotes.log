@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.11.7)  11 FEB 2025 08:02
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.11.7)  13 FEB 2025 09:51
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1059,7 +1059,7 @@ File: ts1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 Here is how much of TeX's memory you used:
  36911 strings out of 478268
  842458 string characters out of 5846347
- 1253631 words of memory out of 5000000
+ 1253632 words of memory out of 5000000
  54006 multiletter control sequences out of 15000+600000
  581191 words of font info for 241 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -1091,10 +1091,10 @@ c/lm/lmtko10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmtt
 10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmtti10.pfb></
 usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pf
 b>
-Output written on expfamnotes.pdf (31 pages, 581529 bytes).
+Output written on expfamnotes.pdf (31 pages, 581808 bytes).
 PDF statistics:
- 751 PDF objects out of 1000 (max. 8388607)
- 660 compressed objects within 7 object streams
+ 753 PDF objects out of 1000 (max. 8388607)
+ 662 compressed objects within 7 object streams
  175 named destinations out of 1000 (max. 500000)
  57645 words of extra memory for PDF output out of 61914 (max. 10000000)
 

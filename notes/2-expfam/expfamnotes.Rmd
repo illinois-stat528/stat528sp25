@@ -1055,9 +1055,9 @@ $$
 $$
 where $H_o$ is that the canonical submodel is correct and the alternative test is that the canonical submodel is incorrect but the saturated model is correct, $n$ is the sample size, and $p$ is the number of parameters in the canonical submodel. So we reject correctness of the canonical submodel when
 $$
-  D(y;\hat\mu) \; > \: \chi^2_{n-p}(\alpha).
+  D(y;\hat\mu) \; > \: \chi^2_{n-p}(1-\alpha), 
 $$
-Note that the $\chi^2$ approximation can be poor in practice.
+where $\chi^2_{n-p}(1-\alpha)$ is the $(1-\alpha)$ quantile of a chi-squared random variable with $n-p$ degrees of freedom. Note that the $\chi^2$ approximation can be poor in practice.
 
 We can use deviance based testing to nested models. Let $\mathcal{M}_0$ and $\mathcal{M}_1$ both be canonical submodels. We say that $\mathcal{M}_0$ is \emph{nested} within $\mathcal{M}_1$  when every distribution in $\mathcal{M}_0$ is also in $\mathcal{M}_1$ but not vice-versa. That is, $\mu$ is more restricted under $\mathcal{M}_0$ than under $\mathcal{M}_1$. Let $\hat\mu_0$ be the MLE of $\mu$ under $\mathcal{M}_0$, and let $\hat\mu_1$ be the MLE of $\mu$ under $\mathcal{M}_1$. We can use this framework for testing
 $$
@@ -1104,7 +1104,7 @@ $$
    \text{BIC} = -2l(\hat\mu;y) + \log(n) \cdot p
 $$
 Since $\log(n) \ge 2$ for $n \ge 8$, BIC penalizes larger models more than AIC.
-BIC always selects smaller models than AIC.
+BIC never selects larger models than AIC.
 
 The reason BIC is called "Bayesian" is that, if $\mathop{\rm BIC}(m)$
 denotes the BIC for model $m$ and $g(m)$ denotes the prior probability
@@ -1156,7 +1156,7 @@ A shorthand often used is "sparsity".  The *sparsity* assumption is that the tru
 
 A (possibly vector-valued) statistic is *sufficient* if the conditional distribution of the full data given this statistic does not depend on the parameter.
 
-The interpretation is that the full data provides no information about the parameter that is not already provided by the sufficient statistic. The principle of sufficiency follows: all inference should depend on the data only through sufficient statistics. The Fisher-Neyman factorization criterion \citep[Corollary 1 of Chapter 2]{lehmann1959testing} says that a statistic is sufficient if and only if the likelihood depends on the whole data only through that statistic.
+The interpretation is that the full data provides no information about the parameter that is not already provided by the sufficient statistic. The principle of sufficiency follows: all inference should depend on the data only through sufficient statistics. The [Fisher-Neyman factorization theorem](https://en.wikipedia.org/wiki/Sufficient_statistic#Fisher%E2%80%93Neyman_factorization_theorem) \citep[Corollary 1 of Chapter 2]{lehmann1959testing} says that a statistic is sufficient if and only if the likelihood depends on the whole data only through that statistic.
 
 \begin{lem}
 The canonical statistic vector of an exponential family is a sufficient statistic.
@@ -1215,7 +1215,7 @@ and we want $f$ to maximize entropy subject to these constraints plus the constr
 \end{align*}
 It turns out that the inequality constraints here are unnecessary. If we solve the problem without requiring $f$ be nonnegative, the solution happens to be nonnegative. But we do need to enforce the equality constraints.
 
-To do that, we use the method of Lagrange multipliers. Multiply each constraint function by a new parameter (Lagrange multiplier) and add to the objective function. This gives the Lagrangian function
+To do that, we use the method of [Lagrange multipliers](https://en.wikipedia.org/wiki/Lagrange_multiplier). Multiply each constraint function by a new parameter (Lagrange multiplier) and add to the objective function. This gives the Lagrangian function
 \begin{align*}
 	\mathcal{L}(f) &= -\sum_{x \in S} f(x)\log\left(\frac{f(x)}{m(x)}\right)
 	  + \sum_{j\in J}\theta_j \sum_{x\in S} t_j(x)f(x) + \psi\sum_{x \in S} f(x) \\
@@ -1299,7 +1299,7 @@ The sufficient dimension reduction property and maximum entropy property say tha
 
 The same model can be specified by different formulas or different model matrices, so that a particular canonical parameter value does not specify a model uniquely. A quote from Charlie Geyer:
 \begin{quote}
-"Parameters are meaningless quantities. Only probabilities and expectations are meaningful."
+``Parameters are meaningless quantities. Only probabilities and expectations are meaningful."
 \end{quote}
 Of course, some parameters are probabilities and expectations, but most exponential family canonical parameters are not. Hence interpretations should focus on mean value parameters. This conclusion flies in the face the traditional way regression models are taught. In most courses, students are taught to "interpret" the equation $\theta = M\beta$, or, more precisely, since in lower level courses students aren’t assumed to know about matrices, students are taught to interpret this with the matrix multiplication written out explicitly, interpreting equations like
 $$
@@ -1319,7 +1319,7 @@ $$
 
 By standard theory of maximum likelihood, MLEs of all parameters are consistent, efficient (have minimum asymptotic variance), and asymptotically normal, with easily calculated asymptotic variance (inverse Fisher information matrix). \eqref{FI} is Fisher information for the saturated model canonical parameter $\theta$;
 $$
-  \nabla^2_\beta c(M\beta) = M^T\left(\nabla c(M\beta)\right)M
+  \nabla^2 c_{\text{sub}} c(M\beta) = M^T\left(\nabla c(M\beta)\right)M
 $$
 is Fisher information for the submodel canonical parameter $\beta$.
 

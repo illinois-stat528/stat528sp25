@@ -1,0 +1,297 @@
+---
+title: "Homework 1 : review and coding questions"
+author: "TA : Arjama Das"
+date: "Due: 01/31 at 11:59 PM"
+output: pdf_document
+header-includes: 
+ - \usepackage{amsthm}
+ - \usepackage{amsmath}
+ - \usepackage{amsfonts}
+ - \usepackage{amscd}
+ - \usepackage{amssymb}
+ - \usepackage{natbib}
+ - \usepackage{url}
+urlcolor: blue  
+---
+
+\allowdisplaybreaks
+
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\inner}[1]{\langle #1 \rangle}
+\newcommand{\yobs}{y_{\text{obs}}}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+This assignment is meant to serve multiple objectives:
+
+ - You will gain familiarity with R, RStudio, R Markdown, and GitHub
+ - You will perform at least one iteration of the courses's data science inspired workflow
+ - You will gain experience with typing mathematics
+ - You will learn some \texttt{dplyr} and \texttt{ggplot2} basics
+
+STAT 528 is a collaborative course environment, especially for assignments that involve coding, modeling, and/or data analysis. You are encouraged to ask for help from other students. Coding and data science work flow can be very tedious. Having someone else look over your work or answering a basic question can save you a lot of time. However, direct copying is not accepting. All final work must be your own.
+
+
+
+***
+
+# Mathematical review questions
+
+\noindent{\bf Problem 1}: Prove that the Binomial distribution arises as a sum of $n$ iid Bernoulli trials each with success probability $p$. 
+
+\vspace*{1cm}
+
+\noindent{\bf Solution}: To see this, we check the equivalence of moment generating function.
+Denote the Bernoulli Trials to be $X_1, \ldots, X_n$.
+First for a rv $Y \sim \operatorname{Binom}(n, p)$, recall $$
+f_{Y}(y)=\left(\begin{array}{l}
+n \\
+y
+\end{array}\right) p^y(1-p)^{n-y}, y=0, \ldots, n
+$$
+
+Its generating function gives $$
+M_Y(t)=\mathbb{E}\left[e^{tY}\right]=\sum_{y=0}^{\infty} e^{t y} \cdot f_Y(y)
+=\sum_{y=0}^n\left(\begin{array}{l}
+n \\
+y
+\end{array}\right) \cdot e^{t y} p^y \cdot(1-p)^{n-y}
+$$
+
+
+Then for $X := \sum_{i=1}^{n} X_i$, apply the iid assumption and Binomial Theorem, it follows 
+$$
+\begin{aligned}
+M_{X}(t) & =\mathbb{E}\left[e^{tX}\right] \\
+& =\mathbb{E}\left[e^{t \sum_{i=1}^n X_i}\right] \\
+& =\mathbb{E}\left[\prod_{i=1}^n e^{t X_i}\right] \\
+& =\prod_{i=1}^n \mathbb{E}\left[e^{t X_i}\right] \\
+& =\prod_{i=1}^n\left(e^{t \cdot 1} \cdot p+e^{t \cdot 0} \cdot(1-p)\right) \\
+& =\left(e^t p+(1-p)\right)^n \\
+& =\sum_{k=0}^n\left(\begin{array}{l}
+n \\
+k
+\end{array}\right) \cdot\left(e^t p\right)^k \cdot(1-p)^{n-k} \\
+& =\sum_{k=0}^n\left(\begin{array}{l}
+n \\
+k
+\end{array}\right) \cdot e^{t k} \cdot p^k \cdot(1-p)^{n-k} \\
+& =M_{Y}(t)
+\end{aligned}
+$$
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 2}: Let $l(\theta)$ denote a twice continuously differentiable log likelihood corresponding to an iid sample under density $f_\theta$ where $n$ is the sample size. The score function is defined as
+$$
+  u(\theta) = \frac{\partial l(\theta)}{\partial\theta},
+$$
+and the Fisher information matrix is defined as
+$$
+  I(\theta) = -\E\left(\frac{\partial^2 l(\theta)}{\partial \theta^2}\right),
+$$
+where the expectation is over the assumed distribution for the data when the parameter value is $\theta$. Prove that
+$$
+  \E(u(\theta)) = 0 \qquad \text{and} \qquad \Var(u(\theta)) = I(\theta).
+$$
+\vspace*{1cm}
+
+\noindent{\bf Solution}: For (i), by definition, apply Chain rule and twice cont. differentiability it follows 
+$$
+\begin{aligned}
+\mathbb{E}[u(\theta)] & =\mathbb{E}\left[\frac{\partial l(\theta)}{\partial \theta}\right] \\
+& =\mathbb{E}\left[\frac{\partial \log f_\theta}{\partial \theta}\right] \\
+& =\int_X \frac{\partial}{\partial \theta} \log f_\theta(x) \cdot f_\theta(x) d x \\
+& =\int_X \frac{1}{f_\theta(x)} \cdot \frac{\partial}{\partial \theta} f_\theta(x) \cdot f_\theta(x) d x \\
+& =\int_X \frac{\partial}{\partial \theta} f_\theta(x) d x \\
+& =\frac{\partial}{\partial \theta} \int_X f_\theta(x) d x \\
+& =\frac{\partial}{\partial \theta} 1 \\
+& =0
+\end{aligned}
+$$
+
+For (ii), we equivalently want to show $\mathbb{E}\left[u(\theta)^2\right]-\mathbb{E}[u(\theta)]^2=I(\theta)$. We have seen $\mathbb{E}[u(\theta)] = 0$, then that is to show 
+$-\mathbb{E}\left[\left(\frac{\partial l(\theta)}{\partial \theta}\right)^2\right]=\mathbb{E}\left[\frac{\partial^2 l(\theta)}{\partial \theta^2}\right]$. Note 
+$$
+\frac{\partial^2 l(\theta)}{\partial \theta^2}=\frac{\partial^2}{\partial \theta^2} \log f_\theta=\frac{\partial}{\partial \theta}\left(\frac{\partial}{\partial \theta} \log f_\theta\right)=\frac{\partial}{\partial \theta}\left(\frac{1}{f_\theta} \cdot \frac{\partial}{\partial \theta} f_\theta\right)=\frac{1}{f_\theta} \cdot \frac{\partial^2}{\partial \theta^2} f_\theta-\frac{1}{f_\theta^2} \cdot\left(\frac{\partial}{\partial \theta} f_\theta\right)^2=\frac{1}{f_\theta} \cdot \frac{\partial^2}{\partial \theta^2} f_\theta-\left(\frac{\partial}{\partial \theta} l(\theta)\right)^2
+$$ 
+
+Take expectation on both side to have 
+$$
+\begin{aligned}
+\mathbb{E}\left[\frac{\partial^2 l(\theta)}{\partial \theta^2}\right] & =\mathbb{E}\left[\frac{1}{f_\theta} \cdot \frac{\partial^2}{\partial \theta^2} f_\theta\right]-\mathbb{E}\left[\left(\frac{\partial}{\partial \theta} l(\theta)\right)^2\right] \\
+& =\int_X \frac{\partial^2}{\partial \theta^2} f_\theta d x-\mathbb{E}\left[\left(\frac{\partial}{\partial \theta} l(\theta)\right)^2\right] \\
+& = \frac{\partial^2}{\partial \theta^2} \int_X f_\theta d x-\mathbb{E}\left[\left(\frac{\partial}{\partial \theta} l(\theta)\right)^2\right] \\
+& = \frac{\partial^2}{\partial \theta^2} 1-\mathbb{E}\left[\left(\frac{\partial}{\partial \theta} l(\theta)\right)^2\right] \\ 
+& =0-\mathbb{E}\left[\left(\frac{\partial}{\partial \theta} l(\theta)\right)^2\right] \\
+& =-\mathbb{E}\left[\left(\frac{\partial l(\theta)}{\partial \theta}\right)^2\right]
+\end{aligned}
+$$
+
+# Coding questions 
+
+\noindent{\bf Problem 3}: The data we will use to accomplish this task will come from Lahman’s Baseball Database. Thankfully, there is an R package, \texttt{Lahman}, that makes importing this data into R very easy. If you have not done so previously, install this package using:
+
+```{r, eval=FALSE, message= FALSE, warning=FALSE}
+install.packages("Lahman")
+```
+
+While there many metrics that could be used to determine who is the "best" baseball player, because we are focusing on [batters](https://en.m.wikipedia.org/wiki/Batting_(baseball)), we will use the [on-base plus slugging (OPS)](https://en.m.wikipedia.org/wiki/On-base_plus_slugging) statistic. This statistic measures both a batter's ability to "get on base" and "hit for power."
+
+ - [YouTube: Moneyball, "He Gets on Base"](https://www.youtube.com/watch?v=3MjxoaynCmk)
+
+Additionally, our definition of "best" will be based on a player's career statistics, but an alternative argument could be made based on single season efforts.
+
+After loading the Lahman package, you will have access to several data frames containing historical baseball data from 1871 - 2023. You will need to interact with the following data frames: 
+
+- Schools
+- CollegePlaying
+- Batting
+- People
+
+You should spend some time exploring these datasets and reading the relevant documentation.
+
+Create a tibble named \texttt{illini\_mlb\_batters} that contains the following elements, in this order:
+
+ - playerID
+ - nameFirst
+ - nameLast
+ - birthYear
+ - G
+ - AB
+ - R
+ - H
+ - X2B
+ - X3B
+ - HR
+ - RBI
+ - SB
+ - CS
+ - BB
+ - SO
+ - IBB
+ - HBP
+ - SH
+ - SF
+ - GIDP
+ - PA
+ - TB
+ - BA
+ - OBP
+ - SLG
+ - OPS
+
+The rows of the tibble should be sorted from highest OPS to lowest OPS. Each row should represent the career statistics for the player with ID playerID. Only include players that had at least one at-bat and one plate appearance. Except for PA, TB, AVG, OBP, SLG, and OPS, the (sometimes season-level) variables listed can be found in one of the four data frames listed above. The remaining values can be calculated as follows:
+
+- PA = AB + BB + HBP + SH + SF 
+- TB = H + X2B + 2 * X3B + 3 * HR 
+- BA = H / AB 
+- OBP = (H + BB + HBP) / (PA - SH) 
+- SLG = TB / AB 
+- OPS = OBP + SLG
+
+Round any rate statistics to three decimals places, as is customary in baseball.
+
+\vspace*{1cm}
+
+\noindent{\bf Solution}:
+```{r, message=FALSE, warning=FALSE}
+# intall the packages and upload the tibbles
+# install.packages("Lahman")
+library(Lahman)
+library(tibble)
+library(tidyverse)
+as_tibble(Schools)
+as_tibble(CollegePlaying)
+as_tibble(Batting)
+as_tibble(People)
+
+# Create a tibble to select the players in Illinois
+illiniIDs = CollegePlaying %>%
+  filter(schoolID == "illinois") %>%
+  pull(playerID) %>%
+  unique()
+
+foo = People %>%
+  select(playerID, nameFirst, nameLast, birthYear)
+
+# Create the illini_mlb_batters tibble as required
+illini_mlb_batters = Batting %>% 
+  filter(playerID %in% illiniIDs) %>%
+  select(playerID, G:GIDP) %>%
+  mutate(across(G:GIDP, ~replace_na(.x,0))) %>%
+  group_by(playerID) %>%
+  summarise(across(G:GIDP, sum)) %>%
+  mutate(PA=AB+BB+HBP+SH+SF,
+    TB=H+X2B+2*X3B+3*HR, 
+    BA=H/AB,
+    OBP=(H+BB+HBP)/(PA-SH),
+    SLG=TB/AB,
+    OPS=OBP+SLG) %>%
+  left_join(foo, by="playerID") %>%
+  select(playerID, nameFirst, nameLast, birthYear, everything()) %>%
+  mutate(across(BA:OPS, ~ round(.x,3))) %>%
+  arrange(desc(OPS)) %>%
+  filter(AB >= 1)
+
+print.data.frame(head(illini_mlb_batters))
+```
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 4}:  The data we will use to accomplish this task will come from the \texttt{Teams} data frame in Lahman’s Baseball Database. In this problem we will visualize the [Pythagorean Theorem of Baseball](https://www.baseball-reference.com/bullpen/Pythagorean_Theorem_of_Baseball). This "Theorem" states that winning percentage is given by the following nonlinear equation:
+$$
+  WP = \frac{R^2}{R^2 + RA^2}
+$$
+where 
+
+ - WP is winning percentage 
+ - R is total runs scored by a baseball team
+ - RA is total runs allowed by a baseball team
+
+For this problem, plot the estimated number of wins as predicted by the Pythagorean equation and actual wins (denoted W). The estimated number of wins as predicted by the Pythagorean equation
+$$
+  162 * \frac{R^2}{R^2 + RA^2}.
+$$
+Provide a line of best fit. Restrict attention to the 1990 season and beyond. Note that there are two shortened seasons that need to be treated separately from the remaining seasons. These seasons are 1994 and 2020. The [1994 season](https://en.wikipedia.org/wiki/1994%E2%80%9395_Major_League_Baseball_strike) was cut short because of a labor strike. The [2020 season](https://en.wikipedia.org/wiki/2020_Major_League_Baseball_season) was cut short due to COVID.
+
+\vspace*{1cm}
+
+\noindent{\bf Solution}:
+```{r, message=FALSE, warning=FALSE}
+library(ggplot2)
+as_tibble(Teams)
+
+# Create the PTB tibble as required
+PTB = Teams %>%
+  filter(yearID >= 1990) %>%
+  select(yearID, W, R, RA) %>%
+  mutate(WP = 162*R^2/(R^2 + RA^2)) %>%
+  mutate(seasons = case_when(
+    yearID == 1994 ~ "labor strike",
+    yearID == 2020 ~ "COVID",
+    .default ="normal"
+  ))
+
+# Provide the line with "lm" method in ggplot to get the best fit of W and WP
+ggplot(PTB) +
+  aes(x = WP, y = W, color = seasons) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = "The Line of Best Fit between Actual Wins and Estimated Number of Wins by Pythagorean Equation",
+       x = "Estimated Number of Wins by Pythagorean Equation",
+       y = "Actual Wins") +
+  theme_minimal()
+```
+
+
+
+
+
+

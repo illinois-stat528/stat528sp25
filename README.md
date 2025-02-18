@@ -6,11 +6,11 @@ See the Syllabus for more details. See the notes directory for course notes.
 
 # News
 
+* HW3 now posted. It is due on 02/28 at 11:59 PM.
+
 * Binary response regression notes now posted.
 
 * HW1 solutions now posted.
-
-* HW2 posted. It is due on February 14 at 11:59 PM Champaign time.
 
 
 ## Cheatsheats

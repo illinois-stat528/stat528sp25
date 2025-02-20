@@ -513,7 +513,9 @@ heatmap.fit(y, p1.fit)
 ```
 
 
+\vspace{5pt}
 We can see that the model which omits sex does not fit the data as well.
+\vspace{5pt}
 
 
 ```{r heatmap2, cache = TRUE}
@@ -546,24 +548,26 @@ where it is noted that $\varepsilon \overset{d}{=} -\varepsilon$. There is no in
     &= \Prob\left((\varepsilon_0 - \varepsilon_1)/\sqrt{2} < x^T(\beta_1 - \beta_0)/\sqrt{2}\mid X = x\right) \\
     &= \Phi(x^T\beta^*)
 \end{align*}
-where $\beta^* = (\beta_1 - \beta_0)/\sqrt{2}$. Again, this is the probit model. The probit model can extend to an inverse $t$ link, for which corresponding latent variable models can better accommodate outliers.
+where $\beta^* = (\beta_1 - \beta_0)/\sqrt{2}$. Again, this is the probit model. 
+
+The probit model can extend to an inverse $t$ link, for which corresponding latent variable models can better accommodate outliers.
 
 Parameters in probit models can be interpreted in terms of effects on $\E(Y^*)$ for the threshold latent variable model presented above. Since $Y^* = x^T\beta + \varepsilon$ where $\varepsilon \sim N(0,1)$ has the CDF $\Phi$, a 1-unit increase in $x$ corresonds to a $\beta$ standard deviation increase in $\E(Y^*)$. Alternatively, we can summarize effects on the probability scale, such as by comparing estimated probabilities at extreme values or quartiles of a predictor, with other predictors set at their means. Although probit model parameter estimates are on a different scale than logistic model parameter estimates, the probability summaries of effects are similar.
 
 
 ## Probit model fitting
 
-Let $y_i$ be the number of successes out of $n_i$ trials at setting $x_i$, $i = 1,\ldots,n$. Let $x_{ij}$ denote the value of predictor $j$ for subject $i$. For the probit model $\Phi^{-1}(p(x_i)) = \sum_{j=1}\beta_jx_{ij}$, the log likelihood function is
+Let $x_{ij}$ denote the value of predictor $j$ for subject $i$. For the probit model $\Phi^{-1}(p(x_i)) = \sum_{j=1}\beta_jx_{ij}$, the log likelihood function is
 $$
   l(\beta) = \log\left\{\prod_{i=1}^n\left[\Phi\left(\sum_j \beta_jx_{ij}\right)\right]^{y_i}
-  \left[1 - \Phi\left(\sum_j \beta_jx_{ij}\right)\right]^{n_i - y_i}\right\}.
+  \left[1 - \Phi\left(\sum_j \beta_jx_{ij}\right)\right]^{1 - y_i}\right\}.
 $$
 Differentiation with respect to $\beta_j$ leads to,
 $$
-  \sum_{i}\left\{\left[\frac{n_i\left[y_i - \Phi\left(\sum_j\beta_j x_{ij}\right)\right]x_{ij}}
+  \sum_{i}\left\{\left[\frac{\left[y_i - \Phi\left(\sum_j\beta_j x_{ij}\right)\right]x_{ij}}
   {\Phi\left(\sum_j\beta_j x_{ij}\right)\left[1 - \Phi\left(\sum_j\beta_j x_{ij}\right)\right]}\right] \phi\left(\sum_j\beta_j x_{ij}\right)\right\} = 0,
 $$
-with $\phi(\cdot)$ the standard normal pdf.
+with $\phi(\cdot)$ being the standard normal pdf.
 
 When the link function is not the canonical link (which is the logit function for binary data), there is no reduction of the data in the form of Fisher's notion of sufficieny. Fisher (1935), in an appendix to Bliss (1935) for the single predictor case, showed how to solve the above equations using the Fisher scoring algorithm. He also pointed out that cases with $y_i = 0$ or $y_i = n_i$ were not problematic for ML fitting, unlike weighted least squares using sample probits (or logits). The estimated asymptotic covariance matrix of $\hat\beta$ has the form
 $$
@@ -578,7 +582,7 @@ The Newton-Raphson algorithm yields the same MLE estimates but slightly differen
 
 ## Probit Example
 
-We return to our CCSO example and refit the logistic regression model with a probit link function.
+We return to our CCSO example and refit the logistic regression model with a probit link function. 
 
 ```{r}
 m2 = glm(atleastone ~ -1 + race + sex + arrestAge, data = CCSO_small,
@@ -586,19 +590,29 @@ m2 = glm(atleastone ~ -1 + race + sex + arrestAge, data = CCSO_small,
 summary(m2)
 ```
 
+Note that the AIC value corresponding the probit model is slightly smaller than the AIC value corresponding to the logistic model. This provides some support for the probit model. However, selecting this model would mean losing the many nice properties offered by exponential models. Furthermore, the [relative likelihood](https://en.wikipedia.org/wiki/Relative_likelihood#Relative_likelihood_of_models) of the logistic model is close to 1 which suggests that the probit model's advantage in AIC is not very reliable.
+
+```{r}
+## Relative likelihood: exp( (AICmin - AICi)/2 )
+exp( (AIC(m2) - AIC(m1))/2)
+```
+
+\vspace{5pt}
+We see that that the \cite{esarey2012assessing} diagnostic suggests that the estimated conditional success probabilities obtained from the probit model reasonably approximate the frequency of observed successes across the covariates. This is not surprisng given that the probit and logistic models have very similar fits to this data.
+\vspace{5pt}
+
 ```{r heatmap_probit, cache = TRUE}
 heatmap.fit(y, predict(m2, type = "response"))
 ```
 
 
-Summarise these results.
 
 
 # Inverse propensity score weighting (IPW) in Causal Inference
 
 ## Brief explanation of causal inference
 
-This example will highlight the logistic regression as a model for treatment assignment in causal inference. In this example we will only scratch the surface of casual inference and will cover important causal estimators in very little detail. External references that go into more details about causal inference will be provided. Feel free to read them if you are interested. The goal of our data analysis will be to determine if course lectures provide any improvement to student exam scores when an online course implementation already exists.
+This example will highlight the logistic regression as a model for treatment assignment in [causal inference](https://en.wikipedia.org/wiki/Causal_inference). In this example we will only scratch the surface of casual inference and will cover important causal estimators in very little detail. External references that go into more details about causal inference will be provided. Feel free to read them if you are interested. The goal of our data analysis will be to determine if course lectures provide any improvement to student exam scores when an online course implementation already exists.
 
 One of the central goals of causal inference is to estimate the average treatment effect (ATE). In its most simple presentation, we will assume that the treatment variable is binary. The ATE measures the difference in mean outcomes between individuals assigned to the treatment and individuals assigned to the control. However, there is a difficulty with estimation since individuals do not simultaneously receive the treatment and the control. When the study is randomized this difficulty is mitigated because randomization ensures (when $n$ is large enough) that baseline covariates which may influence the response have the same distribution in both the treatment and control groups. In observational studies this may not be so, and the researcher may have no information about the treatment assignment mechanism. In the observational setting, the collected covariates could confound the relationship between the treatment variable and the response variable.
 
@@ -631,11 +645,11 @@ $$
 where $w_i$ in the above are basic IPW weights.
 
 
-The estimators $\widehat{\text{ATE}}$ and $\widehat{\text{ATE}}_{\text{alt}}$ are consistent if the propensity score model is correctly specified, so should be approximately unbiased in finite samples. We will also consider a [double robust (DR) estimator](https://www.tandfonline.com/doi/abs/10.1080/01621459.1994.10476818) of the ATE. This estimator is
+The estimators $\widehat{\text{ATE}}$ and $\widehat{\text{ATE}}_{\text{alt}}$ are consistent if the propensity score model is correctly specified, so should be approximately unbiased in finite samples. We will also consider a [double robust (DR) estimator](https://pmc.ncbi.nlm.nih.gov/articles/PMC3070495/) of the ATE. This estimator is
 $$
   \widehat{\text{ATE}}_{\text{DR}} = \frac{1}{n}\sum_{i=1}^n \frac{A_iY_i - (A_i - \hat p_i)m_1(X_i,\hat{\alpha}_1)}{\hat p_i} -  \frac{1}{n}\sum_{i=1}^n \frac{(1-A_i)Y_i + (A_i - \hat p_i)m_0(X_i,\hat{\alpha}_0)}{1 - \hat p_i},
 $$
-where $m_a(X,\alpha_a) = E(Y|A=a,X)$ is the regression of the response on $X$ in each level of $A \in \{0,1\}$, depending on parameters $\alpha_a$, and $\hat{\alpha}_a$ is the estimator for $\alpha_a$ based on the data from subjects with $A = a$.
+where $m_a(X,\alpha_a) = E(Y|A=a,X)$ is the outcome regression of the response on $X$ in each level of $A \in \{0,1\}$, depending on parameters $\alpha_a$, and $\hat{\alpha}_a$ is the estimator for $\alpha_a$ based on the data from subjects with $A = a$. The double robust estimator is unbiased for the average treatment effect provided only one of the outcome or propensity score models are correctly specified.
 
 ## Estimate ATEs
 

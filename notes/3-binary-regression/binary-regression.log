@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.11.7)  15 FEB 2024 10:07
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.11.7)  19 FEB 2025 22:54
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1420,7 +1420,7 @@ Package pdftex.def Info: binary-regression_files/figure-latex/heatmap-1.pdf  us
 ed on input line 1141.
 (pdftex.def)             Requested size: 433.63878pt x 292.10388pt.
 
-Overfull \hbox (10318.08267pt too wide) in paragraph at lines 1167--1167
+Overfull \hbox (10318.08267pt too wide) in paragraph at lines 1170--1170
 []\T1/lmtt/m/n/10 ##   |                                                       
                        |                                                       
                |   0%  |                                                       
@@ -1772,17 +1772,17 @@ File: binary-regression_files/figure-latex/heatmap2-1.pdf Graphic file (type pd
 f)
 <use binary-regression_files/figure-latex/heatmap2-1.pdf>
 Package pdftex.def Info: binary-regression_files/figure-latex/heatmap2-1.pdf  u
-sed on input line 1169.
+sed on input line 1172.
 (pdftex.def)             Requested size: 433.63878pt x 292.10388pt.
 [14 <./binary-regression_files/figure-latex/heatmap-1.pdf>] [15 <./binary-regre
 ssion_files/figure-latex/heatmap2-1.pdf>] [16]
-Overfull \hbox (23.74355pt too wide) in paragraph at lines 1322--1322
+Overfull \hbox (23.74355pt too wide) in paragraph at lines 1324--1324
 []\T1/lmtt/m/n/10 ## glm(formula = atleastone ~ -1 + race + sex + arrestAge, fa
 mily = binomial(link = "probit"),[] 
  []
 
-
-Overfull \hbox (10318.08267pt too wide) in paragraph at lines 1337--1337
+[17]
+Overfull \hbox (10318.08267pt too wide) in paragraph at lines 1367--1367
 []\T1/lmtt/m/n/10 ##   |                                                       
                        |                                                       
                |   0%  |                                                       
@@ -2128,16 +2128,16 @@ Overfull \hbox (10318.08267pt too wide) in paragraph at lines 1337--1337
 ===============| 100%[] 
  []
 
-<binary-regression_files/figure-latex/heatmap_probit-1.pdf, id=214, 433.62pt x 
+<binary-regression_files/figure-latex/heatmap_probit-1.pdf, id=222, 433.62pt x 
 292.09125pt>
 File: binary-regression_files/figure-latex/heatmap_probit-1.pdf Graphic file (t
 ype pdf)
 <use binary-regression_files/figure-latex/heatmap_probit-1.pdf>
 Package pdftex.def Info: binary-regression_files/figure-latex/heatmap_probit-1.
-pdf  used on input line 1339.
+pdf  used on input line 1369.
 (pdftex.def)             Requested size: 433.63878pt x 292.10388pt.
-[17] [18 <./binary-regression_files/figure-latex/heatmap_probit-1.pdf>] [19]
-Overfull \hbox (10318.08267pt too wide) in paragraph at lines 1516--1516
+[18 <./binary-regression_files/figure-latex/heatmap_probit-1.pdf>] [19]
+Overfull \hbox (10318.08267pt too wide) in paragraph at lines 1549--1549
 []\T1/lmtt/m/n/10 ##   |                                                       
                        |                                                       
                |   0%  |                                                       
@@ -2483,20 +2483,20 @@ Overfull \hbox (10318.08267pt too wide) in paragraph at lines 1516--1516
 ===============| 100%[] 
  []
 
-<binary-regression_files/figure-latex/heatmap_prop_model-1.pdf, id=246, 433.62p
+<binary-regression_files/figure-latex/heatmap_prop_model-1.pdf, id=250, 433.62p
 t x 292.09125pt>
 File: binary-regression_files/figure-latex/heatmap_prop_model-1.pdf Graphic fil
 e (type pdf)
 <use binary-regression_files/figure-latex/heatmap_prop_model-1.pdf>
 Package pdftex.def Info: binary-regression_files/figure-latex/heatmap_prop_mode
-l-1.pdf  used on input line 1518.
+l-1.pdf  used on input line 1551.
 (pdftex.def)             Requested size: 433.63878pt x 292.10388pt.
 [20] [21 <./binary-regression_files/figure-latex/heatmap_prop_model-1.pdf>] [22
 ] (./binary-regression.bbl [23]) [24] (./binary-regression.aux) ) 
 Here is how much of TeX's memory you used:
  36600 strings out of 478268
  839131 string characters out of 5846347
- 1899684 words of memory out of 5000000
+ 1899686 words of memory out of 5000000
  53852 multiletter control sequences out of 15000+600000
  564056 words of font info for 201 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -2523,10 +2523,10 @@ pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmtko10.pfb></usr
 /local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></usr/local/tex
 live/2022/texmf-dist/fonts/type1/public/lm/lmtti10.pfb></usr/local/texlive/2022
 /texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on binary-regression.pdf (24 pages, 526110 bytes).
+Output written on binary-regression.pdf (24 pages, 528180 bytes).
 PDF statistics:
- 472 PDF objects out of 1000 (max. 8388607)
- 385 compressed objects within 4 object streams
+ 476 PDF objects out of 1000 (max. 8388607)
+ 389 compressed objects within 4 object streams
  87 named destinations out of 1000 (max. 500000)
  51427 words of extra memory for PDF output out of 51595 (max. 10000000)
 

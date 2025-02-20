@@ -170,7 +170,7 @@ all.equal(predict(m1, type = "response"),
 predict(m3, type = "response"))
 
 # sub model canonical parameter vector (beta)
-betahat
+betahat = coef(m1)
 
 # saturated model canonical parameter vector (theta)
 thetahat = as.vector(M %*% betahat)
@@ -193,13 +193,13 @@ tauhat
 cbind(tauhat, crossprod(M, y))
 
 
-###############
-### next time
-###############
+####################################################
+### Thursday 02/20 (2nd half binary response notes)
+####################################################
 
 
 # profile likelihood 
-beta.profile = confint(m1)
+system.time({beta.profile = confint(m1)})
 beta.profile
 
 se = sqrt(diag(vcov(m1)))
@@ -212,7 +212,7 @@ y = CCSO_small$atleastone
 p1 = predict(m1, type = "response")
 heatmap.fit(y = y, pred = p1)
 
-psmall = predict(msmall, type = "response")
+psmall = predict(m2, type = "response")
 heatmap.fit(y = y, pred = psmall)
 
 
@@ -230,7 +230,6 @@ trt = dat_small$Online
 preds = predict(m, type = "response")
 
 ## seems okay
-trt = dat_small$Online
 heatmap.fit(trt, preds)
 
 ## inverse propensity score weights

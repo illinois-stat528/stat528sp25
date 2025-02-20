@@ -482,8 +482,8 @@ beta.profile
 
 ## Wald based method
 se = sqrt(diag(vcov(m1)))
-cbind(betahat + qnorm(0.025) * sqrt(diag(vcov(m1))), 
-      betahat + qnorm(0.975) * sqrt(diag(vcov(m1))))
+cbind(betahat + qnorm(0.025) * se, 
+      betahat + qnorm(0.975) * se)
 ```
 
 
@@ -535,7 +535,7 @@ where $g^{-1}$ is not the logit function. In probit regression we specify $g = \
 $$
   \Phi^{-1}(p(x)) = x^T\beta.
 $$
-A related latent variable (referred to as a threshold model) also specifies the probit model. This model assumes that there is an unobserved continuous response $y^*$ such that the observed response $y = 0$ if $y^* \leq \tau$ and $y = 1$ if $y^* > \tau$. Suppose that $y^* = \mu + \varepsilon$, where $\mu = x^T\beta$ and where $\varepsilon_i$ are independent realizations from a $N(0,\sigma^2)$ distribution. Then,
+A related latent variable (referred to as a threshold model) also specifies the probit model. This model assumes that there is an unobserved continuous response $y^*$ such that the observed response $y = 0$ if $y^* \leq \tau$ and $y = 1$ if $y^* > \tau$. Suppose that $y^* = \mu + \varepsilon$, where $\mu = x^T\beta$ and where $\varepsilon$ are from a $N(0,\sigma^2)$ distribution. Then,
 \begin{align*}
   \Prob(Y = 1\mid X = x) &= \Prob(Y^* > \tau\mid X = x) = \Prob(x^T\beta + \varepsilon > \tau\mid X = x) \\
     &= \Prob(-\varepsilon < x^T\beta - \tau\mid X = x) = \Phi\left((x^T\beta - \tau)/\sigma\right)
@@ -575,7 +575,7 @@ $$
 $$
 For probit models, $\widehat{W}$ is the diagonal matrix with elements
 $$
-  w_i =\frac{n_i\left[\phi\left(\sum_j\hat\beta_j x_{ij}\right)\right]^2}
+  w_i =\frac{\left[\phi\left(\sum_j\hat\beta_j x_{ij}\right)\right]^2}
   {\left\{\Phi\left(\sum_j\hat\beta_j x_{ij}\right)\left[1 - \Phi\left(\hat\beta_j x_{ij}\right)\right]\right\}}.
 $$
 The Newton-Raphson algorithm yields the same MLE estimates but slightly different standard errors. For the information matrix inverted to obtain the asymptotic covariance matrix, Newton-Raphson uses observed information, whereas Fisher scoring uses expected information. These differ for link functions other than the canonical link.
@@ -636,7 +636,7 @@ $$
 If the propensity score were to be known apriori in the above, then $\widehat{\text{ATE}}$ is an unbiased estimator for the average treatment effect. Therefore, $p_i$ must be the true propensity score for this estimator to be consistent (ie our logistic regression model must be correctly specified).
 
 
-This basic IPW estimator can be unstable, it does not create balanced pseudo populations (which one would expect under purely random assignment), and is inappropriate for continuous predictors in our analysis. We consider an [alternative stable estimator of the ATE](https://onlinelibrary.wiley.com/doi/full/10.1002/sim.6607) (referred to as $\text{ATE}_{\text{IPW}}$). The alternative stable estimator of the ATE has conventional inverse propensity score weights with changes being made to the aggregation. This estimator of the ATE is
+This basic IPW estimator can be unstable, it does not create balanced pseudo populations (which one would expect under purely random assignment), and is inappropriate for continuous predictors in our analysis. We consider an [alternative stable estimator of the ATE](https://onlinelibrary.wiley.com/doi/full/10.1002/sim.6607) (referred to as $\text{ATE}_{\text{alt}}$). The alternative stable estimator of the ATE has conventional inverse propensity score weights with changes being made to the aggregation. This estimator of the ATE is
 $$
  \widehat{\text{ATE}}_{\text{alt}} =
    \left(\sum_{i=1}^n\frac{A_i}{\hat{p}_i}\right)^{-1}\sum_{i=1}^nw_iA_iY_i -
@@ -748,7 +748,7 @@ The two quantities are essentially the same, both estimates of the ATE show that
 
 # Appendix: nonparametric cases bootstrap
 
-We introduce a nonparametric bootstrap procedure to estimate the uncertainty of estimates of model parameters. The idea of the bootstrap is to apply the same estimation task used in the original data set to many resamples of the observed data in order to estimate uncertainty of the modeling task. The intuition is that if the original data is large enough, then resamples from the original data mimic sampling from the data-generating process.
+We introduce a nonparametric [bootstrap](https://en.wikipedia.org/wiki/Bootstrapping_(statistics)) procedure to estimate the uncertainty of estimates of model parameters. The idea of the bootstrap is to apply the same estimation task used in the original data set to many resamples of the observed data in order to estimate uncertainty of the modeling task. The intuition is that if the original data is large enough, then resamples from the original data mimic sampling from the data-generating process.
 
 Suppose that we have a sample of data $(y_i,x_i)$, $i = 1,\ldots, n$ where $y_i$ is a binary response variable and $x_i$ is a vector of predictors taking values in $\R^p$. For the bootstrapping cases method to estimate uncertainty of estimates of the submodel canonical parameter vector, the procedure is as follows:
 

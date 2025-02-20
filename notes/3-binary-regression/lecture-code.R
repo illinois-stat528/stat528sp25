@@ -197,6 +197,15 @@ cbind(tauhat, crossprod(M, y))
 ### next time
 ###############
 
+
+# profile likelihood 
+beta.profile = confint(m1)
+beta.profile
+
+se = sqrt(diag(vcov(m1)))
+cbind(betahat + qnorm(0.025) * se,
+      betahat + qnorm(0.975) * se)
+
 # Esarey and Pierce (2012) diagnostic plot
 library(heatmapFit)
 y = CCSO_small$atleastone
@@ -205,3 +214,129 @@ heatmap.fit(y = y, pred = p1)
 
 psmall = predict(msmall, type = "response")
 heatmap.fit(y = y, pred = psmall)
+
+
+# casual inference example: in-person learning
+dat = read.csv("stat528sp25/notes/3-binary-regression/online.csv", 
+               header = TRUE)[, -1]
+head(dat)
+
+dat_small = dat %>% dplyr::select(Online, ACTMath, ACTMajor, ACT, Gender, 
+  International, F17, S18, S19, Fa19, FR, SO, JR)
+
+# prop score model
+m = glm(Online ~., data = dat_small, family = "binomial")
+trt = dat_small$Online
+preds = predict(m, type = "response")
+
+## seems okay
+trt = dat_small$Online
+heatmap.fit(trt, preds)
+
+## inverse propensity score weights
+weights_IPW = (trt / preds - (1-trt) / (1 -preds))
+mean(weights_IPW * dat$ObjExam)
+
+### they are not too large
+max(abs(weights_IPW))
+weights_IPW[abs(weights_IPW) > 8]
+
+## estimate the stabilized IPW weights
+weights_alt_trt = 1 / sum(trt / preds) * trt /preds
+weights_alt_notrt = 1 / sum((1 - trt)/(1 - preds)) * (1-trt)/(1-preds)
+dat = data.frame(dat, weights = weights_alt_trt - weights_alt_notrt)
+
+# check balance for gender and international (other variables are also balanced)
+## balance is pretty good
+dat %>% group_by(Gender, Online) %>% summarise(sum(weights))
+dat %>% group_by(International, Online) %>% summarise(sum(weights))
+
+## ATE alt
+ATE_alt = sum(weights_alt_trt * dat$ObjExam) -
+  sum(weights_alt_notrt * dat$ObjExam)
+ATE_alt
+
+## DR estimate
+m_trt = lm(ObjExam ~ ACTMath + ACTMajor + ACT + International + Gender +
+             FR + SO + JR + F17 + S18 + S19,
+           data = dat[trt == 1, ])
+Y_trt = predict(m_trt, newdata = dat)
+m_notrt = lm(ObjExam ~ ACTMath + ACTMajor + ACT + International + Gender +
+               FR + SO + JR + F17 + S18 + S19,
+             data = dat[trt == 0, ])
+Y_notrt = predict(m_notrt, newdata = dat)
+ATE_DR = mean( (dat$ObjExam * trt - (trt - preds) * Y_trt) / preds -
+                 (dat$ObjExam * (1 - trt) + (trt - preds)*Y_notrt) / (1 - preds))
+ATE_DR
+
+## nothing 
+m1 = lm(ObjExam ~ trt + ACTMath + ACTMajor + ACT + International + Gender +
+     FR + SO + JR + F17 + S18 + S19,
+   data = dat)
+summary(m1)
+
+
+
+# nonparametric bootstrap (be mindful of sparse categorical 
+# level in this demonstration)
+
+head(CCSO_small)
+
+## reorder factor variable levels
+CCSO_small$race = 
+  relevel(CCSO_small$race, ref = 2)
+
+## remove sparse category
+CCSO_small2 = CCSO_small %>% 
+  filter(race != "Asian/Pacific Islander")
+
+## slow
+betastar = function(){
+  mod = glm(atleastone ~ race + sex + arrestAge, 
+            data = CCSO_small[sample(1:nrow(CCSO_small), replace = TRUE), ], 
+            family = "binomial")
+  coef(mod)
+}
+B = 2e3
+system.time({
+  bootsamp = do.call(rbind, lapply(1:B, function(j) betastar() ))  
+})
+bootse = sqrt(diag(var(bootsamp)))
+
+m1 = glm(atleastone ~ race + sex + arrestAge, 
+         data = CCSO_small, 
+         family = "binomial")
+
+cbind(bootse, summary(m1)$coef[, 2])
+
+
+## faster (mclapply)
+library(parallel)
+ncores = detectCores() - 2
+
+system.time({
+  bootsamp2 = do.call(rbind, mclapply(1:B, function(j) betastar(), 
+                                      mc.cores = ncores))  
+})
+bootse2 = sqrt(diag(var(bootsamp2)))
+cbind(bootse, bootse2, summary(m1)$coef[, 2])
+
+## faster (foreach)
+library(foreach)
+library(doParallel)
+system.time({
+  myCluster = makeCluster(ncores) # number of cores to use
+  registerDoParallel(myCluster)
+  bootsamp = foreach(i=1:2e3, .combine=rbind) %dopar% betastar()  
+  stopCluster(myCluster) # stop cluster when done
+})
+bootse3 = sqrt(diag(var(bootsamp)))
+
+
+## compare variability
+round(cbind(summary(m1)$coef[, 2], 
+            bootse,
+            bootse2,
+            bootse3), 3)
+
+

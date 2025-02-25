@@ -1,0 +1,631 @@
+---
+title: "Count Regression Notes"
+author: "Daniel J. Eck"
+date: ""
+output: pdf_document
+header-includes: 
+ - \usepackage{amsthm}
+ - \usepackage{amsmath}
+ - \usepackage{amsfonts}
+ - \usepackage{amscd}
+ - \usepackage{amssymb}
+ - \usepackage[sectionbib]{natbib}
+ - \usepackage{url}
+ - \usepackage{graphicx}
+ - \usepackage{tikz-cd}
+ - \usepackage{pgfplots}
+ - \usepackage{geometry}
+ - \usepackage{bm}
+ - \usepackage{array,epsfig,fancyheadings,rotating}
+urlcolor: blue  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<!-- \textwidth=31.9pc -->
+<!-- \textheight=46.5pc -->
+<!-- \oddsidemargin=1pc -->
+<!-- \evensidemargin=1pc -->
+<!-- \headsep=15pt -->
+<!-- \topmargin=.6cm -->
+<!-- \leftmargin=0.5cm -->
+<!-- \rightmargin=0.5cm -->
+<!-- \parindent=1.7pc -->
+<!-- \parskip=0pt -->
+
+<!-- \fontsize{12}{14pt plus.8pt minus .6pt}\selectfont -->
+
+<!-- \setcounter{page}{1} -->
+<!-- \setcounter{equation}{0} -->
+<!-- \allowdisplaybreaks -->
+<!-- \renewcommand{\baselinestretch}{1.2} -->
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\Proj}{\textbf{P}}
+\newcommand{\E}{\mathrm{E}}
+<!-- \newcommand{\Var}{\mathrm{Var}} -->
+\newcommand{\Hcal}{\mathcal{H}}
+\newcommand{\rootn}{\sqrt{n}}
+\newcommand{\pibf}{\bm{\pi}}
+\newcommand{\mubf}{\bm{\mu}}
+
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\indep}{\perp\!\!\!\perp}
+\newcommand{\inner}[1]{\langle #1 \rangle}
+\newcommand{\set}[1]{\{\, #1 \,\}}
+
+\newtheorem{cor}{Corollary}
+\newtheorem{lem}{Lemma}
+\newtheorem{thm}{Theorem}
+\newtheorem{defn}{Definition}
+\newtheorem{prop}{Proposition}
+
+<!-- \DeclareMathOperator{\E}{E} -->
+<!-- \DeclareMathOperator{\tr}{tr} -->
+<!-- \DeclareMathOperator{\etr}{etr} -->
+<!-- \DeclareMathOperator{\Var}{Var} -->
+<!-- \DeclareMathOperator{\MSE}{MSE} -->
+<!-- \DeclareMathOperator{\vecop}{vec} -->
+<!-- \DeclareMathOperator{\vech}{vech} -->
+
+
+\tableofcontents
+
+We will suppose that we have a sample of data $(y_i,x_i)$, $i = 1,\ldots, n$ where $y_i$ is a non-negative integer response variable and $x_i$ is a fixed vector of predictors taking values in $\R^p$. We will start with Poisson regression, a count regression model arising from exponential family. Other modeling approaches will also be discussed. Namely, overdispersion, negative binomial regression, and zero-inflated count models.
+
+
+
+
+# Poisson regression model with log link 
+
+The Poisson regression model is another of one of the most widely used and studied GLMs in practice. A Poisson regression model is sometimes known as a log-linear model, especially when used to model contingency tables. The Poisson regression model is used for analyzing a discrete count response variable, $y_i \in \{0,1,2,\ldots\}$ or a contingency table. The Poisson regression model allows for users to model the rate as a function of covariates. The log link arises as the canonical link. 
+
+For a count response variable $Y$ and a vector of predictors $X$, let $\mu(x) = \E(Y|X = x)$. The Poisson regression model is then 
+\begin{equation} \label{loglink}
+  \mu(x) = \E(Y|X = x) = \exp\left(x^T\beta\right).
+\end{equation}
+Equivalently, 
+$$
+  \log\left(\mu(x)\right) = x^T\beta.
+$$
+In vector notation, we can express the above as 
+$$
+  \mubf = \exp(M\beta) \quad \text{and} \quad \text{log}(\mubf) = M\beta
+$$
+where the above $\exp(\cdot)$ and log$(\cdot)$ operations are understood as componentwise operations. To see where the log link comes from in the specification of $\mu(x)$ comes from consider the log likelihood of the Poisson distribution with rate parameter $\mu_i$ for each subject
+\begin{align*}
+  l\left(\beta\right) &\propto \sum_{i=1}^n y_i\log(\mu_i) - \sum_{i=1}^n\mu_i \\
+    &= \sum_{i=1}^n y_i\theta_i - \sum_{i=1}^ng(\theta_i),
+\end{align*}
+where 
+$$
+  \theta_i = \log\left(\mu_i\right) \qquad \text{and} \qquad \mu_i = \exp(\theta_i) = g(\theta_i).
+$$
+We see that the Poisson regression model with log link is the same as the canonical linear submodel of an exponential family with $\theta_i = x_i^T\beta$ which in vector notation is $\theta = M\beta$. Putting this together, we have that 
+$$
+  \E(Y|X = x) = g\left(x^T\beta\right) \qquad \text{and} \qquad g^{-1}\left(\E(Y|X = x)\right) = x^T\beta
+$$
+where the link function $g^{-1}$ is the logarithmic function, the inverse-link function (change of parameters map) is the exponential function. Hence the name log-linear models. 
+
+Therefore, a linear function of the canonical submodel parameter vector is linked to the mean of the Poisson distribution through a change-of-parameter mapping $g(\theta)$. As stated before, this is the basis of exponential family generalized linear models with link function $g^{-1}$. 
+
+
+## Example: Gala data
+
+```{r, warnings = FALSE, message = FALSE}
+rm(list = ls())
+library(tidyverse)
+library(faraway)
+```
+
+\vspace*{0.5cm}\noindent We will demonstrate Poisson regression modeling on the Galapagos data frame in the \texttt{faraway} package. This data frame consists of $n = 30$ observations and $7$ variables in total.
+
+For 30 Galapagos Islands, we have a count of the number of plant species found on each island and the number that are endemic to the island. We also have five geographic variables for each island. A few missing values have been filled in for simplicity. We will model the number of species using Poisson regression using the glm function in R. The Endemic variable is thrown out since it won't be used in this analysis. We create a discrete size variable based on the Area variable for demonstration purposes.
+
+
+```{r}
+gala = gala %>% 
+  mutate(Size = as.factor(1 + ifelse(Area > 1,1,0) + ifelse(Area > 25,1,0)))
+m1 = glm(Species ~ Elevation + Nearest + Scruz + Adjacent + Size, 
+          family = "poisson", data = gala, x = TRUE)
+```
+
+\vspace*{0.5cm}\noindent Now let's unpack the glm function call above. We decided that we wanted to fit an exponential family regression model with log likelihood taking the general form
+$$
+  l(\beta) = \inner{M^Ty, \beta} - c(M\beta),
+$$
+where $y$ is the vector of responses $\beta$ is the submodel canonical statistic vector corresponding to the model matrix $M$ specified by the formula in the glm function call above. The first few rows of $M$ are displayed below
+
+```{r}
+M = m1$x
+head(M)
+```
+
+\vspace*{0.5cm}\noindent The specific log likelihood for the Poisson regression model can then be written as 
+$$
+  l(\beta) \propto \sum_{i=1}^n y_ix_i^T\beta - \exp\left(x_i^T\beta\right)
+$$
+where the $x_i$s are the rows of the design matrix $M$ and the $y_i$s are the components of the response vector $y$ (the Species variable corresponding to the number of species on each of the islands). The glm function then performs a Fisher scoring based optimization routine to maximize the above likelihood. We can view summary information for $\hat\beta$ and the fitting process using the summary function
+
+```{r}
+summary(m1)
+```
+
+\vspace*{0.5cm}\noindent The Estimate column in the above summary table is $\hat\beta$. The standard error column as estimates of the square root of the variances of the estimated submodel canonical statistic vector $\hat\beta$. Recall from the asymptotic theory of maximum likelihood estimation that 
+$$
+  \sqrt{n}(\hat\beta - \beta) \overset{d}{\to} N(0, \Sigma^{-1}),
+$$
+where $\Sigma^{-1}$ is the inverse of the Fisher information matrix. We can extract these same standard errors using the vcov function
+
+```{r}
+sqrt(diag(vcov(m1)))
+```
+\vspace*{0.5cm}\noindent These values are the same as those in the Std. Error column in the above summary table
+
+```{r}
+all.equal(summary(m1)$coef[, 2], sqrt(diag(vcov(m1))))
+```
+
+
+## Inference for $\beta$ in Poisson regression 
+
+The Galapagos example connects the exponential family that we have developed to R-based data analysis. We motivated this connection in the logistic regression notes. In Poisson regression the link function is $\log$, and thus $\log(\mu(x)) = x_i^T\beta$. Therefore, a unit increase in one predictor variables $x_j$ corresponds to an increase of $\beta_j$ (estimated by $\hat\beta_j$) in the log mean with everything else being held fixed. See the summary table below for estimates of $\beta$ in our Galapagos example
+
+```{r}
+summary(m1)
+```
+
+
+## Deviance testing and AIC/BIC
+
+We can use the deviance and degrees of freedom objects to perform the likelihood ratio test to determine whether or not the main effects model fits the data well.
+
+```{r}
+## test against intercept only model
+pchisq(m1$null.deviance - m1$deviance, df = m1$df.null - m1$df.residual, 
+       lower = FALSE)
+
+m_null = glm(Species ~ 1, family = "poisson", data = gala, x = TRUE)
+anova(m_null, m1, test = "LRT")
+```
+
+\vspace*{0.5cm}\noindent Let's consider the smaller model that ignores the Elevation variable. A likelihood ratio test shows that the larger model is preferable at any reasonably chosen significance level $\alpha$.
+
+
+```{r}
+m_small = glm(Species ~ Nearest + Scruz + Adjacent + Size, 
+          family = "poisson", data = gala, x = TRUE)
+
+## built in likelihood ratio test using anova.glm
+anova(m_small, m1, test = "LRT")
+
+## perform the above directly (different machine tolerances)
+pchisq(m_small$deviance - m1$deviance, df = 1, lower = FALSE)
+
+## AIC/BIC
+AIC(m_small, m1)
+BIC(m_small, m1)
+```
+
+
+
+## Further testing
+
+In this example we see that the levels of the Size variable are statistically significant at any reasonable error threshold $\alpha$. Suppose instead that we wanted to test if large islands are expected to have a different number of species than medium sized islands. Informally, the summary table above suggests that large islands have mores species than medium sized islands, but this is not a formal comparison. Formally, we want to test
+$$
+  H_o: \mu_l - \mu_m = 0, \qquad H_a: \mu_l - \mu_m \neq 0,
+$$
+where $\mu_l$ and $\mu_m$, respectively, correspond to the mean-value parameters for large and medium-sized islands. We know that $\mu_l = \exp(\beta_l)$ and $\mu_m = \exp(\beta_m)$ where $\beta_l$ and $\beta_m$, respectively, correspond to the canonical parameters for large and medium-sized islands. We can test the above hypothesis using the Delta method
+$$
+  \sqrt{n}\left[ (\hat\mu_l - \hat\mu_m) - (\mu_l - \mu_m)  \right] 
+    \overset{d}{\to} N\left(0, \nabla h(\beta)^T\Sigma^{-1}\nabla h(\beta)\right)
+$$
+where $h(\beta) = \exp(\beta_l) - \exp(\beta_m) = \mu_l - \mu_m$. We obtain the estimate $\hat\mu_l - \hat\mu_m$ below
+```{r}
+comp = c(0,0,0,0,0,-1,1)
+betahat = m1$coefficients
+grad = exp(betahat) * comp
+est = sum(grad)
+est
+```
+\vspace*{0.5cm}\noindent and the estimate of $\nabla h(\beta)$ is the column vector below
+```{r}
+grad
+```
+
+
+\vspace*{0.5cm}\noindent The asymptotic variance $\nabla h(\beta)^T\Sigma^{-1}\nabla h(\beta)$ and corresponding standard error are estimated below
+```{r}
+InvFish = vcov(m1)
+asympVar = as.numeric(t(grad) %*% InvFish %*% grad)
+asympVar
+SE = sqrt(asympVar)
+SE
+```
+\vspace*{0.5cm}\noindent The ratio $(\hat\mu_l - \hat\mu_m)/\text{se}(\hat\mu_l - \hat\mu_m)$ is given by
+```{r}
+est/SE
+```
+\vspace*{0.5cm}\noindent and a corresponding 95\% confidence interval is
+```{r}
+est + qnorm(c(0.025,0.975)) * SE
+```
+\vspace*{0.5cm}\noindent Keep in mind that there are three possible tests that we could have made. If multiple hypotheses are tested, the probability of observing a rare event increases, and therefore, the likelihood of incorrectly rejecting a null hypothesis (Type I error) increases. We can adjust for this using a [Bonferroni correction](https://en.wikipedia.org/wiki/Bonferroni_correction) which scales the desired error tolerance by the number of tests in order to align the [family-wise error rate](https://en.wikipedia.org/wiki/Family-wise_error_rate) of all tests (probability of at least one false rejection) is at the original testing threshold. 
+
+ 
+```{r}
+est + qnorm(c(0.025/3, 1-0.025/3)) * SE
+```
+
+
+
+## Diagnostics (will revisit)
+
+The diagnostic methods discussed here are similar to those used for linear models with normal errors. However, some adaptions are necessary, and not all diagnostic methods will be applicable.
+
+### Residual-based diagnostics
+
+Residuals represent the discrepancy between the model and the observed data, and are essential for exploring the adequacy of the model. In the Gaussian case, the residuals are $\hat\epsilon = y - \hat\mu$. In Faraway, these are referred to as response residuals for GLMs and they can be used directly to check the constant variance assumption in linear models with Gaussian errors. However, since the variance of the GLM is often not constant and is often a function of the canonical parameter, some modifications to the residuals are necessary.
+
+\vspace*{0.3cm}\noindent\textbf{Pearson residuals}: the Pearson residual is comparable to the standardized residual used for linear models and is defined as: 
+$$
+  r_P = \frac{y - \hat\mu}{\sqrt{\widehat{\mathrm{Var}}(\hat\mu)}}
+$$
+where $\widehat{\mathrm{Var}}$ is the estimated variance under the original exponential family. Notice that $\sum_{i=1}^n r_{P,i}^2$ is the [Pearson $\chi^2$ statistic](https://en.wikipedia.org/wiki/Pearson%27s_chi-squared_test), hence the name. And note that Pearson residuals can be skewed for nonnormal responses. 
+
+\vspace*{0.3cm}\noindent\textbf{Deviance residuals}: The deviance residuals are defined by analogy to the Pearson residuals. In other words, we set the deviance residual $r_D$ so that 
+$$
+  \sum_{i=1}^n r_{D,i}^2 = \text{Deviance}.
+$$
+In Poisson regression the deviance residuals are
+$$
+  r_{D,i} = \text{sign}(y_i - \hat\mu_i)\left[2\left(y_i\log\left(\frac{y_i}{\hat\mu_i}\right) - (y_i - \hat\mu_i)\right)\right]^{1/2}.
+$$
+
+Notice that both types of residuals possess scaling by the estimated mean values or standard deviations in their constructions. Thus, a Poisson regression model has to well-estimate both small and large expected counts. We now revisit the Galapagos data to explore these residuals.
+
+```{r}
+## Deviance residuals
+head(residuals(m1))
+
+## Pearson residuals
+head(residuals(m1, "pearson"))
+```
+
+\vspace*{0.5cm}\noindent For linear models, the residuals vs. fitted values plot is probably the single most valuable graphic. For GLMs, we must decide on the appropriate scale for the fitted values. Usually, it is better to plot on the scale of the linear predictors ($\theta$) than on the fitted responses ($\mu$). 
+
+We are looking for features in these residuals vs. fitted values plots. First of all, is there any nonlinear relationship between the residuals and the fitted values? If so, this would be an indication of a lack of fit that might be rectified by a change in the model. For a linear model, we may transform the response variable but this is likely impractical for a GLM since it would change the assumed distribution of the response variable. We might also consider changing the link function, but often this undesirable since the canonical link functions facilitate desirable theoretical properties and yield models which are relatively easy to interpret. 
+
+It is best to make a change in the choice of predictors or transformations to these predictors since this involves the least disruption to the GLM theoretical foundations. 
+
+
+\vspace*{0.5cm}\noindent The plots below show the residuals as a function of $\hat\theta_i = x_i^T\hat\beta$.
+
+```{r}
+dat = data.frame(theta = as.numeric(M %*% betahat), 
+                 mu = exp(as.numeric(M %*% betahat)), 
+                 deviance_residuals = residuals(m1), 
+                 pearson_residuals = residuals(m1, "pearson")) %>%
+  pivot_longer(., cols = deviance_residuals:pearson_residuals, 
+             names_to = "residuals")
+dat$residuals = 
+  factor(dat$residuals, levels = c("deviance_residuals", "pearson_residuals"), 
+       labels = c("Deviance", "Pearson"))
+
+ggplot(dat) + 
+  aes(x = theta, y = value) + 
+  labs(y = "residuals") + 
+  geom_point() + 
+  facet_wrap(~residuals) + 
+  geom_hline(yintercept = 0, lty = 2, col = "red") + 
+  theme_minimal() 
+```
+
+\vspace*{0.5cm}\noindent The plots below show the residuals as a function of $\hat\mu$.
+```{r}
+ggplot(dat) + 
+  aes(x = mu, y = value) + 
+  labs(y = "residuals") + 
+  geom_point() + 
+  facet_wrap(~residuals) + 
+  geom_hline(yintercept = 0, lty = 2, col = "red") + 
+  theme_minimal() 
+```
+
+
+### half-normal plot
+
+A half-normal plot of the Deviance residuals of the Poisson model is shown on the below. The half-normal plot depicts points 
+$$
+  \left(\Phi^{-1}\left(\frac{n+i}{2n+1}\right),r_{D,(i)}\right),
+$$
+where $r_{D,(i)}$ denotes an ordering of deviance residuals so that $r_{D,(1)} \leq \cdots \leq r_{D,(n)}$. The half-normal plot will not necessarily return a straight line relationship because deviance residuals are not necessarily normally distributed. However, this plot is useful for diagnosing outliers. 
+
+\vspace*{5pt}
+```{r}
+halfnorm(residuals(m1), pch = 19)
+```
+\vspace*{5pt}
+
+
+### variance vs mean 
+
+The relationship between the mean and the variance is shown below. A line showing that the variance increases linearly in the mean (not a perfect slope of 1) is also shown.
+```{r}
+plot(log(fitted(m1)),log((gala$Species-fitted(m1))^2), 
+     main = "variance vs mean (on log scale)",
+     xlab= expression(hat(mu)),ylab=expression((y-hat(mu))^2), 
+     pch = 19)
+abline(0,1)
+```
+
+We see that the variance is proportional to, but larger than, the mean. When the variance assumption of the Poisson regression model is broken but the link function and choice of predictors are correct, the estimates of $\beta$ are consistent, but the standard errors will be wrong.
+
+
+# Overdispersion 
+
+The Poisson distribution has only one parameter (mean equals variance) and is therefore not very flexible for empirical fitting purposes. We can generalize by allowing ourselves a dispersion parameter to allow for increased flexibility in various Poisson models. For example, suppose the Poisson response $Y$ has rate $\lambda$ which is itself a random variable. The tendency to fail for a machine may vary from unit to unit even though they are the same model. We can model this by letting $\lambda$ be gamma distributed with $E(\lambda) = \mu$ and $\mathrm{Var}(\lambda) = \mu/\phi$. Now $Y$ is negative binomial with mean $\mathrm{E}(Y) = \mu$. The mean is the same as the Poisson, but the variance $\mathrm{Var}(Y) = \mu(1+\phi)/\phi$ which is not equal to $\mu$. 
+
+If we know the specific data generating process, as in the above example, we could model the response as a negative binomial or some other more flexible distribution. However, when the mechanism is not known, we can introduce a dispersion parameter $\phi$ such that $\mathrm{Var}(Y) = \phi \mathrm{E}(Y) = \phi\mu$. The case $\phi = 1$ is the regular Poisson regression case, while $\phi > 1$ is overdispersion and $\phi < 1$ is underdispersion.
+
+A common explanation for large deviance (or poor fit) is the presence of a few outliers. When large number of points are identified as outliers, they become unexceptional, and it may be the case that the error distribution is misspecified. In the presence of overdispersion, the exponential family takes on a different functional form
+\begin{equation} \label{expofamdisp}
+  f(y|\theta,\phi) = \exp\left(\frac{\inner{y,\theta}- c(\theta)}{a(\phi)} - b(y,\phi) \right),
+\end{equation}
+where $y$, $\theta$, and $c(\theta)$ are as before, $\phi$ is a dispersion parameter, and $b(y,\phi)$ is a function of the data $y$ and the dispersion parameter $\phi$. From the perspective of the canonical exponential families that we have motivated throughout, the function $b(y,\phi)$ is similar to the base measure $h$ that was dropped from consideration in log likelihood based arguments that focused on the parameters. Notice that the density \eqref{expofamdisp} is a generalization of the exponential family density which specifies that $a(\phi) = 1$ and $b(y,\phi) = \log(h(y))$.
+
+Note that the dispersion parameter can be estimated using
+$$
+  \hat{\phi} = \frac{\sum_{i=1}^n(y - \hat\mu_i)^2/\hat\mu_i}{n-p}.
+$$
+Notice that the estimation of the dispersion and the regression parameters is independent, so choosing a dispersion other than one has no effect on the regression parameter estimates. See pages 149-150 in \cite{agresti2013cat} for more details.
+
+We investigate the overdispersed Poisson regression model with respect to the Galapogas data.
+
+```{r}
+n = nrow(gala)
+p = length(betahat)
+y = gala$Species
+
+## estimate dispersion directly
+fits = predict(m1, type = "response")
+dp = sum((y - fits)^2/fits) / (n - p)
+summary(m1, dispersion = dp)
+
+## fit the model with dispersion
+m2 = glm(Species ~ Elevation + Nearest + Scruz + Adjacent + Size, 
+          family = "quasipoisson", data = gala, x = TRUE)
+summary(m2)
+```
+In this case the dispersion is quite large leading to an increase in standard errors of over a factor of 5 
+```{r}
+## dispersion and sqrt(dispersion)
+c(dp, sqrt(dp))
+
+se = function(model) sqrt(diag(vcov(model)))
+round(data.frame(coef.m1=coef(m1), 
+                 coef.m2=coef(m2), 
+                 se.m1=se(m1), 
+                 se.m2=se(m2), 
+                 ratio=se(m2)/se(m1)), 4)
+```
+
+The overdispersed Poisson model clearly offers improvements to the residuals vs fitted values plot
+
+```{r}
+# dispersion
+par(mfrow = c(1,2))
+plot(predict(m1), (gala$Species - fitted(m1))^2, 
+     main = "Overdispersed Poisson model", 
+     xlab= expression(hat(theta)), 
+     ylab=expression((y-hat(mu))^2), 
+     pch = 19)
+lines(sort(predict(m1)), dp*sort(fitted(m1)), lty="dashed")
+
+# no dispersion
+plot(predict(m1), (gala$Species - fitted(m1))^2, 
+     main = "Standard Poisson model", 
+     xlab= expression(hat(theta)), 
+     ylab=expression((y-hat(mu))^2), 
+     pch = 19)
+lines(sort(predict(m1)), sort(fitted(m1)), lty="dashed")
+```
+
+```{r}
+# log mean-value scale with dispersion (this distorts the success)
+par(mfrow = c(1,2))
+plot(log(fitted(m1)), log((gala$Species - fitted(m1))^2), 
+     main = "Overdispersed Poisson model", 
+     xlab= expression(hat(theta)), 
+     ylab=expression((y-hat(mu))^2), 
+     pch = 19)
+lines(log(sort(fitted(m1))), log(dp*sort(fitted(m1))), lty="dashed")
+
+# log mean-value scale with no dispersion
+plot(log(fitted(m1)), log((gala$Species - fitted(m1))^2), 
+      main = "Overdispersed Poisson model", 
+     xlab= expression(hat(theta)), 
+     ylab=expression((y-hat(mu))^2), 
+     pch = 19)
+lines(log(sort(fitted(m1))), log(sort(fitted(m1))), lty="dashed")
+```
+
+
+The \texttt{AER} package includes a function that allows for one to [test whether or not dispersion is present](https://www.sciencedirect.com/science/article/abs/pii/030440769090014K). We can see that dispersion is present at most reasonable significance testing levels.
+
+```{r, message = FALSE}
+library(AER)
+dispersiontest(m1, trafo=1)
+```
+
+Note that the \texttt{AER} package defines dispersion differently than the \texttt{glm} function.
+
+
+
+# Negative Binomial regression
+
+Given a series of independent trials, each trial with probability of success $p$, let $Z$ be the number of trials until the $k$th success. This is the basis for the negative binomial distribution. The mass function for the negative binomial distribution is:
+$$
+  \Prob(Z = z) = {z-1 \choose k-1}p^k(1-p)^{z-k}, \qquad z = k,k+1,\ldots
+$$
+The negative binomial distribution can arise naturally in several ways. One can envision a system that can withstand $k$ hits before failure. The probability of a hit in a given time period is $p$. The negative binomial also arises from the generalization of the Poisson where the rate parameter is gamma distributed.  The negative binomial also comes up as a limiting distribution for urn schemes that can be used to model contagion.
+
+We get a more convenient parameterization if we let $Y = Z - k$ and $p = (1 + \alpha)^{-1}$ so that: 
+$$
+  \Prob(Y=y) = {y+k-1 \choose k-1} \frac{\alpha^y}{(1+\alpha)^{y+k}}, \qquad y = 0,1,2,\ldots
+$$
+then $\mathrm{E}(Y) = \mu = k\alpha$ and $\mathrm{Var}(Y) = k\alpha + k\alpha^2 = \mu + \mu^2/k$. The log-likelihood is then 
+$$
+  \sum_{i=1}^n\left(y_i\log\left(\frac{\alpha}{1 + \alpha}\right) - k\log(1 + \alpha) 
+    + \sum_{j=0}^{y_i-1}\log(j+k) - \log(y_i!)\right).
+$$
+The most convenient way to link the mean response $\mu$ to a linear combination of the the predictors $X$ in typical GLM fashion is through 
+$$
+  \log\left(\frac{\mu}{\mu+k}\right) = \log\left(\frac{\alpha}{1+\alpha}\right) = \theta = x^T\beta.
+$$
+We can specify the change of parameters map $g:\theta\to\mu$ and the link function as $g^{-1}:\mu\to\theta$ as
+$$
+  g(\theta) = \frac{ke^\theta}{1 - e^\theta} = \mu, \qquad 
+    g^{-1}(\mu) = \log\left(\frac{\mu}{\mu+k}\right) = x^T\beta.
+$$
+We can regard $k$ as fixed and determined by the application or as an additional parameter to be estimated.
+
+
+## Example: Solder data 
+
+Consider this example. ATT ran an experiment varying five factors relevant to a wave-soldering procedure for mounting components on printed circuit boards. The response variable, skips, is a count of how many solder skips appeared in a visual inspection. The data comes from Comizzoli et al. (1990) (See the source material on the help page for the solder dataset in the faraway package). We start with a Poisson regression: 
+```{r}
+library(faraway)
+modp = glm(skips ~ . , family=poisson, data=solder)
+
+## saturated model fits better
+pchisq(deviance(modp), df.residual(modp), lower = FALSE)
+
+## Faraway mentions rule of thumb that saturated model is 
+## likely better when deviance noticeably exceeds df
+c(deviance(modp), df.residual(modp))
+```
+Perhaps including interaction terms will improve the fit: 
+```{r}
+modp2 = glm(skips ~ (Opening +Solder + Mask + PadType + Panel)^2, 
+             family=poisson, data=solder)
+
+pchisq(deviance(modp2), df.residual(modp2), lower=FALSE)
+c(deviance(modp2), df.residual(modp2))
+```
+The fit is improved but not enough to conclude that the model fits. We could try adding more interactions but that would make interpretation increasingly difficult. A check for outliers reveals no problem. An alternative model for counts is the negative binomial. The functions for fitting come from the \texttt{MASS} package. We can specify the link parameter $k$. Here we choose $k = 1$ to demonstrate the method, although there is no substantive motivation from this application to use this value. Note that the $k = 1$ case corresponds to an assumption of a geometric distribution for the response.
+```{r, message=FALSE}
+library(MASS)
+modn = glm(skips ~ ., negative.binomial(1), solder)
+modn
+
+## LRT test
+pchisq(deviance(modn), df.residual(modn), lower=FALSE)
+```
+We could experiment with different values of $k$, but there is a more direct way of achieving this by allowing the parameter $k$ to vary and be estimated using maximum likelihood in:
+```{r}
+modn = glm.nb(skips ~ ., solder)
+summary(modn)
+```
+We see that $\hat k = 4.528$ with a standard error of $0.518$. We can compare negative binomial models using the usual inferential techniques. For instance, we see that the overall fit is much improved.
+
+```{r}
+## LRT test
+pchisq(deviance(modn), df.residual(modn), lower=FALSE)
+```
+
+# Zero Inflated Count Models 
+
+Sometimes we see count response data where the number of zeroes appearing is significantly greater than the Poisson or negative binomial models would predict. This commonly arises in life history analyses of plants and animals where many subjects die before they reproduce, arrest and bookings data where many people are either not arrested or receive zero day sentences, and insurance claims data. Modifying the Poisson by adding a dispersion parameter does not adequately model this divergence from the standard count distributions.
+
+We consider a sample of 915 biochemistry graduate students. The response variable is the number of articles produced during the last three years of the PhD. We are interested in how this is influenced by the gender, marital status, number of children, prestige of the department and productivity of the advisor of the student. The dataset may be found in the \texttt{pscl} package. We start by fitting a Poisson regression model:
+```{r, message=FALSE}
+library(pscl)
+modp = glm(art ~ ., data=bioChemists, family=poisson)
+sumary(modp)
+```
+
+We can see that deviance is significantly larger than the degrees of freedom (a rule of thumb indicated poor fit). Some experimentation reveals that this cannot be solved by using a richer linear predictor or by eliminating some outliers \citep{faraway2016extending}. We might consider a dispersed Poisson model or negative binomial but some thought suggests that there are good reasons why a disproportionate number of students might produce no articles at all.
+
+We count and predict how many students produce between zero and seven articles. Very few students produce more than seven articles so we ignore these. The \texttt{predprob} function produces the predicted probabilities for each case. By summing these, we get the expected number for each article count.
+```{r}
+ocount = table(bioChemists$art)[1:8]
+pcount = colSums(predprob(modp)[,1:8])
+plot(pcount, ocount, type="n", xlab="Predicted", ylab="Observed", 
+     ylim = c(0, 300), axes = FALSE)
+axis(side = 1)
+axis(side = 2)
+text(pcount,ocount, 0:7)
+```
+
+We see that there are many more students with zero articles than would be predicted by the Poisson model. In contrast, the relationship between observed and predicted is linear for the students who produce at least one article. 
+
+We now consider a zero-inflated Poisson model. First, some motivation. Suppose we ask the general public how many games of chess they have played in the last month. Some people will say zero because they do not play chess but some zero responses will be from chess players who have not managed a game in the last month. Circumstances such as these require a \emph{mixture} model. A general specification of this model takes the form:
+\begin{align*}
+  \Prob(Y = 0) &= \phi + (1 - \phi)f(0) \\
+  \Prob(Y = j) &= (1 - \phi)f(j), \qquad j > 0.
+\end{align*}
+The parameter $\phi$ represents the proportion of subjects who will always respond zero (the non-chess players in the motivating example). One can model the proportion $\phi$ using a binary response model. The distribution $f$ models the counts of those individuals that can have a positive response. Note that it is possible that some of these individuals will have zero response which combine with the always-zero individuals. We can use a Poisson model for $f$ in which case this is called zero-inflated Poisson model.
+
+```{r}
+modz = zeroinfl(art ~ ., data=bioChemists)
+summary(modz)
+```
+
+We notice that the \texttt{ment} variable which counts the number of articles produced by the mentor is the most significant predictor in both the Poisson and binary regressions. Notice that the signs of regression coefficient estimates are reversed across the two models. This is because the zero-inflated approach models the probability of a zero count (not the probability of a successful 1 count). Hence there is no contradiction in inferences.
+
+We can use the standard likelihood testing theory to compare nested models. For example, suppose we consider a simplified version of the zero-inflated Poisson model where we now have different predictors for the two components of the model. The count part of the model is specified before the | and the binary response model after.
+
+```{r}
+# smaller model
+modz2 = zeroinfl(art ~ fem+kid5+ment | ment, data=bioChemists)
+
+# summary table for smaller model
+summary(modz2)
+
+# test of nested models
+pchisq(2*(modz$loglik-modz2$loglik), 6, lower = FALSE)
+```
+
+Given the large p-value of 0.4, we conclude that our simplification of the model is justifiable. For interpretation, the exponentiated coefficients are more useful:
+```{r}
+exp(coef(modz2))
+```
+
+We can also use the model to make predictions. Consider a single male with no
+children whose mentor produced six articles:
+```{r}
+newman = data.frame(fem="Men",mar="Single",kid5=0,ment=6)
+predict(modz2, newdata=newman, type="prob")[1:6]
+```
+We see that most likely outcome for this student is that no articles will be produced with a probability of 0.278. We can query the probability of no production from the zero part of the model:
+```{r}
+predict(modz2, newdata=newman, type="zero")
+```
+So the additional probability to make this up to 0.278 comes from the Poisson count part of the model. This difference might be attributed to students who had the potential to write an article.
+
+We note that the zero-inflated Poisson distribution also arises as a special case of an [aster model](https://academic.oup.com/biomet/article-abstract/94/2/415/224189) used in life history analyses for populations of plants or animals. The aster model can be thought of as a generalized generalized linear regression model and it models individuals through stages of their lifecycle. One can think of a simple lifecycle: 
+$$
+  1 \to Y_1 \to Y_2,
+$$
+where $Y_1$ encodes subjects either reaching or not reaching a reproductive stage (modeled as a binary random variable) and then, conditional on reproduction, $Y_2$ encodes how many offspring produced by the subjects in the reproductive stage (modeled as a Poisson or 0-truncated Poisson random variable).
+
+
+# Acknowledgments
+
+\noindent These notes borrow materials from \cite{faraway2016extending} and Charles Geyer's notes on exponential families and other topics. 
+
+
+
+\bibliographystyle{plainnat}
+\bibliography{../note_sources}
+
+
+
+
+
+
+

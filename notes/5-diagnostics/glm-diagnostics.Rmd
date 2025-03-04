@@ -1,0 +1,459 @@
+---
+title: "GLM Diagnostics Notes"
+author: "Daniel J. Eck"
+date: ""
+output: pdf_document
+header-includes: 
+ - \usepackage{amsthm}
+ - \usepackage{amsmath}
+ - \usepackage{amsfonts}
+ - \usepackage{amscd}
+ - \usepackage{amssymb}
+ - \usepackage[sectionbib]{natbib}
+ - \usepackage{url}
+ - \usepackage{graphicx}
+ - \usepackage{tikz-cd}
+ - \usepackage{pgfplots}
+ - \usepackage{geometry}
+ - \usepackage{bm}
+ - \usepackage{array,epsfig,fancyheadings,rotating}
+ - \usepackage{multirow}
+urlcolor: blue 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+\allowdisplaybreaks
+
+<!-- \textwidth=31.9pc -->
+<!-- \textheight=46.5pc -->
+<!-- \oddsidemargin=1pc -->
+<!-- \evensidemargin=1pc -->
+<!-- \headsep=15pt -->
+<!-- \topmargin=.6cm -->
+<!-- \leftmargin=0.5cm -->
+<!-- \rightmargin=0.5cm -->
+<!-- \parindent=1.7pc -->
+<!-- \parskip=0pt -->
+
+<!-- \fontsize{12}{14pt plus.8pt minus .6pt}\selectfont -->
+
+<!-- \setcounter{page}{1} -->
+<!-- \setcounter{equation}{0} -->
+<!-- \renewcommand{\baselinestretch}{1.2} -->
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\Proj}{\textbf{P}}
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\Hcal}{\mathcal{H}}
+\newcommand{\rootn}{\sqrt{n}}
+\newcommand{\pibf}{\bm{\pi}}
+\newcommand{\logit}{\text{logit}}
+
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\indep}{\perp\!\!\!\perp}
+\newcommand{\inner}[1]{\langle #1 \rangle}
+\newcommand{\set}[1]{\{\, #1 \,\}}
+
+\newtheorem{cor}{Corollary}
+\newtheorem{lem}{Lemma}
+\newtheorem{thm}{Theorem}
+\newtheorem{defn}{Definition}
+\newtheorem{prop}{Proposition}
+
+\tableofcontents
+
+\noindent In these notes we discuss diagnostics for generalized linear models (GLMs) with discrete responses that arise naturally from exponential family theory. These diagnostics extend to other cases as well. First, we load in the needed software packages. 
+
+```{r, warnings = FALSE, message = FALSE}
+rm(list = ls())
+library(tidyverse)
+library(ggplot2)
+library(data.table)
+library(heatmapFit)
+#install.packages("devtools")
+#devtools::install_github("jhlee1408/assessor")
+library(assessor)
+```
+
+
+# Model assessment
+
+## Esarey and Pierce (2012) 
+
+We investigated the \cite{esarey2012assessing} method for assessing the fit of binary response models. We will now provide more details of this method. The basic plan is to compare a model's predicted probability, or $\hat{p}$, to an in-sample empirical estimate of $\Prob(y = 1|\hat{p})$.  If 
+$$
+  \Prob(y = 1|\hat{p} = m) \approx m,
+$$
+then the model fits the data well. 
+
+Let $R(\hat{p}) = \Prob(y = 1|\hat{p})$. The first task is to empirically estimate $R(\hat{p})$, as the true probabilities $p$ are unobserved. In an ideal setting where one has $k$ cases where $\hat{p} = m$, then 
+$$
+  R(\hat{p}) = \frac{1}{k} \sum_{i=1}^{n} y_i 1(\hat{p}_i = m).
+$$
+However, this ideal setting will likely never happen in interesting applications with continuous covariates. Since this ideal will likely not be satisfied, \cite{esarey2012assessing} use a smoothed local linear regression to estimate $R(\hat{p})$. At each point $m$, a vector of coefficients $\gamma$ is chosen to minimize the weighted sum of squared errors,
+\begin{equation} \label{eq:WLS}
+  \sum_{i=1}^{n} \left(y_i - (\gamma_0 + \gamma_1(m - \hat{p}_i))\right)^2 K(m - \hat{p}_i),
+\end{equation}
+where $K$ is a kernel smoother. The idea of kernel smoothing in this context is for the smoother $K$ to, in a principled way, give large weight to observations with corresponding predicted probabilities that are close to $m$, and give little weight to observations with corresponding predicted probabilities that are far from $m$. The authors use the classical [loess smoother](https://en.wikipedia.org/wiki/Local_regression) for their method,
+$$
+  K(x)=(1-|x|^{3})^{3}.
+$$
+With this choice of smoother specified, the estimate of $R(\hat{p})$ at $m$ is given as
+$$
+  R(\hat{p} = m) = \hat{\gamma}_0,
+$$
+the prediction for the fitted line at $\hat{p} = m$. This method is performed for several $m \in (0,1)$. See [here](https://en.wikipedia.org/wiki/Kernel_smoother) for more details on kernal smoothing.
+
+
+### CCSO example
+
+We now load in the CCSO data corresponding to "Other Traffic Offenses", fit the same basic model as before to investigate the effect that demographic variables have on the propensity that a person will spend at least one day in jail, and then use the \cite{esarey2012assessing} method to diagnose the fit of this model. First we fit the model and obtain $\hat{p}$.
+
+\vspace*{5pt}
+
+```{r, warnings = FALSE, message = FALSE}
+library(stat528materials)
+data("CCSO")
+
+## data wrangling
+CCSO_small = CCSO %>% 
+  mutate(atleastone = ifelse(daysInJail > 0,1,0)) %>% 
+  filter(crimeCode == "OTHER TRAFFIC OFFENSES") %>%  
+  filter(race %in% c("Asian/Pacific Islander","Black","White","Hispanic")) %>% 
+  filter(sex %in% c("Female","Male")) %>% 
+  select(atleastone, arrestAge, sex, race, bookingDate) %>%  
+  mutate(race = fct_drop(race), sex = fct_drop(sex))
+CCSO_small = CCSO_small[complete.cases(CCSO_small), ]
+m1 = glm(atleastone ~ -1 + race + sex + arrestAge, 
+         data = CCSO_small, 
+         family = "binomial", x = "TRUE")
+p1 = predict(m1, type = "response", se.fit = TRUE)
+p1.fit = as.numeric(p1$fit)
+y = CCSO_small$atleastone
+```
+
+We now call the heatmap.fit function which implements the \cite{esarey2012assessing} method and provides a visual and numerical diagnostic for the fit of our simple model.
+
+```{r heatmap, cache=TRUE}
+heatmap.fit(y, p1.fit)
+```
+
+
+## Quasi-Empirical Residual Distribution Functions (QERDF)
+
+We now present the methodology of \cite{yang2021assessment} for assessing the fit of regression models with discrete outcomes (note that this methodology has been expanded upon in \cite{yang2024double} and implemented in \cite{lee2024assessor}). The method uses "Quasi-empirical residual distribution functions" as the main tool. The idea is to extend the [probability integral transform](https://en.wikipedia.org/wiki/Probability_integral_transform) to discrete settings. Recall that if $Y$ is continuous, then for any fixed value $s \in (0, 1)$, we have that
+\begin{align}\label{unic}
+	\Prob(F(Y|x)\leq s)=s.
+\end{align}
+
+For discrete data we have a similar result when $s = F(k|x)$ for some value $k$, ie,
+$$
+  \Prob \left(Y\leq k| F(k|x)=s\right)=s.
+$$
+The idea in \cite{yang2021assessment} is to use subsets of the data for which $F(k|x)\approx s$ to estimate  $\Prob(Y\leq k| F(k|x) \approx s)$ instead. Definite decisions about which data points to include will not be made. Instead, closeness will be judged by a kernel smoother. This method has a similar intuition to the methodology in \cite{esarey2012assessing}.
+
+<!-- Define the grid point $F(k| \mathbf{x})$ closest to $s$ as $H(s;X,\beta)$ -->
+
+### Theoretical notions of closeness
+
+We define the conditional range of the distribution function given $X = x$ as a grid $$
+  \Delta(x) = \{F(k|x) : k = 0,1,...\}.
+$$
+If $X$ contains continuous components, when $X$ varies in regression, there might be a subset of observations for which $s \in \Delta(x)$ holds approximately. Equivalently, the distance between $s$ and $\Delta(x)$, 
+$$
+  d(s, \Delta(x)) = \min\{| s - \eta |, \eta \in \Delta(x)\},
+$$
+is small in this case.
+
+Conditioning on $X = x$, denote $F^{(-1)} (\cdot| x)$ as the general inverse function of $F(\cdot| x)$ such that 
+$$
+  F^{(-1)}(s | x) = \inf\{y : s \leq F(y|x) < 1 \} \qquad \text{for} \qquad s \in (0,1).
+$$
+Here, we exclude $\{1\}$ to avoid boundary effects. Removing this point is not a concern, because Equation \eqref{unic} always holds on the boundary. Denote 
+$$
+  H^{+}(s; x) = F(F^{(-1)}(s | x) | x).
+$$
+
+<!-- It can be shown that $H^{+}(s; x)$ is the smallest interior point on the grid $\Delta(x)$ that is larger than or equal to $s$. To see this observe that  -->
+<!-- \begin{align*} -->
+<!--   H^{+}(s; x) &= F(F^{(-1)}(s | x) | x) \\ -->
+<!--     &= F\left( \, \inf\{y \, : \, s \leq F(y|x) < 1 \, | \, x\} \, \right) \\  -->
+<!--     &= \min\{F(k|x) \, : \, F(k|x) \geq s, \, k = 0,1,...\} \\ -->
+<!--     &= \min\{\eta \in \Delta(x) \setminus \{1\} \, : \, \eta \geq s\}. -->
+<!-- \end{align*} -->
+<!-- In a similar manner we can define -->
+<!-- $$ -->
+<!--   H^{-}(s; x) = \max\{ \, \eta \in \Delta(x)\setminus\{1\} \, : \, \eta \leq s\}. -->
+<!-- $$ -->
+It can be shown that $H^{+}(s; x)$ is the smallest interior point on the grid $\Delta(x)$ that is larger than or equal to $s$. In a similar manner we can define $H^{-}(s; x)$ as the largest interior point on the grid $\Delta(x)$ that is smaller than or equal to $s$.
+
+Now define $H(s; x)$ as the proximal interpolator which maps $s$ to its nearest neighbor on $\Delta(x)$. In other words, $H(s; x)$ is defined to be whichever $H^{-}(s; x)$ or $H^{+}(s; x)$ is closest to $s$. It follows that 
+$$
+  d(s, \Delta(x)\setminus\{1\}) = | H(s; x) - s |.
+$$
+When $s$ is "close to" being on the grid given $x$ in the sense that $H(s; x) \approx s$, we have an approximation to Equation \eqref{unic},
+$$
+  P(F(Y|x) \leq H(s;x)) = H(s;x) \approx s,
+$$
+
+
+### QERDF in practice
+
+Now consider a sample $(Y_i, X_i^T)$, $i = 1,...,n$, where $Y$ is a discrete response variable and $X$ is a vector of covariates containing at least one continuous covariate, and also consider a fixed value of $s$. To realize the above idea, we use a kernel function $K(\cdot)$ to give large weight to observations whose grid is close to $s$. Note that several key theoretical quantities in the previous section now require estimation. We will change notation slightly by adding a $\beta$ vector to make this explicit.
+
+We assign weights to observations depending on the normalized distance between $s$ and $H(s; X_i; \beta)$, that is, 
+$$
+K \left(\frac{H(s; X_i; \beta) - s}{\epsilon_n}\right),
+$$
+where $\varepsilon_n$ is a small bandwidth. Then, we define the **quasi-empirical residual distribution function** as
+$$
+  U(s;\beta) = \sum_{i=1}^n W_n (s;X_i ,\beta) 1\left[F_\beta(Y_i | X_i ) \leq H(s;X_i; \beta )\right], 
+$$
+where $1(\cdot)$ is the indicator function, 
+$$
+  W_n (s;X_i ,\beta) = \frac{K \left(\frac{H(s; X_i; \beta) - s}{\epsilon_n}\right)}{\sum_{j=1}^n K \left(\frac{H(s; X_j; \beta) - s}{\epsilon_n}\right)},
+$$
+and $K(\cdot)$ is a bounded, symmetric, and [Lipschitz continuous](https://en.wikipedia.org/wiki/Lipschitz_continuity) kernel. In practice, $\beta$ is unknown; let $\hat{\beta}$ be the corresponding estimator. Then everything in the above can be estimated via plug-in. Asymptotic results and bandwidth selection are beyond the scope of this course. More details can be found in \cite{yang2021assessment}.
+
+Essentially, $U(s;\beta)$ is an estimator of the probability
+$$
+  \Prob(Y\leq k | F(k|X)=s) = \Prob(F(Y|X) \leq s|F(k|X)=s),
+$$
+if there exists such an integer $k$ satisfying the condition $F (k | X) = s$. This probability equals $s$ under the true model.
+
+
+### Numerical examples
+
+We will now consider some numerical examples to demonstrate the effectiveness of the quasi-empirical residual distribution function method for diagnosing Poisson model fits. We first load in a snapshot of the source code from the supplement of \cite{yang2021assessment}. 
+
+```{r, message=FALSE}
+source("yang2021supp.R")
+```
+
+We simulate some data to assess performance. In one simulation configuration we will test how the method performs when evaluated with respect to a true data generating model. We will compare this ideal setting to configurations with misspecification.
+
+\vspace{5pt}
+
+```{r}
+## true model
+set.seed(13)
+n = 500
+p = 2
+beta = rep(1,p+1)
+M = cbind(1, matrix(rnorm(n*p), nrow = n, ncol = p))
+Y = rpois(n = n, lambda = exp(M %*% beta))
+m1 = glm(Y ~ -1 + M, family = "poisson")
+lambdahat = m1$fitted.values
+```
+
+\vspace{5pt}
+
+We can see that the method indicates that the model fits the data very well, as expected.
+
+\vspace{5pt}
+
+```{r m1, cache = TRUE}
+## calculate bandwidth parameter
+h = bandwidthp(y = Y, lambdaf = lambdahat)
+
+## diagnostic plot using the marginesti function
+data.frame(s = seq(0,1,length = 1001)) %>% 
+  mutate(y = sapply(s, function(u) {
+    marginesti(u, y = Y, lambdaf = lambdahat)
+  })) %>% 
+  ggplot() + 
+  aes(x = s, y = y) + 
+  geom_line() + 
+  geom_abline(col = "red", lty = 2) + 
+  labs(title = "QERDF for Poisson (true model)", 
+       x = "s", y = "U(s)") + 
+  theme_minimal()
+```
+
+\vspace{5pt}
+
+We can see that the model with a predictor removed does not fit the data well, also as expected.
+
+\vspace{5pt}
+
+```{r m2, cache = TRUE}
+m2 = glm(Y ~ -1 + M[, -p], family = "poisson")
+lambdahat = m2$fitted.values
+
+## calculate bandwidth parameter
+h = bandwidthp(y = Y, lambdaf = lambdahat)
+
+## diagnostic plot using the marginesti function
+data.frame(s = seq(0,1,length = 1001)) %>% 
+  mutate(y = sapply(s, function(u) {
+    marginesti(u, y = Y, lambdaf = lambdahat)
+  })) %>% 
+  ggplot() + 
+  aes(x = s, y = y) + 
+  geom_line() + 
+  geom_abline(col = "red", lty = 2) + 
+  labs(title = "QERDF for Poisson (missing covariate)", 
+       x = "s", y = "U(s)") + 
+  theme_minimal()
+```
+
+
+# Prediction and classification 
+
+In this section we briefly demonstrate some prediction and classification metrics that are used for binary and count response models. 
+
+
+## Binary response models
+
+Our demonstration will involve an analysis of 2022 baseball data where we model home runs as a function of launch speed (how hard one hits a baseball) and launch angle (the angle of the ball off the bat). Relevant data and software is loaded.
+
+```{r, message=FALSE}
+library(lubridate)
+library(caret)
+library(pROC)
+library(PresenceAbsence)
+dat = read_csv("sc-hr-2022.csv")
+head(dat)
+```
+
+### Confusion matrix
+
+We fit a basic main effects only logistic regression model.
+
+```{r}
+m1 = glm(HR ~ launch_speed + launch_angle, data = dat, 
+         family = "binomial")
+summary(m1)
+pchisq(deviance(m1), df.residual(m1), lower = FALSE)
+```
+
+This model fits the data extremely well. We now present a confusion matrix which shows correct and incorrect classifications, the overall classification accuracy, the accuracy that we could achieve if we flipped a weighted coin at random (with probability being the max of the marginal empirical success probability or one minus the marginal empirical success probability), and the [Sensitivity and Specificity](https://en.wikipedia.org/wiki/Sensitivity_and_specificity). 
+
+- **Sensitivity (true positive rate)** is the probability of a positive test result, conditioned on the individual truly being positive.
+- **Specificity (true negative rate)** is the probability of a negative test result, conditioned on the individual truly being negative.
+
+
+We can see below that this data has a high no information rate (there are relatively few home runs), and the main effects only model barely outperforms random guessing.
+
+\vspace{5pt}
+
+```{r}
+preds_m1 = predict(m1, type = "response")
+y = dat$HR
+confusionMatrix(
+  data = as.factor(as.numeric(preds_m1 >= 0.5)), 
+  reference = as.factor(y))
+```
+
+\vspace{5pt}
+Modeling of homeruns is much improved by the addition of a quadratic term for launch angle. 
+\vspace{5pt}
+
+```{r}
+m2 = glm(HR ~ launch_speed + poly(launch_angle, 2), 
+         data = dat, family = "binomial")
+anova(m1, m2, test = "LRT")
+
+preds_m2 = predict(m2, type = "response")
+confusionMatrix(
+  data = as.factor(as.numeric(preds_m2 >= 0.5)), 
+  reference = as.factor(y))
+```
+
+### ROC curve 
+
+A [receiver operating characteristic (ROC)](https://en.wikipedia.org/wiki/Receiver_operating_characteristic) curve is a plot of the true positive rate (sensitivity) against the false positive rate (specificity) of a classifier as the threshold which differentiates predicted class membership changes. The area under the ROC curve (AUC) is important tool for measuring the accuracy of a classifier. 
+
+The following is taken from \cite{nahm2022receiver}: The AUC is widely used to measure the accuracy of diagnostic tests. The closer the ROC curve is to the upper left corner of the graph, the higher the accuracy of the test because in the upper left corner, the sensitivity = 1 and the false positive rate = 0 (specificity = 1). The ideal ROC curve thus has an AUC = 1.0. However, when the coordinates of the x-axis (1 – specificity) and the y-axis correspond to 1 : 1 (i.e., true positive rate = false positive rate), a graph is drawn on the 45 degree diagonal (y = x) of the ROC curve (AUC = 0.5). Such a situation corresponds to determining the presence or absence of disease by random guessing with probability 0.5. Therefore, for any diagnostic technique to be meaningful, the AUC must be greater than 0.5, and in general, it must be greater than 0.8 to be considered acceptable. In addition, when comparing the performance of two or more diagnostic tests, the ROC curve with the largest AUC is considered to have a better diagnostic performance.
+
+\vspace{5pt}
+
+```{r}
+roc_m1 = roc(y, preds_m1)
+roc_m1
+plot(roc_m1, print.auc = TRUE)
+
+roc_m2 = roc(y, preds_m2)
+roc_m2
+plot(roc_m2, print.auc = TRUE)
+```
+
+\vspace{5pt}
+
+The quadratic model also exhibits better performance according to Esarey and Pierce's method for assessing the fit of binary response models.
+
+\vspace{5pt}
+
+```{r heatmaps, cache=TRUE}
+heatmap.fit(y = y, preds_m1)
+heatmap.fit(y = y, preds_m2)
+```
+
+\vspace{5pt}
+Note that our confusion matrix example used 0.5 as the threshold for differentiating predicted class membership. We may be able improve classification accuracy by changing the threshold. The \texttt{optimal.thresholds} function in the \texttt{PresenceAbsence} package can be useful for finding desirable thresholds.
+\vspace{5pt}
+
+```{r}
+optimal.thresholds(DATA = data.frame(ID = seq_along(nrow(dat)), 
+                                     obs = y, 
+                                     pred = preds_m2)) %>% 
+  as.data.frame() 
+```
+
+
+### Out-of-sample classification 
+
+We now investigate the out-of-sample classification performance of our final logistic regression with a quadratic term for launch angle. We split our original data set into a training set and a testing set. The training data is for model fitting. It will contain 75\% of observations. The classification accuracy of our trained model will be assessed on the test set.
+
+```{r}
+index = sample(1:nrow(dat), size=round(0.75*nrow(dat)), replace = FALSE)
+train = dat[index, ]
+test = dat[-index, ]
+```
+\vspace{5pt}
+We fit our model on the training data.
+\vspace{5pt}
+
+```{r}
+m_train = glm(HR ~ launch_speed + poly(launch_angle, 2), 
+         data = train, family = "binomial")
+```
+
+\vspace{5pt}
+We get the binary response vector from the test daa set and obtain conditional probability estimates for observations in the test data set.
+\vspace{5pt}
+
+```{r}
+y_test = test$HR
+preds_test = predict(m_train, newdata = test)
+```
+
+\vspace{5pt}
+We assess classification accuracy and the sensitivity and specificity of our fitted logistic regression model on the out-of-sample test set.
+\vspace{5pt}
+
+```{r}
+confusionMatrix(
+  data = as.factor(as.numeric(preds_test >= 0.5)), 
+  reference = as.factor(y_test))
+
+roc_test = roc(y_test, preds_test)
+roc_test
+plot(roc_test, print.auc = TRUE)
+```
+
+
+
+
+
+
+
+
+\bibliographystyle{plainnat}
+\bibliography{../note_sources}
+
+

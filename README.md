@@ -6,15 +6,11 @@ See the Syllabus for more details. See the notes directory for course notes.
 
 # News
 
-* Count regression notes now posted.
+* Notes on diagnostics now posted. There are exciting developments to diagnostics happening in real time!
 
 * link to stat528materials R package is [here](https://github.com/DEck13/stat528materials)
 
-* HW3 now posted. It is due on 02/28 at 11:59 PM.
-
-* Binary response regression notes now posted.
-
-* HW1 solutions now posted.
+* HW2 solutions now posted.
 
 
 ## Cheatsheats

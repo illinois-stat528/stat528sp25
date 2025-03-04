@@ -134,14 +134,56 @@ modpnb2 = glm.nb(skips~. + I(Opening:Mask),data=solder)
 modp = glm(skips~.,famil=poisson(link="log"),data=solder)
 modp2 = glm(skips~.^2,famil=poisson(link="log"),data=solder)
 
+
+## resid plots from last time
+## make dataframe and ggplot to display residuals
+dat = data.frame(mu =  predict(modpnb, type = "response"), 
+                 deviance_residuals = residuals(modpnb), 
+                 pearson_residuals = residuals(modpnb, "pearson")) %>%
+  pivot_longer(., cols = deviance_residuals:pearson_residuals, 
+               names_to = "residuals")
+dat$residuals = 
+  factor(dat$residuals, 
+         levels = c("deviance_residuals", "pearson_residuals"), 
+         labels = c("Deviance", "Pearson"))
+ggplot(dat) + 
+  aes(x = mu, y = value) + 
+  labs(y = "residuals") + 
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  facet_wrap(~residuals) + 
+  geom_hline(yintercept = 0, lty = 2, col = "red") + 
+  theme_minimal() 
+
+
+dat2 = data.frame(mu =  predict(modpnb2, type = "response"), 
+                  deviance_residuals = residuals(modpnb2), 
+                  pearson_residuals = residuals(modpnb2, "pearson")) %>%
+  pivot_longer(., cols = deviance_residuals:pearson_residuals, 
+               names_to = "residuals")
+dat2$residuals = 
+  factor(dat2$residuals, 
+         levels = c("deviance_residuals", "pearson_residuals"), 
+         labels = c("Deviance", "Pearson"))
+
+## residual plots
+ggplot(dat2) + 
+  aes(x = mu, y = value) + 
+  labs(y = "residuals") + 
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  facet_wrap(~residuals) + 
+  geom_hline(yintercept = 0, lty = 2, col = "red") + 
+  theme_minimal() 
+
 ## QQ-plot
 par(mfrow=c(3,2))
-poi.resid <- resid_disc(modp,plot = TRUE)
-poi2.resid <- resid_disc(modp2,plot = TRUE)
-norm.resid <- resid_disc(modpnb,plot = TRUE, scale = "normal")
-unif.resid <- resid_disc(modpnb,plot = TRUE, scale = "uniform")
-norm2.resid <- resid_disc(modpnb2,plot = TRUE, scale = "normal")
-unif2.resid <- resid_disc(modpnb2,plot = TRUE, scale = "uniform")
+poi.resid = resid_disc(modp,plot = TRUE)
+poi2.resid = resid_disc(modp2,plot = TRUE)
+norm.resid = resid_disc(modpnb,plot = TRUE, scale = "normal")
+unif.resid = resid_disc(modpnb,plot = TRUE, scale = "uniform")
+norm2.resid = resid_disc(modpnb2,plot = TRUE, scale = "normal")
+unif2.resid = resid_disc(modpnb2,plot = TRUE, scale = "uniform")
 
 
 # classification example

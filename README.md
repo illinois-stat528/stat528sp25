@@ -6,6 +6,8 @@ See the Syllabus for more details. See the notes directory for course notes.
 
 # News
 
+* Midterm posted. It is due on March 14 at 11:59 PM
+
 * Notes on diagnostics now posted. There are exciting developments to diagnostics happening in real time!
 
 * link to stat528materials R package is [here](https://github.com/DEck13/stat528materials)

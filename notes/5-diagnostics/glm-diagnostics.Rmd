@@ -337,7 +337,7 @@ This model fits the data extremely well. We now present a confusion matrix which
 - **Specificity (true negative rate)** is the probability of a negative test result, conditioned on the individual truly being negative.
 
 
-We can see below that this data has a high no information rate (there are relatively few home runs), and the main effects only model barely outperforms random guessing.
+We can see below that this data has a high no information rate (there are relatively very few home runs), and the main effects only model barely outperforms a classification strategy that says it is impossible to hit a home run.
 
 \vspace{5pt}
 
@@ -350,7 +350,7 @@ confusionMatrix(
 ```
 
 \vspace{5pt}
-Modeling of homeruns is much improved by the addition of a quadratic term for launch angle. 
+Modeling of home runs is much improved by the addition of a quadratic term for launch angle. 
 \vspace{5pt}
 
 ```{r}
@@ -369,6 +369,8 @@ confusionMatrix(
 A [receiver operating characteristic (ROC)](https://en.wikipedia.org/wiki/Receiver_operating_characteristic) curve is a plot of the true positive rate (sensitivity) against the false positive rate (specificity) of a classifier as the threshold which differentiates predicted class membership changes. The area under the ROC curve (AUC) is important tool for measuring the accuracy of a classifier. 
 
 The following is taken from \cite{nahm2022receiver}: The AUC is widely used to measure the accuracy of diagnostic tests. The closer the ROC curve is to the upper left corner of the graph, the higher the accuracy of the test because in the upper left corner, the sensitivity = 1 and the false positive rate = 0 (specificity = 1). The ideal ROC curve thus has an AUC = 1.0. However, when the coordinates of the x-axis (1 – specificity) and the y-axis correspond to 1 : 1 (i.e., true positive rate = false positive rate), a graph is drawn on the 45 degree diagonal (y = x) of the ROC curve (AUC = 0.5). Such a situation corresponds to determining the presence or absence of disease by random guessing with probability 0.5. Therefore, for any diagnostic technique to be meaningful, the AUC must be greater than 0.5, and in general, it must be greater than 0.8 to be considered acceptable. In addition, when comparing the performance of two or more diagnostic tests, the ROC curve with the largest AUC is considered to have a better diagnostic performance.
+
+Here we see that the model with a quadratic launch angle term has a larger AUC than the model with that term excluded. Note that both ROC curves are much greater than 0.8. In this example the general rule does not apply because the no-information classification rate is greater than 0.95. 
 
 \vspace{5pt}
 
@@ -424,7 +426,7 @@ m_train = glm(HR ~ launch_speed + poly(launch_angle, 2),
 ```
 
 \vspace{5pt}
-We get the binary response vector from the test daa set and obtain conditional probability estimates for observations in the test data set.
+We get the binary response vector from the test data set and obtain conditional probability estimates for observations in the test data set.
 \vspace{5pt}
 
 ```{r}

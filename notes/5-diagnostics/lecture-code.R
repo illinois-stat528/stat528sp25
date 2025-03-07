@@ -1,5 +1,5 @@
 
-
+library(tidyverse)
 
 # implement Esarey and Pierce (2012) by hand
 
@@ -12,7 +12,9 @@ X = cbind(1, matrix(rnorm(n*p), nrow = n, ncol = p))
 Y = rbinom(n, size = 1, prob = 1/(1 + exp(-X %*% beta)))
 
 ## conditional success probability estimates under true model
-ptrue = predict(glm(Y ~ -1 + X, family = "binomial"), type = "response")
+ptrue = predict(glm(Y ~ -1 + X, family = "binomial"), 
+                type = "response")
+
 
 ## loess kernel smoother as implemented by EP2012
 K = function(x) (1 - abs(x)^3)^3
@@ -23,8 +25,8 @@ wls = function(m, p){
   w = sapply(x, K)
   as.numeric(coef(lm(Y ~ x, weights = w))[1])
 }
-x = seq(from = 0, to = 1, by = 1/1000)
-eta0 = sapply(x, function(m) wls(m, p=ptrue))  
+m = seq(from = 0, to = 1, by = 1/1000)
+eta0 = sapply(m, function(x) wls(x, p=ptrue))  
 foo = data.frame(x = x, eta0 = eta0)
 
 ## make plot
@@ -39,8 +41,8 @@ ggplot(foo) +
 pfalse = predict(glm(Y ~ X[, 2], family = "binomial"), type = "response")
 
 ## implement smoothed local linear regression by hand
-x = seq(from = 0, to = 1, by = 1/1000)
-eta0 = sapply(x, function(m) wls(m,p=pfalse))  
+m = seq(from = 0, to = 1, by = 1/1000)
+eta0 = sapply(m, function(x) wls(x,p=pfalse))  
 foo = data.frame(x = x, eta0 = eta0)
 
 ## make plot
@@ -130,6 +132,8 @@ data("solder") # from faraway package
 
 ## Negative Binomial
 modpnb = glm.nb(skips~.,data=solder)
+summary(modpnb)
+
 modpnb2 = glm.nb(skips~. + I(Opening:Mask),data=solder)
 modp = glm(skips~.,famil=poisson(link="log"),data=solder)
 modp2 = glm(skips~.^2,famil=poisson(link="log"),data=solder)
@@ -194,6 +198,7 @@ library(PresenceAbsence)
 
 ## balls put into play 2022 season
 dat = read_csv("stat528sp25/notes/5-diagnostics/sc-hr-2022.csv")
+nrow(dat)
 head(dat)
 
 m1 = glm(HR ~ launch_speed + launch_angle, data = dat, 
@@ -203,6 +208,13 @@ pchisq(deviance(m1), df.residual(m1), lower = FALSE)
 
 preds_m1 = predict(m1, type = "response")
 mean(preds_m1 >= 0.999)
+mean(preds_m1 <= 0.000000001)
+dat %>% 
+  arrange(desc(launch_speed))
+
+dat %>% 
+  filter(HR == 1) %>%  
+  arrange(desc(launch_speed))
 
 y = dat$HR
 confusionMatrix(
@@ -213,6 +225,7 @@ confusionMatrix(
 m2 = glm(HR ~ launch_speed + poly(launch_angle, 2), 
          data = dat, family = "binomial")
 anova(m1, m2, test = "LRT")
+AIC(m1, m2)
 
 preds_m2 = predict(m2, type = "response")
 confusionMatrix(
@@ -258,7 +271,71 @@ optimal.thresholds(DATA = data.frame(ID = seq_along(nrow(dat)),
                                      pred = preds_m2)) %>% 
   as.data.frame() 
 
+## out-of-sample classification accuracy
+index = sample(1:nrow(dat), size=round(0.75*nrow(dat)), replace = FALSE)
+train = dat[index, ]
+test = dat[-index, ]
+m_train = glm(HR ~ launch_speed + poly(launch_angle, 2), 
+              data = train, family = "binomial")
+y_test = test$HR
+preds_test = predict(m_train, newdata = test)
+confusionMatrix(
+  data = as.factor(as.numeric(preds_test >= 0.5)), 
+  reference = as.factor(y_test))
+
+roc_test = roc(y_test, preds_test)
+roc_test
+plot(roc_test, print.auc = TRUE)
+
+
+## Jim Albert's work
+## https://bayesball.github.io/BLOG/homeruns.html
+
+### A rectangular region is drawn where the launch_angle is 
+### between 20 and 35 degrees and the launch_speed is 
+### between 95 and 110 mph
+foo = dat %>% mutate(red_zone = 
+  ifelse(launch_angle >= 20 & 
+           launch_angle <= 35 & 
+           launch_speed >= 95,1,0))
+m3 = glm(HR ~ launch_speed + poly(launch_angle, 2) + 
+           red_zone, 
+         data = dat, family = "binomial")
+preds_m3 = predict(m3, type = "response")
+summary(m3)
+anova(m1, m2, m3, test = "LRT")
+
+heatmap.fit(y = y, preds_m3)
+roc_m3 = roc(y, preds_m3) 
+roc_m3
+plot(roc_m3, print.auc = TRUE)
+
+confusionMatrix(
+  data = as.factor(as.numeric(preds_m3 >= 0.50)), 
+  reference = as.factor(y))
+
+
+dat_aug = cbind(dat, preds_m3)
+dat_aug %>% arrange(desc(preds_m3))
 
 
 
+### out-of-sample classification accuracy
+#### note that the test/train data sets are exactly the same 
+#### as before. The only difference is the inclusion of the 
+#### red_zone variable
+train_m3 = foo[index, ]
+test_m3 = foo[-index, ]
+m3_train = glm(HR ~ launch_speed + poly(launch_angle, 2) + 
+                 red_zone, 
+              data = train_m3, family = "binomial")
+y_test = test_m3$HR
+preds_test = predict(m3_train, newdata = test_m3)
+confusionMatrix(
+  data = as.factor(as.numeric(preds_test >= 0.5)), 
+  reference = as.factor(y_test))
+
+roc_test = roc(y_test, preds_test)
+roc_test
+plot(roc_test, print.auc = TRUE)
 

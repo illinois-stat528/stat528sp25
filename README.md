@@ -6,7 +6,7 @@ See the Syllabus for more details. See the notes directory for course notes.
 
 # News
 
-* HW4 posted. It is due at 11:59 PM on Friday April 4th.
+* HW4 posted. It is due at 11:59 PM on Monday April 7th.
 
 * Multinomial and ordinal regressions notes now posted.
 
@@ -348,15 +348,16 @@ A list of the designated University employees who, as counselors, confidential a
 * Week 10 [03/24 - 03/28]
   + Categorical data analysis
   + **Reading**: course notes, chapter 8 of Agresti, [the VGAM Package for Categorical Data Analysis](https://www.jstatsoft.org/article/view/v032i10)
+  + **Midterm solution demonstration**
 
 * Week 11 [03/31 - 04/04]
   + Data separation 
   + **Reading**: course notes, sections 6.5, 7.2 of Agresti
-  + Homework 4 due on Friday, 04/04 at 11:59 PM  
 
 * Week 12 [04/07 - 04/11]
   + LMM
   + **Reading**: course notes, chapters 10-11 of Faraway
+  + Homework 4 due on Monday, 04/07 at 11:59 PM  
 
 * Week 13 [04/14 - 04/18]
   + LMM

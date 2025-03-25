@@ -6,13 +6,11 @@ See the Syllabus for more details. See the notes directory for course notes.
 
 # News
 
-* Midterm posted. It is due on March 14 at 11:59 PM
+* HW4 posted. It is due at 11:59 PM on Friday April 4th.
 
-* Notes on diagnostics now posted. There are exciting developments to diagnostics happening in real time!
+* Multinomial and ordinal regressions notes now posted.
 
-* link to stat528materials R package is [here](https://github.com/DEck13/stat528materials)
-
-* HW2 solutions now posted.
+* link to stat528materials R package is [here](https://github.com/DEck13/stat528materials).
 
 
 ## Cheatsheats

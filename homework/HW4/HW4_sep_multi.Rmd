@@ -1,0 +1,99 @@
+---
+title: "Homework 4: Multinomial regression and data separation"
+author: "your name"
+date: 'Due: 04/04 at 11:59 PM'
+output: pdf_document
+header-includes: 
+ - \usepackage{amsthm}
+ - \usepackage{amsmath}
+ - \usepackage{amsfonts}
+ - \usepackage{amscd}
+ - \usepackage{amssymb}
+ - \usepackage{natbib}
+ - \usepackage{url}
+---
+
+\allowdisplaybreaks
+
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\inner}[1]{\langle #1 \rangle}
+\newcommand{\yobs}{y_{\text{obs}}}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This homework set will cover problems concerning multinomial regression models and data separation. Point totals for specific problems are given, 10 points will be reserved for correct submission of the homework assignment.
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 1} [20 points]: Do the following regarding the Sabermetrics dataset (bball.csv), 
+
+ - **part a** [5 points]: Fit a similar multinomial regression model to that fit to the Sabermterics data set in the course notes using the \texttt{multinom} function in the \texttt{nnet} package. Comment on the similarities and differences between the \texttt{nnet} and \texttt{VGAM} fits. Report interesting conclusions using either implementation.
+ - **part b** [15 points]: Provide recommendations on how an aspiring baseball player should approach hitting. You may want to consider success metrics like hits where hits = 1B + 2B + 3B + HR, or weighted hits where weighted hits = 1B + 2 $\times$ 2B + 3 $\times$ 3B + 4 $\times$ HR. Note these metrics are conditional on a ball being put into play in the context of this analysis. You can use either the \texttt{nnet} or \texttt{VGAM} package for this question.
+
+
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 2} [10 points]: A study of factors affecting alcohol consumption measures the response variable with the scale (abstinence, a drink a day or less, more than one drink a day). For a comparison of two groups while adjusting for relevant covariates, the researchers hypothesize that the two groups will have about the same prevalence of abstinence, but that one group will have a considerably higher proportion who have more than one drink a day. Even though the response variable is ordinal, explain why a cumulative logit model with proportional odds structure may be inappropriate for this study.
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 3} [10 points]: Refer to the table below:
+
+\begin{center}
+\begin{tabular}{llccc}
+\hline 
+	& & \multicolumn{3}{c}{Belief in Heaven} \\
+    \cline{3-5} 
+Race & Gender & Yes & Unsure & No \\	
+\hline
+Black & Female &  88 &  16 & 2 \\
+ 	  &   Male &  54 &  17 & 5 \\
+White & Female & 397 & 141 & 24 \\
+  	  & Male   & 235 & 189 & 39 \\
+\hline
+\end{tabular}
+\end{center}
+
+ - **part a** [4 points]: Fit the model
+$$
+ \log(\pi_j/\pi_3) = \alpha_j + \beta_j^Gx_1 + \beta_j^R x_2, \qquad j = 1,2.
+$$
+- **part b** [3 points]: Find the prediction equation for $\log(\pi_1/\pi_2)$.
+- **part c** [3 points]: Treating belief in heaven as ordinal, fit and interpret a cumulative logit model and a cumulative probit model. Compare results and state interpretations in each case.
+
+
+
+\vspace*{1cm}
+
+
+\noindent{\bf Problem 4} [10 points]: Suppose that you have a coin that when flipped has a probability $0 < p < 1$ of landing heads, and that we know nothing about $p$. Suppose that you flip the coin four times and all four flips resulted in heads. Derive the MLE of $p$ and the MLE of $\Var(Y_i)$ under the standard Bernoulli model. Now, for some error tolerance $0 < \alpha < 1$, derive a valid one-sided confidence interval for $p$ making use of the statement $\Prob\left(\sum_{i=1}^4y_i = 4\right)$.
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 5} [20 points]: Complete the following with respect to the \texttt{endometrial} example:
+
+  - **part a** [5 points]: Write your own Fisher scoring algorithm for this example. Argue that $\hat\beta$ diverges in some sense as the iterations of your algorithm increase.
+  - **part b** [5 points]: Show that the log likelihood has an asymptote in $\|\beta\|$.
+  - **part c** [5 points]: Code the likelihood function for this dataset, pick a value of $\tilde\beta$ that is in the LCM, find an eigenvector of estimated Fisher information $\eta$ such that the likelihood asymptotes, and then show that the likelihood asymptotes in $\tilde\beta + s\eta$ as $s \to \infty$.
+  - **part d** [5 points]: Explain why the likelihood asymptotes in $\tilde\beta + s\eta$ as $s \to \infty$.
+
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 6} [10 points]: Summarise the Firth approach mentioned in Section 7.4.7 and 7.4.8 of Agresti. Compare and contrast the Firth approach with the direct MLE approach outlined in the complete separation notes. What are the strengths and weaknesses of each approach?
+
+\vspace*{1cm}
+
+
+\noindent{\bf Problem 7} [10 points]: Use \texttt{glmdr} software to analyze the \texttt{catrec.txt} data using Poisson regression. Specifically, fit a third order model and provide confidence intervals for all mean-value parameter estimates, both one-sided intervals for responses that are constrained on the boundary and two-sided intervals for responses that are unconstrained. Also verify that the third order model is appropriate using a likelihood ratio test.
+
+
+
+
+

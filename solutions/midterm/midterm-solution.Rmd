@@ -1,0 +1,727 @@
+---
+title: "STAT 528 midterm exam"
+author: "Solution Set"
+output: pdf_document
+urlcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Analyze the SBA loans dataset
+
+This dataset contains 899164 observations and 27 columns. This is historical data about actual business loans covered by the Small Business Administration (SBA) primarily from years 1970-2013 with emphasis on whether those businesses defaulted (charged off) or not (paid in full) on those loans. The observations are small businesses that seek loans to fund their operations, start-up costs, materials, payroll, rent, etc. The SBA works with banks by guaranteeing a portion of the loan to relieve banks of assuming all financial risk. 
+
+This will load in the data:
+
+```{r loaddata, cache = TRUE}
+library(data.table)
+sba<-fread("https://uofi.box.com/shared/static/vi37omgitiaa2yyplrom779qvwk1g14x.csv", 
+					 header = TRUE, stringsAsFactors = FALSE)
+dim(sba)
+```
+
+Your assignment is to analyze this SBA dataset. Your analysis needs to be interesting and well motivated. Any final model reported needs to be justified, properly validated, and well-fitting. You need to check modeling assumptions for any final models that you report. You are allowed to consider subsets of the data as long as subsetting is well motivated. You are allowed to transform variables and create new variables provided that these manipulations are well motivated. Your analysis should be multifaceted, interesting relationships between variables should be reported. You are allowed to use materials from outside this course provided that you have a good reason for doing so and have considered the materials in this course (for example, if you consider flexible machine learning methods then you need to consider interaction terms in the glms). You are encouraged to add outside variables that may be important (economic measures for example, there have been several economic downturns over the range of data collection). 
+
+Point on selection bias: It is believed that the inclusion of loans with disbursement dates after 2010 would provide greater weight to those loans that are charged off versus paid in full. More specifically, loans that are charged off will do so prior to the maturity date of the loan, while loans that will likely be paid in full will do so at the maturity date of loan (which would extend beyond the dataset ending in 2014). Since this dataset has been restricted to loans for which the outcome is known, there is a greater chance that those loans charged off prior to maturity date will be included in the dataset, while those that might be paid in full have been excluded. It is important to keep in mind that any time restriction on the loans included in the data analyses could introduce selection bias, particularly toward the end of time period. This may impact the performance of any predictive models based on these data.
+
+The original source for this data is "Should this loan be approved or denied?: A Large dataset with class assignment guidelines" by Min Li, Amy Mickel, and Stanley Taylor (https://www.tandfonline.com/doi/full/10.1080/10691898.2018.1434342). You are not allowed to copy the analyses in this reference. However, you can compare your analyses to those conducted in this reference.
+
+You should save your midterm as **netid_midterm** and it should be stored in a directory titled **midterm**. Do not include the data set with your submission.
+
+
+\newpage
+
+Here is a description of the variables: 
+
+|Variable name | Data type | Description of variable |
+| --- | --- | --- |
+| LoanNr_ChkDgt | Text |Identifier–Primary key | 
+| Name | Text | Borrower name| 
+| City | Text | Borrower city | 
+| State | Text | Borrower state | 
+| Zip | Text | Borrower zip code | 
+| Bank |Text | Bank name | 
+| BankState | Text | Bank state | 
+| NAICS | Text | North American industry classification system code | 
+| ApprovalDate | Date/Time | Date SBA commitment issued | 
+| ApprovalFY | Text | Fiscal year of commitment | 
+| Term | Number | Loan term in months | 
+| NoEmp | Number | Number of business employees | 
+| NewExist | Text | 1 = Existing business, 2 = New business | 
+| CreateJob | Number | Number of jobs created | 
+| RetainedJob | Number | Number of jobs retained | 
+| FranchiseCode | Text | Franchise code, (00000 or 00001) = Nofranchise | 
+| UrbanRural | Text | 1 = Urban, 2 = rural, 0 = undefined | 
+| RevLineCr | Text | Revolving line of credit: Y = Yes, N = No | 
+| LowDoc | Text | LowDoc Loan Program: Y = Yes, N = No | 
+| ChgOffDate | Date/Time | The date when a loan is declared to be in default | 
+| DisbursementDate | Date/Time | Disbursement date | 
+| DisbursementGross | Currency | Amount disbursed | 
+| BalanceGross | Currency | Gross amount outstanding | 
+| MIS_Status | Text | Loan status charged off = DCHGOFF, Paid in full = PIF |  
+| ChgOffPrinGr | Currency | Charged-off amount | 
+| GrAppv | Currency | Gross amount of loan approved by bank | 
+| SBA_Appv | Currency | SBA’s guaranteed amount of approvedloan |
+
+(You may want to use regular expressions and pattern replacement functions such as `gsub` to convert currency variables to numeric.)
+
+
+\newpage
+
+Here is a description of the first two digits of the NAICS classifications: 
+
+| Sector | Description |
+| --- | --- |
+| 11 | Agriculture, forestry,fishing and hunting |
+| 21 | Mining, quarrying, and oil and gas extraction |
+| 22 | Utilities |
+| 23 | Construction | 
+| 31–33 | Manufacturing |
+| 42 | Wholesale trade | 
+| 44–45 | Retail trade | 
+| 48–49 | Transportation and warehousing | 
+| 51 | Information | 
+| 52 | Finance and insurance | 
+| 53 | Real estate and rental and leasing | 
+| 54 | Professional, scientific, and technical services | 
+| 55 | Management of companies and enterprises | 
+| 56 | Administrative and support and waste management and remediation services |
+| 61 | Educational services | 
+| 62 | Health care and social assistance | 
+| 71 | Arts, entertainment, and recreation | 
+| 72 | Accommodation and food services | 
+| 81 | Other services (except public administration) | 
+| 92 | Public administration |
+
+
+
+\newpage
+# Analysis of the SBA loans dataset
+
+This solution set is one of several possible reasonable analyses. It will be organized as follows:  
+
+- We will first clean the data set.
+- We will then consider data exploration and investigate interesting variables. 
+- We will then fit and examine a logistic regression model.
+- We will then present results, validation, and comparisons with a simple neural network and random forest.
+- Concluding remarks will then be provided.
+
+The analysis presented here will be from the perspective of an SBA official who has basic covariates on businesses, including term length, but does not have any future information on the businesses (jobs created and jobs retained variables are ignored). This hypothetical SBA official will be interested in simple models that are well-fitting and offer satisfactory predictive/classification performance.
+
+We load in the following packages:
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(heatmapFit)
+library(caret)
+library(pROC)
+library(nnet)
+library(randomForest)
+library(rpart)
+library(rpart.plot)
+```
+
+
+## Data Cleaning
+
+We start by performing some cleaning on the variables that make up the covariates in our model. First, since our response variable is whether the customer defaulted on the loan or not, the variable `MIS_Status` is our response variable. We also count the number of rows that do not have a value for `MIS_Status` as 1997 rows.
+
+```{r data cleaning}
+sba <- sba %>% mutate(MIS_Status = factor(MIS_Status))
+#sba <- separate(data = sba, col = ApprovalDate, into = c("day", "month", "year"), sep = "\\-")
+sba %>% pull(MIS_Status) %>% table()
+```
+
+
+Now, we check if the variable `ChgOffDate` can be used to measure the missing data. Since `ChgOffDate` corresponds to the date where the loan was charged off, we hypothesize that any columns with `ChgOffDate` but not `MIS_Status` can be filled in as "CHGOFF". However, we observe that not only does `ChgOffDate` not correspond necessarily to `MIS_Status` but that there are a decent number of loans that have a `ChgOffDate` and were paid in full later. Thus, we remove all the blank columns for `MIS_Status` as we cannot say anything about the final results of these loans.
+
+```{r data check}
+sba <- sba %>% filter(MIS_Status != "") 
+sba$MIS_Status <- droplevels(sba$MIS_Status)
+sba %>% pull(MIS_Status) %>% table()
+sba$MIS_Status <- ifelse(sba$MIS_Status == "P I F",1,0)
+```
+
+
+<!-- We also seek to remove and reformat some extraneous columns. We remove the loan number, as that is a distinct value for each individual loan and therefore is not useful as a covariate. We also remove the business name, as there are 778,683 distinct business names in 897,167 columns. We also remove the city name. We remove `ApprovalDate` as `ApprovalFY` provides similar date information with fewer distinct values. We also remove `ChgOffDate` as it is redundant with whether the loan is charged off in the first place.  -->
+
+Only some variables will be used in this analysis. Excluded variables either contain too many categorical levels to be useful or are thought to not be useful.
+
+\vspace{12pt}
+```{r}
+## Considered variables
+sba <- sba %>% select(State,Bank,NAICS,ApprovalFY,Term,NoEmp,NewExist,CreateJob,
+                      RetainedJob,FranchiseCode,UrbanRural,LowDoc,RevLineCr,
+                      DisbursementDate,DisbursementGross,BalanceGross,MIS_Status,
+                      GrAppv,SBA_Appv)
+```
+
+
+\vspace{12pt}
+We construct an \texttt{Industry} classification variable based on \texttt{NAICS}. For example, this variable will treat \texttt{NAICS} codes 31-33 as Manufacturing. We will also create a  geographic regions variable to be used in place of states. The variable \texttt{DisbursementYear} will be created and used in place of \texttt{ApprovalFY}. This variable indicates the year in which businesses began receiving their loans.
+<!-- We removed `RevLineCr` because it is supposed to contain only "N", "Y" or "0" if there is no data, but it in fact has 19 unique values. These other values will mess up converting it into a factor. We did the same thing with `LowDoc` which has 9 unique values even though it is listed as only containing "Y" or "N". -->
+\vspace{12pt}
+
+```{r datacleaning 2, message=FALSE}
+NAIC <- data.frame(
+  "Code" = c(11,21,22,23,31,32,33,42,44,45,48,49,51,52,53,54,55,
+             56,61,62,71,72,81,92),
+  "Industry"=c("Agriculture, Forestry, Fishing and Hunting", 
+               "Mining","Utilities","Construction",
+               rep("Manufacturing",3),"Wholesale Trade",
+               rep("Retail Trade",2),rep("Transportation and Warehousing",2),
+               "Information","Finance and Insurance",
+               "Real Estate Rental and Leasing",
+               "Professional, Scientific, and Technical Services",
+               "Management of Companies and Enterprises",
+               "Administrative and Remediation Services",
+               "Educational Services","Health Care and Social Assistance",
+               "Arts, Entertainment, and Recreation",
+               "Accommodation and Food Services",
+               "Other Services (except Public Administration)",
+               "Public Administration")
+)
+
+sba <- sba %>% 
+  mutate(NAICS = as.integer(NAICS / 10000)) %>% 
+  left_join(NAIC,by=c("NAICS"="Code")) %>% 
+  mutate(Industry = replace_na(Industry, "Unknown")) %>% 
+  filter(Industry != "Unknown") %>%
+  mutate(Region = ifelse(State %in% c("CT", "MA", "DE", "ME", "NH", 
+                                      "NJ", "NY", "PA", "VT", "RI"), "NE", "0"), 
+       Region = ifelse(State %in% c("IL", "IN", "MI", "OH", "WI", 
+                                    "IA", "KS", "MN", "MO", "NE", "ND", "SD"), 
+                       "MW", Region), 
+       Region = ifelse(State %in% c("WA", "MT", "ID", "WY", "OR", 
+                                         "CA", "NV", "UT", "CO", "AZ", 
+                                         "NM"), "West", Region),
+       Region = ifelse(Region == "0", "South", Region)) %>% 
+  mutate(Region = as.factor(Region))
+
+sba$DisbursementDate = as.Date(sba$DisbursementDate, format="%d-%b-%y")
+sba$DisbursementYear = year(sba$DisbursementDate)
+```
+\vspace{12pt}
+
+We convert dollar amounts to numeric values using the \texttt{gsub} function.
+
+\vspace{12pt}
+```{r datacleaning_gsub, cache = TRUE}
+sba <- sba %>%
+  mutate(DisbursementGross = as.numeric(gsub("\\,", "", 
+    gsub("\\$", "", DisbursementGross)))) %>%
+  mutate(BalanceGross = as.numeric(gsub("\\,", "", 
+                                        gsub("\\$", "", BalanceGross)))) %>%
+  mutate(GrAppv = as.numeric(gsub("\\,", "", gsub("\\$", "", GrAppv)))) %>%
+  mutate(SBA_Appv = as.numeric(gsub("\\,", "", gsub("\\$", "", SBA_Appv))))
+```
+
+
+\vspace{12pt}
+We consider the number of employees on the log scale. Empty levels and levels of factor variables for which the meaning is unclear are removed. This is done for \texttt{UrbanRural}, \texttt{NewExist}, and \texttt{State}. Term length is converted to years as opposed to months, and entries with 0 term length are removed. We also create the variable \texttt{recession\_2007} to model impacts of the Great Recession. All loans disbursed after 2011 are ignored because of the selection bias mentioned in the reference (https://www.tandfonline.com/doi/full/10.1080/10691898.2018.1434342).
+
+A variable \texttt{p\_GrAppv = GrAppv/SBA\_Appv} is created. This variable is greater than 1 whenever the business receives more funding than what was approved by the SBA. This variable has the nice property that it is [dimensionless in the physical sense](https://en.wikipedia.org/wiki/Dimensionless_quantity), i.e. does not have units, and has the same meaning across years, different inflationary environments, and for large and small businesses alike. If you find the concept of modeling using "dimensionless" variables interesting then see [this paper](https://www.tandfonline.com/doi/abs/10.1080/00401706.2019.1585294?journalCode=utch20) on work that bridges physical dimensional analysis and statistical modeling in the context of experimental design.
+
+
+\vspace{12pt}
+```{r}
+sba <- sba  %>% 
+  mutate(State = factor(State)) %>% 
+  mutate(log_noEmp = log(NoEmp + 1)) %>% 
+  filter(NewExist != 0) %>%
+  filter(NoEmp > 0) %>%
+  mutate(NewExist = as.factor(NewExist)) %>%
+  mutate(UrbanRural = as.factor(UrbanRural)) %>% 
+  mutate(Industry = as.factor(Industry)) %>% 
+  mutate(Term = Term/12) %>% 
+  filter(Term > 0) %>% 
+  mutate(p_GrAppv = GrAppv/SBA_Appv) %>%  
+  mutate(DisbursementGross = log(DisbursementGross)) %>% 
+  mutate(recession_2007 = as.factor(ifelse(ApprovalFY >= 2007,1,0))) %>% 
+  filter(State != "") %>% 
+  filter(DisbursementYear < 2011) %>%
+  filter(UrbanRural != 0) %>% 
+  filter(RevLineCr %in% c("Y","N",0)) %>% 
+  filter(LowDoc %in% c("Y","N")) %>%   
+  mutate(LowDoc = as.factor(LowDoc)) %>% 
+  mutate(RevLineCr = as.factor(RevLineCr))
+sba$LowDoc <- droplevels(sba$LowDoc)
+sba$RevLineCr <- droplevels(sba$RevLineCr)
+sba$State <- droplevels(sba$State)
+```
+
+
+## Data exploration
+
+We will consider a subset of the data for exploratory purposes.
+
+\vspace{12pt}
+```{r, warning=FALSE, message=FALSE}
+set.seed(13)
+sba_test <- sba[sample(1:nrow(sba), size = 1e5, replace = FALSE), ]
+```
+
+
+\vspace{12pt}
+The term length variable seems to be highly associated with the default rate. But this variable is irregular in that it has a large mass at certain discrete values.
+
+\vspace{12pt}
+```{r, warning=FALSE, message=FALSE}
+ggplot(sba_test, aes(x = Term, y = MIS_Status)) + 
+  geom_point() + 
+  geom_smooth(formula = y~poly(x, 10), method = "glm", 
+              method.args=list(family = "binomial"), se = FALSE) + 
+  theme_minimal()
+
+ggplot(sba_test, aes(x = Term, y = MIS_Status)) + 
+  geom_point() + 
+  geom_smooth(method = "glm", method.args=list(family = "binomial"), 
+              se = FALSE) + 
+  theme_minimal()
+
+sba %>% pull(Term) %>% hist(., main = "Histogram of Term length", breaks = 50)
+```
+
+\vspace{12pt}
+We still see that Term length is associated with the default rate after removing 5,7,10,15, and 20 year loans. It is interesting to note that the probability of paid in full decreases with the exclusion of these discrete term lengths. We will consider discrete effects for these categorical levels when we fit models.
+
+\vspace{12pt}
+```{r, warning=FALSE, message=FALSE}
+ggplot(sba_test %>% filter(!Term %in% c(5,7,10,15,20)), 
+       aes(x = Term, y = MIS_Status)) + 
+  geom_point() + 
+    geom_smooth(formula = y~poly(x, 10), method = "glm", 
+              method.args=list(family = "binomial"), se = FALSE) + 
+  theme_minimal()
+```
+
+\vspace{12pt}
+We see that the number of employees is also associated with the default rate. There is an interesting business with a large number of employees that defaulted. We will display some information on other large businesses which defaulted.
+
+
+\vspace{12pt}
+```{r, message=FALSE, warning=FALSE}
+ggplot(sba_test, aes(x = log(NoEmp + 1), y = MIS_Status)) + 
+  geom_point() + 
+  geom_smooth(method = "glm", method.args=list(family = "binomial"), 
+              se = FALSE) + 
+  theme_minimal()
+```
+
+\footnotesize
+```{r}
+sba %>% 
+  filter(NoEmp > 2000, MIS_Status == 0) %>% 
+  select(DisbursementYear, Term, NoEmp, recession_2007, Industry)
+```
+
+
+\normalsize
+\vspace{12pt}
+We see that some industries only have a few businesses receiving SBA loans. We will remove industries with fewer than 500 businesses in the data set.
+
+\vspace{12pt}
+```{r}
+sba %>% 
+  count(Industry) %>% 
+  arrange(desc(n)) %>% 
+  as.data.frame()
+
+sba <- sba %>% 
+  filter(!Industry %in% c("Utilities","Public Administration",
+                       "Management of Companies and Enterprises"))
+```
+
+
+
+\vspace{12pt}
+We see that the default rate is associated with \texttt{p\_GrAppv}. In particular, the default rate increases as the amount of funds dispersed relative to those approved by SBA increases.
+
+\vspace{12pt}
+```{r, message=FALSE, warning=FALSE}
+ggplot(sba_test, aes(x = p_GrAppv, y = MIS_Status)) + 
+  geom_point() + 
+  geom_smooth(formula = y~poly(x, 3), method = "glm", 
+              method.args=list(family = "binomial"), se = FALSE) + 
+  theme_minimal()
+```
+
+\vspace{12pt}
+Outlying values of \texttt{p\_GrAppv} are removed.
+
+\vspace{12pt}
+
+```{r, message=FALSE, warning=FALSE}
+sba %>% select(DisbursementYear, Term, p_GrAppv, MIS_Status) %>% 
+  filter(p_GrAppv >= 5) %>%
+  arrange(desc(p_GrAppv)) %>% 
+  as.data.frame()
+sba <- sba %>% filter(p_GrAppv <= 5) 
+
+ggplot(sba_test %>% filter(p_GrAppv <= 5), aes(x = p_GrAppv, y = MIS_Status)) + 
+  geom_point() + 
+  geom_smooth(formula = y~poly(x, 3), method = "glm", 
+              method.args=list(family = "binomial"), se = FALSE) + 
+  theme_minimal()
+```
+
+
+\vspace{12pt}
+<!-- We will restrict attention to years after 1983 due to [multiple recessions](https://en.wikipedia.org/wiki/List_of_recessions_in_the_United_States) in the early 1980s and relatively sparse data before that time period.  -->
+We will restrict attention to data entries in which the term length plus disbursement year is before 2015.
+
+\vspace{12pt}
+```{r}
+sba %>% pull(DisbursementYear) %>% table()
+
+sba <- sba %>% 
+  filter(Term + DisbursementYear < 2015)
+```
+
+\vspace{12pt}
+There a lot of banks issuing loans. We will treat banks that issue at least 2000 loans as individual banks, and group all other banks into a single level. Notice that there is significant variability in the default rate across banks.
+
+\vspace{12pt}
+```{r}
+big_banks = sba %>% 
+  count(Bank) %>% 
+  filter(n >= 2000) %>% 
+  pull(Bank)
+sba = sba %>% 
+  mutate(Bank_factor = ifelse(Bank %in% big_banks, Bank, "Small Bank"), 
+         Bank_factor = as.factor(Bank_factor))
+
+sba %>% 
+  summarise(default_rate =  1- mean(MIS_Status), n = n(), 
+            .by = Bank_factor) %>% 
+  arrange(desc(default_rate))
+```
+
+Finally, we will split data into training and testing sets.
+
+```{r}
+set.seed(528)
+idx = sample(nrow(sba), size = round(0.8*nrow(sba)))
+train = sba[idx,]
+test = sba[-idx,]
+```
+
+
+
+## Modeling
+
+We now fit a logistic regression model that considers several interactions and main-effect terms. Notably, we consider a linear effect for term length while also considering discrete effects for several common term lengths and short term loans. We consider post-2008 recession effects for several variables.
+
+\vspace{12pt}
+```{r model, cache=TRUE}
+system.time(m <- glm(MIS_Status ~ Region*UrbanRural + Bank_factor + 
+        poly(p_GrAppv, 3) + RevLineCr + LowDoc + 
+        (I(Term <= 2) + I(Term == 5) + I(Term == 7) + I(Term == 10) + 
+          poly(Term, 2))*p_GrAppv + 
+        log_noEmp + NewExist + Industry + 
+        recession_2007*(Bank_factor + (I(Term <= 2) + 
+          I(Term == 5) + I(Term == 7) + poly(Term, 2))*p_GrAppv + Region),
+          data = train, family = "binomial"))
+```
+
+
+
+\vspace{12pt}
+The summary table below reveals that most of these variables are statistically significant at any reasonable testing threshold. Justification for several of these covariates (and their effects on default rate) was investigated in the preceding section. It is interesting to note that the urban/rural effect interacts with geographical region, and that several covariates interact with the 2008 recession (encoded when funds were disbursed in the previous year). In particular the main-effect for term length is positively associated with the probability of paid in full before the recession, and is negatively associated after/during the recession.
+
+\vspace{12pt}
+\footnotesize
+```{r}
+summary(m)
+```
+\normalsize
+
+
+## Results and validation
+
+A likelihood ratio test suggests that our model fits the data better than a saturated model.
+
+\vspace{12pt}
+```{r}
+pchisq(deviance(m), m$df.residual, lower = FALSE)
+```
+
+\vspace{12pt}
+The heatmap diagnostic in [Esarey and Pierce (2012)](https://econpapers.repec.org/article/cuppolals/v_3a20_3ay_3a2012_3ai_3a04_3ap_3a480-500_5f01.htm) suggests that our final model fits the data pretty well. The tests suggest a statistical lack of fit, but the heatmap plot does not reveal any practical lack of fit. Model predictions are closely aligned with empirical success probabilities.
+
+\vspace{12pt}
+```{r heatmap, cache=TRUE}
+p_train <- predict(m, type = "response")
+y_train <- train$MIS_Status
+heatmap.fit(y_train, p_train)
+```
+
+\vspace{12pt}
+We will now investigate classification using a confusion matrix on the test data where we encode a success when $\hat{p} > 0.5$, and a failure when $\hat{p} \leq 0.5$. From the output below, we see that classification accuracy of 0.8802 is much higher than the no information rate of 0.7081. 
+
+\vspace{12pt}
+```{r, warning=FALSE, message=FALSE}
+y_test <- test$MIS_Status
+p_test <- predict(m, newdata = test, type = "response")
+conf_mat <- confusionMatrix(data=factor(as.numeric(p_test>0.5)), 
+                           reference = factor(y_test))
+conf_mat
+```
+
+
+\vspace{12pt}
+A [Receiver Operating Characteristic (ROC)](https://developers.google.com/machine-learning/crash-course/classification/roc-and-auc) curve is also provided. This ROC curve indicates that our logistic regression model is a pretty good classifier as judged by area under the curve. 
+
+\vspace{12pt}
+```{r, warning=FALSE, message=FALSE}
+sba_roc = roc(y_test ~ p_test, plot = TRUE, print.auc = TRUE)
+```
+
+
+
+#### Neural network 
+
+We now compare our logistic regression model with a simple neural network. We first extract a model matrix for the main-effect terms used in our logistic regression model.
+
+\vspace{12pt}
+```{r}
+variables_train <- train %>% select(Term, NoEmp, log_noEmp, p_GrAppv, 
+                        Region, RevLineCr, LowDoc, NewExist, UrbanRural, 
+                        recession_2007, Bank_factor)
+modmat_train <- model.matrix(~., data = variables_train)
+```
+
+\vspace{12pt}
+The neural network that we will consider will have 3 units in the hidden layer. We see that this neural network converged. 
+
+\vspace{12pt}
+```{r neural_net, cache = TRUE}
+system.time(n1 <- nnet(x = modmat_train, y = y_train, 
+                       size = 3, maxit = 1e3, trace = FALSE))
+n1$convergence
+```
+
+
+\vspace{12pt}
+This neural network had a slightly lower classification accuracy (0.8768) than our logistic regression model (0.8802). This could be due to the algorithm struggling with the discrete/polynomial nature of the Term variable, although this is speculation.
+
+
+\vspace{12pt}
+```{r}
+variables_test <- test %>% select(Term, NoEmp, log_noEmp, p_GrAppv, 
+                        Region, RevLineCr, LowDoc, NewExist, 
+                        UrbanRural, recession_2007, Bank_factor)
+modmat_test <- model.matrix(~., data = variables_test)
+p_nnet <- predict(n1, newdata = modmat_test)
+conf_mat_nnet <- confusionMatrix(
+  data=factor(as.numeric(p_nnet>0.5)), 
+  reference = factor(test$MIS_Status))
+conf_mat_nnet
+```
+
+\vspace{12pt}
+This ROC curve indicates that this neural network model is an adequate/good classifier and is comparable, albeit worse, than our logistic regression model as judged by area under the curve.
+
+\vspace{12pt}
+```{r, warning=FALSE, message=FALSE}
+sba_roc_nnet = roc(y_test ~ p_nnet, 
+                   plot = TRUE, print.auc = TRUE)
+```
+
+
+#### Random forest
+
+We now compare our logistic regression model with a random forest. 
+
+\vspace{12pt}
+```{r rf, warning = FALSE, cache=TRUE}
+colnames(modmat_train) <- make.names(colnames(modmat_train))
+system.time(rforest <- randomForest(y_train ~ ., 
+  data = modmat_train[, -1]))
+```
+
+\vspace{12pt}
+Random forest predictions are computed below.
+
+\vspace{12pt}
+```{r rf_preds, warning = FALSE, cache=TRUE}
+colnames(modmat_test) <- make.names(colnames(modmat_test))
+p_rf <- predict(rforest, newdata = modmat_test[, -1])
+```
+
+
+\vspace{12pt} 
+The random forest had superior classification accuracy (0.9349) over our logistic regression model (0.8802). 
+
+\vspace{12pt}
+```{r}
+conf_mat_rf <- confusionMatrix(
+  data=factor(as.numeric(p_rf>0.5)), 
+  reference = factor(y_test))
+conf_mat_rf
+```
+
+\vspace{12pt}
+This ROC curve indicates that the random forest is an good classifier and is comparable, albeit better, than our logistic regression model as judged by area under the curve.
+
+\vspace{12pt}
+```{r, warning=FALSE, message=FALSE}
+sba_roc_rf = roc(y_test ~ p_rf, 
+                   plot = TRUE, print.auc = TRUE)
+```
+
+\vspace{12pt}
+A variable importance plot reveals that term length is far and away the most relevant predictor.
+
+\vspace{12pt}
+```{r}
+varImpPlot(rforest, sort = TRUE)
+```
+
+
+\newpage
+## Concluding remarks 
+
+1. Our logistic regression model included highly relevant predictors, is better fitting than a saturated model, passes model diagnostics, and exhibits good classification accuracy. This model does not include year effects or covariates that are recorded after loan funds are disbursed, and can therefore be used to assess the chances that a loan will be paid in full after the loan term length is designated. 
+
+2. The effect that term length has on the probability that a loan is paid in full is interesting as it exhibits a linear continuous type effect punctuated by jumps for specific frequently occurring term lengths as well as a short term length effect. It could be that specific term lengths are a part of standard banking practices, and that other less occurring term lengths reflect different banking practices. In any event, these discrete term length variables are relevant for modeling. A follow up analysis in the Appendix demonstrates that the removal of these effects yields poorer model fit. 
+
+3. We compared our logistic regression model with a simple neural network, and this comparison was favorable for our logistic regression. However, it should be noted that not much attention was given toward properly tuning the neural network. So it may be a bit premature to conclude that logistic regression modeling is better than a neural network based approach. That being said, the discrete and continuous nature of the term length variable may be difficult for neural networks. 
+
+4. We also compared our logistic regression model with a random forest, and this comparison was favorable for the random forest in terms of classification accuracy. Perhaps our logistic regression model can be improved by considering more variables, higher order interaction terms, and/or additional data splits. The variable importance plot from the the random forest fit and the reported decision tree in the Appendix suggest that Term is very important and the Bank factor variable is also important. Further considerations of these variables and perhaps more informed engineering of the Bank variable can improve modeling performance. In the Appendix we go a different direction and explore an ensemble inspired approach to improve our logistic regression model by using the random forest predicted probabilities as a model input. This model is (slightly) better on balance than both our original logistic regression model and the original random forest model. A more transparent ensemble inspired approach is also provided. This approach uses predicted probabilities from a single decision tree as a model input. This approach is transparent and is more competitive with the random forest ensemble approach in terms of prediction accuracy, but random forest still wins.
+
+5. Several potentially interesting variables were excluded. We did not consider inflation-adjusted disbursement gross, state effects, or recession effects for industries in this analysis. We also did not include the franchise code variable as we thought that new vs established business was more relevant. 
+
+
+\newpage
+## Appendix (removal of discrete term effects)
+
+Here we refit our logistic regression model without the discrete Term effects. This model exhibits some lack of fit. 
+
+\vspace{12pt}
+```{r appen, message = FALSE,  warning=FALSE, cache = TRUE}
+m2 <- glm(MIS_Status ~ Region*UrbanRural + 
+  p_GrAppv + I(p_GrAppv^2) + I(p_GrAppv^3) + 
+  RevLineCr + LowDoc + (Term + I(Term^2))*p_GrAppv + log_noEmp + 
+  NewExist + Industry + 
+  recession_2007*((Term + I(Term^2))*p_GrAppv + Region),
+          data = train, family = "binomial")
+
+p2 <- predict(m2, type = "response")
+heatmap.fit(y_train, p2)
+```
+
+
+
+
+\newpage
+## Appendix (ensemble model inspired approach)
+
+We fit the same logistic regression model as before with the random forest estimated success probabilities as an additional covariate.
+
+\vspace{12pt}
+```{r super_glm, cache = TRUE}
+p_rf_train <- predict(rforest)
+train_super <- train
+train_super$rf <-  p_rf_train
+system.time(m_super <- glm(MIS_Status ~ rf + Bank_factor + 
+  Region*UrbanRural + poly(p_GrAppv, 3) + RevLineCr + LowDoc + 
+  (I(Term <= 2) + I(Term == 5) + I(Term == 7) + I(Term == 10) + 
+  poly(Term, 2))*p_GrAppv + 
+    log_noEmp + NewExist + Industry + 
+  recession_2007*(Bank_factor + (I(Term <= 2) + I(Term == 5) + I(Term == 7) + 
+    poly(Term, 2))*p_GrAppv + Region),
+  data = train_super, family = "binomial"))
+```
+
+\vspace{12pt}
+This model has the highest classification accuracy and its ROC curve has the highest area under the curve.
+
+\vspace{12pt}
+```{r}
+test_super <- test
+test_super$rf <- p_rf
+p_super_test <- predict(m_super, newdata = test_super, type="response")
+
+conf_mat_super <- confusionMatrix(
+  data=factor(as.numeric(p_super_test>0.5)), 
+  reference = factor(y_test))
+conf_mat_super
+```
+
+```{r, warning=FALSE, message=FALSE}
+sba_roc_rf = roc(y_test ~ p_super_test, 
+                 plot = TRUE, print.auc = TRUE)
+
+```
+
+\vspace{12pt}
+However, this model blurs transparency by using random forest output as a logistic model input. A more transparent approach would be to use the output from a single decision tree as a logistic model input.
+
+\vspace{12pt}
+```{r rpart_fit, cache = TRUE}
+set.seed(13)
+variables <- train %>% dplyr::select(Term, NoEmp, log_noEmp, p_GrAppv, 
+                                   Region, RevLineCr, LowDoc, NewExist, 
+                                   UrbanRural, recession_2007, Bank_factor)
+
+## fit decision tree
+system.time({
+  fit <- rpart(train$MIS_Status~., data = variables, method = 'class')
+})  
+train_rpart <- train
+train_rpart$rpart <-  as.numeric(predict(fit)[, 2])
+
+## add decision tree output to logistic regression model
+system.time(m_rpart <- 
+  glm(MIS_Status ~ as.factor(rpart) + Region*UrbanRural + Bank_factor + 
+        poly(p_GrAppv, 3) + RevLineCr + LowDoc + 
+        (I(Term <= 2) + I(Term == 5) + I(Term == 7) + I(Term == 10) + 
+          poly(Term, 2))*p_GrAppv + 
+        log_noEmp + NewExist + Industry + 
+        recession_2007*(Bank_factor + (I(Term <= 2) + 
+          I(Term == 5) + I(Term == 7) + poly(Term, 2))*p_GrAppv + Region),
+        data = train_rpart, family = "binomial"))
+
+## obtain predictions on test set
+test_rpart <- test
+test_rpart$rpart <- as.numeric(predict(fit, newdata = test %>% 
+                     dplyr::select(Term, NoEmp, log_noEmp,
+                                   p_GrAppv, Region, RevLineCr, LowDoc, 
+                                   NewExist, UrbanRural, recession_2007, 
+                                   Bank_factor))[, 2])
+
+p_test_rpart <- predict(m_rpart, newdata = test_rpart)
+```
+
+\vspace{12pt}
+This approach is more accurate than our basic logistic regression model and offers more competitive prediction accuracy with the random forest ensemble above, albeit it is not as good. Perhaps the gained transparency makes up the difference.
+
+\vspace{12pt}
+```{r}
+conf_mat <- confusionMatrix(data=factor(as.numeric(p_test_rpart>0.5)), 
+                           reference = factor(y_test))
+conf_mat
+```
+
+\vspace{12pt}
+```{r, warning=FALSE, message=FALSE}
+sba_roc_rpart = roc(y_test ~ p_test_rpart, 
+                   plot = TRUE, print.auc = TRUE)
+```
+
+\vspace{12pt}
+Here is the decision tree: 
+
+\vspace{12pt}
+```{r}
+rpart.plot(fit, extra = 106)
+```
+
+
+

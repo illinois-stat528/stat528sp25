@@ -1,0 +1,860 @@
+---
+title: "Homework 3: Binary and Count Regressions"
+author: "TA : Arjama Das"
+date: "Due: February 28th at 11:59 PM"
+output: pdf_document
+header-includes: 
+ - \usepackage{amsthm}
+ - \usepackage{amsmath}
+ - \usepackage{amsfonts}
+ - \usepackage{amscd}
+ - \usepackage{amssymb}
+ - \usepackage{natbib}
+ - \usepackage{url}
+---
+
+\allowdisplaybreaks
+
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\inner}[1]{\langle #1 \rangle}
+\newcommand{\yobs}{y_{\text{obs}}}
+\newcommand{\simiid}{\stackrel{iid}{\sim}}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This homework set will cover problems concerning binary and count regression models. Point totals for specific problems are given, 10 points will be reserved for correct submission of the homework assignment.
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 1} [15 points]: This problem concerns manual creation of summary tables from nothing more than the observed data and the assumed model.
+
+ - **part a** [5 points]: Manually write your own iteratively reweighted least squares algorithm which maximizes the logistic regression log likelihood for the CCSO example in the notes. Report the estimated submodel canonical parameter vector $\hat\beta$ and reproduce the summary table (up to convergence tolerance differences) without using the \texttt{glm} or \texttt{summary} commands. You can ignore deviance residuals.
+ - **part b** [5 points]: Manually write your own iteratively reweighted least squares algorithm which maximizes the Poisson regression log likelihood for the Galapagos example in the notes. Report $\hat\beta$ and reproduce the summary table (up to convergence tolerance differences) without using the \texttt{glm} or \texttt{summary} commands. You can ignore deviance residuals. 
+ - **part c** [5 points]: Manually write your own Fisher scoring algorithm for one of the parts above, and compare estimates of $\beta$ from the Fisher scoring algorithm and the iteratively rewighted least squares algorithm.
+ 
+\vspace*{1cm}
+
+\noindent{\bf Solution}:
+
+\vspace*{0.5cm}
+
+- part a
+
+Now we will define the IRLS function for this problem.
+
+```{r, message=FALSE, warning=FALSE}
+# Reading in the data
+library(data.table)
+library(tidyverse)
+library(MASS)
+```
+
+```{r}
+CCSO = fread("https://uofi.box.com/shared/static/9elozjsg99bgcb7gb546wlfr3r2gc9b7.csv")
+CCSO <- CCSO %>% rename(daysInJail = "Days in Jail", arrestAge = "Age at Arrest",
+bookingDate = "BOOKING DATE", sex = "SEX", race = "RACE",
+crimeCode = "CRIME CODE", jacketNumber = 'JACKET NUMBER',
+releasedReason = 'RELEASED REASON', arrestAgency = 'ARREST AGENCY',
+employmentStatus = 'EMPLOYMENT STATUS', city = 'CITY'
+)
+CCSO_small = CCSO %>%
+mutate(atleastone = ifelse(daysInJail > 0,1,0)) %>%
+filter(crimeCode == "OTHER TRAFFIC OFFENSES") %>%
+filter(race %in% c("Asian/Pacific Islander","Black","White","Hispanic")) %>%
+filter(sex %in% c("Female","Male")) %>%
+dplyr::select(atleastone, arrestAge, sex, race, bookingDate) %>%
+mutate(race = fct_drop(race), sex = fct_drop(sex))
+CCSO_small = CCSO_small[complete.cases(CCSO_small), ]
+head(CCSO_small)
+```
+
+```{r}
+M1 <- model.matrix(~ -1 + race + sex + arrestAge, data = CCSO_small)
+Y1 = CCSO_small$atleastone
+```
+
+```{r}
+irls_logistic_regression <- function(M, Y, max.iter = 100, tolerance = 1e-8) {
+    # Number of parameters
+    p <- dim(M) [2]
+    # Initialize beta
+    beta <- matrix(0, nrow = p, ncol = 1)
+    # Loop until convergence or max iterations
+    for (iter in 1:max.iter) {
+        # Calculate probabilities
+        eta <- M %*% beta
+        p <- 1 / (1 + exp(-eta))
+        # Calculate weights
+        W <- diag(as.vector(p * (1 - p)))
+            # Update beta using the Newton-Raphson method (IRLS)
+            z<- eta + (Y - p) / (p * (1 - p))
+            beta.new <- solve(t(M) %*% W %*% M) %*% t(M) %*% W %*% z
+            # Check for convergence
+            if (sqrt(sum((beta.new - beta)^2)) < tolerance) {
+                cat("Converged in", iter, "iterations\n")
+            break
+        }
+        beta <- beta.new
+    }
+    return(beta)
+}
+beta_1 = irls_logistic_regression(M1, Y1)
+```
+
+```{r}
+eta <- M1 %*% beta_1
+p <- 1 / (1 + exp(-eta))
+W <- diag(as.vector(p * (1 - p)))
+H <- t(M1) %*% W %*% M1
+var_cov_matrix <- solve(H)
+sd_err <- sqrt(diag(var_cov_matrix))
+z_val = beta_1/sd_err
+p_val = 2 *(1 - pnorm(abs(beta_1/sd_err)))
+sum_table_1 = data.frame(beta_1, sd_err, z_val, p_val)
+sum_table_1
+```
+
+- part b
+
+```{r, message=FALSE, warning=FALSE}
+library(faraway)
+```
+
+```{r}
+#Pre-processing the data
+data(gala)
+gala <- gala %>%
+mutate(Size = as.factor(1 + ifelse(Area > 1,1,0) + ifelse(Area > 25,1,0)))
+head(gala)
+```
+
+```{r}
+M2 <- model.matrix(~ Elevation + Nearest + Scruz + Adjacent + Size, data = gala)
+Y2 = gala$Species
+```
+
+```{r}
+irls_poisson_regression <- function(M, Y, max.iter = 100, tolerance = 1e-8) {
+    # Initialize beta
+    p <- dim(M)[2] # Number of parameters
+    set.seed(96)
+    #beta <- matrix(0, nrow = p, ncol = 1)
+    beta <- matrix(rnorm(p)/100, nrow = p, ncol = 1)
+    # Loop until convergence or max iterations
+    for (iter in 1:max.iter) {
+        # Calculate lambda (mean) for Poisson distribution
+        eta <- M %*% beta
+        lambda <- exp(eta)
+        # Calculate weights
+        W <- diag(as.vector(lambda),nrow=nrow(M) ,ncol=nrow(M))
+        # Calculate the working response
+        z <- eta + solve(W) %*% (Y - lambda)
+        # Update beta
+        beta_new <- solve(t(M) %*% W %*% M) %*% t(M) %*% W %*% z
+        # Check for convergence
+        if (sqrt(sum((beta_new - beta)^2)) < tolerance) {
+            cat("Converged in", iter, "iterations\n")
+            break
+        }
+        beta <- beta_new
+    }
+    return(beta)
+}
+beta_2 = irls_poisson_regression(M2, Y2)
+```
+
+```{r}
+eta <- M2 %*% beta_2
+lambda <- exp(eta)
+W <- diag(as.vector(lambda),nrow=nrow(M2),ncol=nrow(M2))
+H <- t(M2) %*% W %*% M2
+var_cov_matrix <- solve(H)
+sd_err <- sqrt(diag(var_cov_matrix))
+z_val = beta_2/sd_err
+p_val = 2 * (1 - pnorm(abs(beta_2/sd_err)))
+sum_table_2 = data.frame(beta_2, sd_err, z_val, p_val)
+sum_table_2
+```
+
+- part c
+
+The log-likelihood is
+$$
+\begin{gathered}
+l(\beta)=\sum_{i=1}^{n} y_{i} x_{i}^{T} \beta-\log \left(1+\exp \left(x_{i}^{T} \beta\right)\right) \\
+l^{\prime}(\beta)=\sum_{i=1}^{n}\left(y_{i} x_{i}-\frac{x_{i}}{1+\exp \left(x_{i}^{T} \beta\right)} \exp \left(x_{i}^{T} \beta\right)\right) \\
+\Longrightarrow l^{\prime}(\beta)=X^{T}(Y-\pi)
+\end{gathered}
+$$
+where $\pi_{i}=\frac{\exp \left(x_{i}^{T} \beta\right)}{1+\exp \left(x_{i}^{T} \beta\right)}$
+$$
+\begin{gathered}
+l^{\prime \prime}(\beta)=-\sum_{i=1}^{n}\left(\frac{x_{i}^{2}}{\left(1+\exp \left(x_{i}^{T} \beta\right)\right)^{2}} \exp \left(x_{i}^{T} \beta\right)\right) \\
+\Longrightarrow l^{\prime \prime}(\beta)=-X^{T} W X
+\end{gathered}
+$$
+where $W=\operatorname{diag}\left(\pi_{i}\left(1-\pi_{i}\right)\right)$
+Thus the Fisher scoring algorithm:
+$$
+\beta^{(t+1)}=\beta^{(t)}+(X^{T} W^{(t)} X)^{-1} X^{T}(Y-\pi)
+$$
+
+```{r}
+#Creating the model matrix
+X = model.matrix(atleastone ~ -1 + race + sex + arrestAge, data = CCSO_small)
+n = nrow(X)
+p = ncol(X)
+Y = CCSO_small$atleastone
+# Initializing the beta
+beta = matrix (rep (0,6))
+#Running the Fisher scoring iterations
+for(t in 1:10)
+{
+    pi = exp(X%*%beta)/(1+exp(X%*%beta))
+    W = diag(c(pi*(1-pi)))
+    beta = beta + solve(t(X) %*% W %*% X)%*%t(X)%*%(Y - pi)
+}
+```
+
+```{r}
+# The final values
+pi_CCSO = exp(X%*%beta)/(1+exp(X%*%beta))
+W_CCSO = diag(c(pi_CCSO*(1-pi_CCSO)))
+var_matrix_CCSO = solve(t(X) %*% W_CCSO %*% X)
+sd_beta = sqrt(diag(var_matrix_CCSO))
+z_Val = beta/sd_beta
+pvalue = 2*(1 - pnorm(abs(z_Val)))
+```
+
+```{r}
+#Deviance results
+deviance_res = -2*(t(Y)%*%X%*%beta - sum(log(1+exp(X%*%beta))))
+beta_0 = 0
+deviance_null = -2*(beta_0*sum(Y) - n*log(1+exp(beta_0)))
+AIC = deviance_res + 2*p
+```
+
+The summary table:
+
+```{r}
+tab = data.frame("Estimate" = beta,"Std.Error" = sd_beta,
+            "z value" = z_Val, "Pvalue" = pvalue)
+list("Coefficients" = tab, "Null deviation" = deviance_null,
+        "Residual Deviance" = deviance_res,"Null df" = n,
+        "Residual df" = n-p, "AIC" = AIC)
+```
+
+Both algorithms yield the same estimate.
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 2} [10 points]: Complete the following parts:
+
+ - **part a** [5 points]: Explain important findings and model information from the summary table produced by a call to summary(m1) in the CCSO example in the logistic regression notes. Keep in mind that we restricted attention to "other traffic offenses" in the CCSO example, and that this data is observational.
+ - **part b** [5 points]: Explain important findings and model information from the summary table produced by a call to summary(m1) in the Galapagos islands example in the count regression notes.
+ 
+\vspace*{1cm}
+
+\noindent{\bf Solution}:
+
+\vspace*{0.5cm}
+
+- part a
+
+```{r}
+# Creating the logistic regression model for the CCSO model
+m1 <- glm(atleastone ~ -1 + race + sex + arrestAge, data = CCSO_small,
+family = "binomial", x = "TRUE")
+summary(m1)
+```
+
+The estimate column gives the estimate for $\beta$ for the logistic model
+$$
+\operatorname{logit}(E(Y \mid X))=X \beta
+$$
+
+A unit increase in the predictor variable $X_{j}$ corresponds to an increase of $\beta_{j}$ (estimated by $\hat{\beta}_{j}$ ) in the log-odds ratio with everything else being held fixed. A simpler interpretation is that $\hat{\beta}_{j}>0$ can be interpreted as: An increase in $X_{j}$ implies that $P(Y=1 \mid X=x)$ increases.
+
+Thus,
+
+ - Race is significant when testing at reasonable significance levels. We observe that Black individuals are estimated to have comparatively larger propensity of incarcerations lasting one day or longer for "other traffic offenses". We would need to look into other factors such as socio-economic status, repeat offenders, and multiple offenses before we could conclude that race is the driver of longer incarcerations.
+
+ - Sex being Male is estimated to increase the propensity of incarcerations lasting longer than one day for "other traffic offenses".
+
+ - Age increasing also is estimated to increase the propensity of incarcerations lasting longer than one day for "other traffic offenses".
+
+The standard error column gives the standard error of the estimate of the $\beta$ coefficients. The Z-value and P -value help in detecting the significance of the covariates. At a level of $\alpha=0.05$ we can see that all the covariates are significant.
+The null deviance and residual deviance give information about the goodness of fit of the null model (with no covariates) and the submodel we consider respectively. To check if the sub-model is better than the saturated model we can do a $\chi^{2}$ test because under $H_{0}$ (The submodel is a better fit)
+$$
+D(y ; \hat{\mu}) \sim \chi_{n-p}^{2}
+$$
+where D is the deviance.
+
+```{r}
+pchisq(m1$deviance, df = m1$df.residual, lower = FALSE)
+```
+
+Since the p-value is 1 this shows that the submodel is indeed a good fit to the data. We can also check if the null model $\left(M_{0}\right)$ is better than the submodel $\left(M_{1}\right)$ we choose.
+$$
+H_{0}: M_{0} \text { true } \quad H_{a}: M_{1} \text { true, but not } M_{0}
+$$
+
+Then
+$$
+D\left(y ; \hat{\mu}_{0}\right)-D\left(y ; \hat{\mu}_{1}\right) \sim \chi_{p_{0}-p_{1}}^{2}
+$$
+where $D\left(y ; \hat{\mu}_{0}\right)$ is the null deviance and $D\left(y ; \hat{\mu}_{1}\right)$ is the residual deviance.
+
+```{r}
+pchisq(m1$null.deviance - m1$deviance, df = m1$df.null - m1$df.residual,
+lower = FALSE)
+```
+
+Since the pvalue is 0 this means that the submodel we choose is a better fit than the null model.
+
+- part b
+
+```{r}
+m2 <- glm(Species ~ Elevation + Nearest + Scruz + Adjacent + Size,
+family = "poisson", data = gala, x = TRUE)
+summary(m2)
+```
+
+The estimate column gives the estimate for $\beta$ for the logistic model
+$$
+\log (E(Y \mid X))=X \beta
+$$
+. A unit increase in the predictor variable $X_{j}$ corresponds to an increase of $\beta_{j}$ (estimated by $\hat{\beta}_{j}$ ) in the log of the mean response with everything else being held fixed. A simpler interpretation is that $\hat{\beta}_{j}>0$ can be interpreted as: An increase in $X_{j}$ implies that the mean response increases.
+
+Thus,
+
+ - Elevation is estimated to increase the expected number of plant species found on each island
+
+ - Distance to the nearest island is estimated to increases the expected number of plant species found on each island
+
+ - Distance to Scruz is estimated to decreases the number of expected plant species found on each island
+
+ - Larger adjacent islands are also estimated to decrease the number of expected plant species found on each island
+
+ - Medium and large islands are estimated to have more expected plant species found on each island
+
+The standard error column gives the standard error of the estimate of the $\beta$ coefficients. The Z-value and P -value help in detecting the significance of the covariates. At a level of $\alpha=0.05$ we can see that all the covariates are significant.
+The null deviance and residual deviance give information about the goodness of fit of the null model (w ith no covariates) and the submodel we consider respectively. To check if the sub-model is better than the saturated model we can do a $\chi^{2}$ test because under $H_{0}$ (The submodel is a better fit)
+$$
+D(y ; \hat{\mu}) \sim \chi_{n-p}^{2}
+$$
+where D is the deviance.
+
+```{r}
+pchisq(m2$deviance, df = m2$df.residual, lower = FALSE)
+```
+
+Since the p-value is very small this shows that the submodel not really a good fit to the data. We prefer the saturated model over it. We can also check if the null model $\left(M_{0}\right)$ is better than the submodel $\left(M_{1}\right)$ we choose.
+$$
+H_{0}: M_{0} \text { true } \quad H_{a}: M_{1} \text { true, but not } M_{0}
+$$
+
+Then,
+$$
+D\left(y ; \hat{\mu}_{0}\right)-D\left(y ; \hat{\mu}_{1}\right) \sim \chi_{p_{0}-p_{1}}^{2}
+$$
+where $D\left(y ; \hat{\mu}_{0}\right)$ is the null deviance and $D\left(y ; \hat{\mu}_{1}\right)$ is the residual deviance.
+
+```{r}
+pchisq(m2$null.deviance - m2$deviance, df = m2$df.null - m2$df.residual,
+lower = FALSE)
+```
+
+Since the pvalue is 0 this means that the submodel we choose is a better fit than the null model.
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 3} [10 points]: This problem concerns MLEs and inferences of modeling parameters using the CCSO example in class. Do the following:
+
+ - **part a** [5 points]: Compute MLEs and estimated standard errors for the saturated model parameter $\mu$ from the logistic regression with race, sex, and arrestAge as predictors for atleastone fit to the CCSO data restricted to "other traffic offenses". Compare with \texttt{predict.glm}. 
+ - **part b** [5 points]: Then construct Wald based confidence intervals for the estimated mean value parameters. Also construct confidence intervals 
+
+$$
+(g(\hat{\beta} - z_{\alpha/2}\text{se}(\hat{\beta})), g(\hat{\beta} + z_{\alpha/2}\text{se}(\hat{\beta}))). 
+$$
+
+Comment on any noticeable differences between these two confidence intervals for $\hat{\mu}$.
+
+\vspace*{1cm}
+
+\noindent{\bf Solution}:
+
+\vspace*{0.5cm}
+
+- part a
+
+The logistic regression with race, sex, and arrestAge as predictors for atleastone fit to the CCSO data restricted to "other traffic offenses".
+
+```{r}
+f1 <- function(x){1 /(1 + exp(-x))}
+f2=function(x) {exp(x)/(1+exp(x))^2}
+X = model.matrix(atleastone ~ -1 + race + sex + arrestAge,data = CCSO_small)
+m1 = glm(atleastone ~ -1 + race + sex + arrestAge, data = CCSO_small,
+family = "binomial", x = "TRUE")
+beta = m1$coefficient
+M = m1$x
+mu_mle = as.numeric(f1(M %*% beta))
+p1 = predict(m1, type = "response", se.fit = TRUE)
+p1.fit = as.numeric(p1$fit)
+(cbind.data.frame('Calculated MLEs'= mu_mle[1:10],'Obtained MLEs' = p1.fit[1:10]))
+```
+
+```{r}
+(sqrt(sum(mu_mle - p1.fit)^2))
+```
+
+Comparison: From the output above, we can see that the MLEs we computed and the values obtained by using the "predict" function are all same.
+
+We know that
+$$
+\sqrt{n}(\hat{\beta}-\beta) \xrightarrow{d} N\left(0, \Sigma^{-1}\right)
+$$
+where $\Sigma=X^{T} W X, W=\operatorname{diag}\left(\mu_{i}\left(1-\mu_{i}\right)\right)$ and $\mu=e^{X \beta} /\left(1+e^{X \beta}\right)$
+Now $\mu_{i}=g(\beta)=e^{M_{i}^{T} \beta} /\left(1+e^{M_{i}^{T} \beta}\right) \Longrightarrow g^{\prime}(\beta)=M_{i} * \mu_{i}\left(1-\mu_{i}\right)$
+Thus by the delta method
+$$
+\sqrt{n}\left(\hat{\mu}_{i}-\mu_{i}\right) \xrightarrow{d} N\left(0, \hat{\mu}_{i}^{2}\left(1-\hat{\mu}_{i}\right)^{2} M_{i}^{T} \Sigma^{-1} M_{i}\right)
+$$
+
+Thus our estimation of the SE is:
+
+```{r}
+#Calculating the se
+se_pihat = sqrt(apply(X,1,function(j) t(j)%*%var_matrix_CCSO%*%j))*pi_CCSO*(1-pi_CCSO)
+```
+
+```{r}
+p1.se = as.numeric(p1$se.fit)
+(cbind.data.frame('Calculated SEs'= se_pihat[1:10],'Obtained SEs' = p1.se[1:10]))
+```
+
+```{r}
+(sqrt(sum(se_pihat - p1.se)^2))
+```
+
+Comparison: From the output above, we can see that the estimated standard errors we computed and the values obtained by using the "predict" function are all same.
+
+- part b
+
+The Wald based confidence intervals for the estimated mean value parameters are
+$$
+\hat{\mu}_{i}(x) \pm z_{1-\alpha / 2} \sigma_{i} \quad \text { where } \sigma_{i}=\hat{\mu}_{i}\left(1-\hat{\mu}_{i}\right) \sqrt{M_{i}^{T} \Sigma^{-1} M_{i}}
+$$
+
+```{r}
+#Creating the conf intervals
+conf_lower = pi_CCSO - qnorm(0.975)*se_pihat
+conf_upper = pi_CCSO + qnorm(0.975)*se_pihat
+waldci = cbind.data.frame('lower' = conf_lower, 'upper' = conf_upper)
+waldci = waldci %>% as.data.frame() %>%
+    mutate(length = conf_upper - conf_lower) %>% round(4)
+head(waldci)
+```
+
+And, for the other confidence interval type $\left.g\left(\hat{\beta}+z_{\alpha / 2} \operatorname{se}(\hat{\beta})\right)\right)$ :
+
+```{r}
+m1 <- glm(atleastone ~ -1 + race + sex + arrestAge, data = CCSO_small,
+            family = "binomial", x = "TRUE")
+betahat = m1$coefficients
+M = m1$x
+alpha = 0.025
+z = qnorm(p = 1-alpha)
+n = nrow(M)
+pici_upper = 1/(1 + exp( - M %*% (betahat + z*diag(vcov(m1))) ))
+pici_lower = 1/(1 + exp( - M %*% (betahat - z*diag(vcov(m1))) ))
+pici = cbind.data.frame('lower' = pici_upper, 'upper' = pici_upper)
+pici = pici %>% as.data.frame() %>%
+    mutate(length = pici_upper - pici_lower) %>% round(4)
+head(pici)
+```
+
+Then, the average length of the Wald and plug-in approaches are given as:
+
+```{r}
+avg_length_wald = round(mean(waldci$length), digits=4)
+avg_length_wald
+```
+
+```{r}
+avg_length_pi = round(mean(pici$length), digits=4)
+avg_length_pi
+```
+
+Then, the average Wald CI is somewhat larger than the average plug-in CI.
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 4} [10 points]: Construct a [nonparametric bootstrap procedure](http://users.stat.umn.edu/~helwig/notes/npboot-notes.html) that estimates the uncertainty associated with both estimates of the average treatment effect (ATE) of online learning in the logistic regression notes. Do the conclusions change when we factor in the uncertainty obtained from the nonparametric bootstrap procedure? Explain.
+
+\vspace*{1cm}
+
+\noindent{\bf Solution}:
+
+\vspace*{0.5cm}
+
+Here we are estimating the ATE for the scores earned by students in online learning as opposed to in-person learning.
+
+```{r}
+#Reading in the data
+dat = read.csv("/Users/arjam/Downloads/online.csv")
+dat_small <- dat %>% dplyr::select(Online, ACTMath, ACTMajor, ACT, Gender,
+International, F17, S18, S19, Fa19, FR, SO, JR)
+ATE_alt = NULL
+#Taking 1000 bootstrap samples
+for(i in 1:1000)
+{
+    rand = sample(nrow(dat_small),replace = T)
+    m <- glm(Online ~., data = dat_small[rand,], family = "binomial")
+    trt <- dat_small[rand,]$Online
+    preds <- predict(m, type = "response")
+    weights_alt_trt <- 1 / sum(trt / preds) * trt /preds
+    weights_alt_notrt <- 1 / sum((1 - trt)/(1 - preds)) * (1-trt)/(1-preds)
+    dat_new <- data.frame(dat[rand,], weights = weights_alt_trt - weights_alt_notrt)
+    ATE_alt <- c(ATE_alt,sum(weights_alt_trt * dat_new$ObjExam) -
+sum(weights_alt_notrt * dat_new$ObjExam))
+}
+mean(ATE_alt)
+```
+
+```{r}
+var(ATE_alt)
+```
+
+```{r}
+quantile(ATE_alt,prob = c(0.025,0.975))%>% round(4)
+```
+
+The mean and variance are small and the confidence interval contains 0. The lower bound is close to 0 but the upper bound is not close to 0. From this we can say that  even though the CI suggests mostly similar results from both types of learning,there might be a slight improvement for online learning since the upper bound is a little higher than 0.
+
+```{r}
+ATE_DR = NULL
+for(i in 1:1000)
+{
+    rand = sample(nrow(dat),replace = T)
+    trt = dat_small[rand,]$Online
+    m <- glm(Online ~., data = dat_small[rand,], family = "binomial")
+    preds <- predict(m, type = "response")
+    dat_boot = dat[rand,]
+    m_trt <- lm(ObjExam ~ ACTMath + ACTMajor + ACT + International + Gender +
+FR + SO + JR + F17 + S18 + S19,
+data = dat_boot[trt == 1, ])
+    Y_trt <- predict(m_trt, newdata = dat_boot)
+    m_notrt <- lm(ObjExam ~ ACTMath + ACTMajor + ACT + International + Gender +
+FR + SO + JR + F17 + S18 + S19,
+data = dat_boot[trt == 0, ])
+    Y_notrt <- predict(m_notrt, newdata = dat_boot)
+    ATE_DR <- c(ATE_DR,mean( (dat_boot$ObjExam * trt - (trt - preds) * Y_trt) / preds -
+(dat_boot$ObjExam * (1 - trt) + (trt - preds)*Y_notrt) / (1 - preds)))
+}
+mean(ATE_DR)
+```
+
+```{r}
+var(ATE_DR)
+```
+
+```{r}
+quantile(ATE_DR,prob = c(0.025,0.975))%>% round(4)
+```
+
+Since the mean and variance are small even for the robust estimate and the confidence intreval contains 0 we can still conclude that there is not much difference between the two types of learning. However, like before the lower bound is still close to o but the upper bound is higher than 0 which again suggests that there might be a slight improvement for online learning.
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 5} [15 points]: Use the \texttt{dvisits} data in the \texttt{faraway} package to answer the follow parts:
+
+ - **part a** [1 points]: Make plots which show the relationship between the response variable, doctorco, and the potential predictors, age and illness.
+ - **part b** [2 points]: Combine the predictors chcond1 and chcond2 into a single three-level factor. Make an appropriate plot showing the relationship between this factor and the response. Comment.
+ - **part c** [2 points]: Build a Poisson regression model with doctorco as the response and sex, age, agesq, income, levyplus, freepoor, freerepa, illness, actdays, hscore and the three-level condition factor as possible predictor variables. Considering the deviance of this model, does this model fit the data?
+ - **part d** [2 points]: Plot the residuals and the fitted values — why are there lines of observations on the plot? Make a QQ plot of the residuals and comment.
+ - **part e** [2 points]: Use a stepwise AIC-based model selection method. What sort of person would be predicted to visit the doctor the most under your selected model?
+ - **part f** [2 points]: For the last person in the dataset, compute the predicted probability distribution for their visits to the doctor, i.e., give the probability they visit 0, 1, 2, etc. times.
+ - **part g** [2 points]: Tabulate the frequencies of the number of doctor visits. Compute the expected frequencies of doctor visits under your most recent model. Compare the observed with the expected frequencies and comment on whether it is worth fitting a zero-inflated count model.
+ - **part h** [2 points]:	Fit a comparable (Gaussian) linear model and graphically compare the fits. Describe how they differ.
+ 
+\vspace*{1cm}
+
+\noindent{\bf Solution}:
+
+\vspace*{0.5cm}
+
+- part a
+
+```{r}
+data(dvisits)
+plot(dvisits$age,dvisits$doctorco)
+```
+
+```{r}
+plot(dvisits$illness,dvisits$doctorco)
+```
+
+- part b 
+
+We create a new variable chcond which takes 3 factor values
+- 1 if the patient has a chronic condition(s) but is not limited in activity
+- 2 if the patient has a chronic condition(s) but is limited in activity
+- 0 Otherwise
+
+```{r}
+chcond = as.factor(dvisits$chcond1+2*dvisits$chcond2)
+plot(chcond,dvisits$doctorco)
+```
+
+From the plot we can see that patients which chronic conditions which limit activity have more visits to the doctor. This possible is a factor which influences the response variable.
+
+- part c
+
+```{r}
+dat = dvisits %>% dplyr::select(doctorco, sex, age, agesq, income,
+levyplus, freepoor,freerepa, illness, actdays, hscore)
+dat = cbind(dat,"chcond" = chcond)
+head(dat)
+```
+
+```{r}
+#Creating the model
+mod = glm(doctorco~.,data = dat,family = "poisson",x =TRUE)
+summary(mod)
+```
+
+```{r}
+#Testing for the goodness of fit of the model against the saturated moddel
+pchisq(mod$deviance, df = mod$df.residual, lower = FALSE)
+```
+
+Since the pvalue is 1 we can conclude that the model is indeed a better fit than the saturated model.
+
+```{r}
+pchisq(mod$null.deviance - mod$deviance, df = mod$df.null - mod$df.residual,
+lower = FALSE) %>% round(4)
+```
+
+Since the pvalue is nearly 0 we can conclude that the model is also better than the null model. Thus it is a appropriate fit to the data.
+
+- part d
+
+```{r}
+res = residuals(mod)
+fit = fitted(mod)
+plot(res,fit)
+```
+
+We observe lines of observations because most of the variables are factor variables with a small number of levels.
+
+```{r}
+qqnorm(res)
+abline(0, 1)
+```
+
+The QQ-plot shows that the residuals do not follow a normal distribution very well indicating the normality of residuals assumption is not reasonable.
+
+- part e
+
+```{r}
+#Selecting the model
+library(MASS)
+mod_Select = stepAIC(mod)
+```
+
+```{r}
+#Outputting the best models
+mod_Select$anova
+```
+
+```{r}
+# The beta coefficients of our best model
+beta = mod_Select$coefficients
+beta
+```
+
+We can see that the number of doctor consultations increases when the patient is female, with increasing age, with low income, if covered by private health insurance, not covered by the government insurance for low income, high number of illness, high number of days of reduced activity, bad health score and with presence of chronic conditions. This indicates a poorer older woman with private insurance and higher number of illness is predicted to visit doctor more often.
+
+- part f
+
+```{r}
+options (scipen = 99)
+X = mod_Select$x
+Y = mod_Select$y
+hat_lambda_last = exp(t(X[nrow(dat),])%*%beta)
+data.frame("Value" = 0:9, "Prob" = dpois(0:9,hat_lambda_last) %>% round(6) )
+```
+
+- part g
+
+```{r}
+observed_freq <- with(dvisits, table(doctorco))
+est <- matrix(nrow=dim(dvisits)[1], ncol=10)
+for(i in 1:dim(dvisits)[1]){
+est[i,] <- dpois(0:9, fitted.values(mod_Select)[i])
+}
+expected_freq <- colMeans(est)*dim(dvisits)[1]
+cbind.data.frame(observed_freq, expected_freq)
+```
+
+From the two tables, the observed and expected frequencies are close enough and thus it does not seem worth fitting a zero inflated model.
+
+- part h
+
+```{r}
+dvisitsmod_lm <- lm(Y ~ X)
+summary(dvisitsmod_lm)
+```
+
+```{r}
+par(mfrow=c(1,2))
+plot(mod_Select, which=1)
+title(main = "Poisson regression\n")
+plot(dvisitsmod_lm, which=1)
+title(main = "Linear regression\n")
+```
+
+```{r}
+par(mfrow=c(1,2))
+plot(mod_Select, which=2)
+title(main = "Poisson regression\n")
+plot(dvisitsmod_lm, which=2)
+title(main = "Linear regression\n")
+```
+
+This seems to indicate how the Poisson regression is a little better because the line for the residuals plot is much more linear around zero, along with the Q-Q plot. In conclusion, we can see that even though we need to account for overdispersion in the Poisson model it is still a better fit than the linear model.
+
+\vspace*{1cm}
+
+\noindent{\bf Problem 6} [30 points]: This problem will expand on analyses of the CCSO data done in the course notes. The goal is to investigate racial biases in the propensity of people who spend at least one day in jail. We will restrict attention to other traffic offenses as done in class. Do the following: 
+
+- **part a** [15 points]: Analyze the CCSO data restricted to other traffic offenses using a binary response regression models. Your analysis must consider the following variable: 
+  + race
+  + sex
+  + arrestAge
+  + employmentStatus
+  + releaseReason 
+  + repeatOffenders: a variable that you will have to create to indicate whether or not an arrested individual was previously arrested. 
+  + multipleOffenses: a variable that you will have to create to indicate whether the arrested individual has committed multiple offenses upon a single arrest.
+  
+Note that "consider" does not mean that a variable has to be included in a regression model in this context. You may want to combine factor levels in these variables, or you may want to throw out individuals belonging to a factor level that may be hard to interpret or is sparse. You are encouraged, but not required, to consider other variables. Report your final regression model, and justify your choice for your final model. Report interesting findings. 
+
+- **part b** [5 points]: Report observed propensities of spending at least one day in jail broken up by race and employment status after restricting attention to people who were released because of a bond payment. Comment on racial discrepancies. 
+
+- **part c** [5 points]: Pretend you are an [expert witness](https://academyofexperts.org/users-of-experts/what-is-an-expert-witness/) in a court case where the Champaign County Sheriff's Office is being sued for racial bias in sentencing. Suppose you are hired by the side prosecuting the CCSO. Present an argument for racial bias in sentencing based on your analysis above. You can add further analyses if you think they are needed.
+
+- **part d** [5 points]: Pretend you are an expert witness in a court case where the CCSO is being sued for racial bias in sentencing. Suppose you are hired by the CCSO. Present an argument that there is no racial bias in sentencing based on your analysis above and any additional analyses if you think they are needed. You are allowed to criticize the model you presented in part a. 
+
+\vspace*{1cm}
+
+\noindent{\bf Solution}:
+
+\vspace*{0.5cm}
+
+- part a
+
+We perform the relevant data wrangling to construct multipleOffenses and repeatOffenders. We ignore individuals that have more than one offense. This is to investiage the propensity of spending at least one day in jail for people who were booked with just OTHER TRAFFIC OFFESNES, and nothing else. Levels of releaseReason are combined.
+
+```{r}
+library(tidyverse)
+#library(stat528materials)
+library(heatmapFit)
+#data("CCSO")
+## data wrangling
+CCSO_small = CCSO %>%
+    mutate(atleastone = ifelse(daysInJail > 0,1,0)) %>%
+    filter(crimeCode == "OTHER TRAFFIC OFFENSES") %>%
+    filter(race %in% c("Asian/Pacific Islander","Black","White","Hispanic")) %>%
+    filter(sex %in% c("Female","Male")) %>%
+    mutate(race = fct_drop(race), sex = fct_drop(sex)) %>%
+    group_by(jacketNumber, bookingDate) %>%
+    reframe(n = n(),
+                releasedReason = releasedReason,
+                daysInJail = daysInJail,
+                race = race,
+                sex = sex,
+                city = city,
+                arrestAgency = arrestAgency,
+                employmentStatus = employmentStatus,
+                arrestAge = arrestAge) %>%
+    filter(n == 1) %>%
+    ungroup() %>%
+    group_by(jacketNumber) %>%
+      reframe(repeatOffender = 1:n() - 1,
+                releasedReason = releasedReason,
+                daysInJail = daysInJail,
+                race = race,
+                sex = sex,
+                city = city,
+                arrestAgency = arrestAgency,
+                employmentStatus = employmentStatus,
+                arrestAge = arrestAge) %>%
+    mutate(releasedReason = as.factor(releasedReason)) %>%
+    mutate(atleastoneDay = ifelse(daysInJail > 0, 1, 0))
+levels(CCSO_small$releasedReason) = c("Other","Bond Posted","Other","Other","Other","Bond Posted",
+    "Other", "Other", "Other", "Other", "Other", "Other", "Other", "Probation", "Other", "Personal Recognizance",
+    "Transfer","Served","Transfer","Transfer","Transfer","Transfer","Transfer","Transfer")
+CCSO_small = CCSO_small[complete.cases(CCSO_small), ]
+dim(CCSO_small)
+```
+
+A main-effects only model revelas that black individuals are expected to have a higher propensity for spending at least one day in jail.
+
+```{r}
+m1 = glm(atleastoneDay ~ race + sex + arrestAge +
+    employmentStatus + releasedReason + repeatOffender,
+    data = CCSO_small, family = "binomial")
+summary (m1)
+```
+
+Moreover, a likelihood ratio test suggests that race is an important variable at any reasonable testing level.
+
+```{r}
+m1_small = glm(atleastoneDay ~ sex + arrestAge +
+    employmentStatus + releasedReason + repeatOffender,
+    data = CCSO_small, family = "binomial")
+anova(m1_small, m1, test = "LRT")
+```
+
+Our main-effect only model with race included fits better than a saturated model, and conditional success probability estimates conform with the observed data. This model seems to fit the data well.
+
+```{r}
+pchisq(deviance(m1), df = df.residual(m1), lower = FALSE)
+```
+
+```{r}
+p1 = predict(m1, type = "response")
+y = CCSO_small$atleastoneDay
+heatmap.fit(y = y, pred = p1)
+```
+
+- part b
+
+There seem to be racial disparities in the propensity for spending at least one day in jail across employment status. A careful look also reveals that there are racial disparities in employment rates. For example, 450 and 159 white people are, respectively, fully employed and unemployed. However, 226 and 220 black people are, respectively, fully employed and unemployed.
+
+```{r}
+CCSO_small %>% filter(releasedReason == "Bond Posted") %>%
+    dplyr::select(race, employmentStatus,
+            atleastoneDay) %>%
+    group_by(employmentStatus, race) %>%
+    summarise(n = n(), prop = mean(atleastoneDay)) %>%
+    as.data.frame()
+```
+
+- part c
+
+Our modeling of the propensity for spending at least one day in jail suggests that there are racial biases in sentencing. Moreover, this model offers a convincing description of the data as judged by statistical tests and model diagnostics for binary response regressions.
+
+- part d
+
+The model may suggest racial disparities in sentencing. However, it appears that these disparities are more due to an individual's ability to pay a bond. Ability to pay a bond is associated with race, but not necessarily sentencing. More is needed to conclude that the CCSO exhibits racial bias in sentencing.
+
+\vspace*{1cm}
+ 
+The above six problems are worth 90 points in total. 10 points will be allocated for presentation and correct submission of the homework.

@@ -26,7 +26,7 @@ header-includes:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-This homework set will cover problems concerning multinomial regression models and data separation. Point totals for specific problems are given, 10 points will be reserved for correct submission of the homework assignment.
+This homework set will cover problems concerning multinomial regression models and data separation. Point totals for specific problems are given, and 10 points will be reserved for correct submission of the homework assignment and professionalism.
 
 \vspace*{1cm}
 

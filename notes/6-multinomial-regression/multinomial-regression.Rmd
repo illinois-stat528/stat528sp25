@@ -125,21 +125,18 @@ Let $x_k$ be the $k$th component of $x$, and let $x_{-k}$ be the vector $x$ with
 $$
   \frac{\pi_j(x)}{\pi_J(x)} = e^{x^T\beta_j} %=  e^{\beta_{jk}x_k + x_{-k}^T\beta_{j-k}}
 $$
-as the odds of $Y = j$ \textbf{conditional} on $\{Y = j\; \text{or} \; Y = J\}$. We call it the odds of $j$ relative to $J$. Then,
-$$
- e^{\beta_{jk}x_k}
-$$
+as the odds of $Y = j$ \textbf{conditional} on $\{Y = j\; \text{or} \; Y = J\}$. We call it the odds of $j$ relative to $J$. We refer to this as the odds of category $j$ relative to the baseline category $J$. Thus $e^{\beta_{jk}x_k}$
 is the multiplicative change in odds when $x_k$ increases by one with all other components $x_{-k}$ held fixed. The response probabilities are given as
 $$
   \pi_j(x) = \frac{e^{x^T\beta_j}}{\sum_{h=1}^J e^{x^T\beta_h}}
 $$
-where we recall that $\beta_J = 0$. Remark: unlike in the binomial case, $\pi_j(x)$ is not necessarily a monotone function of each component $x_k$.
+where we recall that $\beta_J = 0$ is specified to ensure identifiability. Remark: unlike in the binomial case, $\pi_j(x)$ is not necessarily a monotone function of each component $x_k$.
 
 
 
 ## Estimation 
 
-The log likelihood for this model is given by
+The log likelihood for this model, written with an explicit reparameterization to include an intercept and a generic parameter vector $\theta$ to collect all parameters, is given by
 \begin{align*}
   l(\theta) &\propto \log\prod_{i=1}^n\prod_{j=1}^J \pi_j(x_i;\theta)^{y_{ij}} \\
     &= \sum_{i=1}^n\left\{\sum_{j=1}^{J-1}y_{ij}(\alpha_j + x_i^T\beta_j) 
@@ -148,9 +145,10 @@ The log likelihood for this model is given by
       +\sum_{k=1}^p \beta_{jk}\left(\sum_{i=1}^nx_{ik}y_{ij}\right)\right] \\
     &\qquad -\sum_{i=1}^n\log\left[1 + \sum_{j=1}^{J-1}\exp(\alpha_j + x_i^T\beta_j)\right]
 \end{align*}
-where $y_{ij}$ is from the ungrouped indicator or grouped format, intercept terms are made explicit, and $\beta_J$ is a reference category level taken to be 0. From the above derivation we see that the multinomial response model has $\sum_{i=1}^n y_{ij}$ as the sufficient statistic for $\alpha_j$; this is the total number of outcomes in category $j$.
+where $y_{ij}$ is either an indicator (in the ungrouped format) or a count (in the grouped format), representing the number of observations for unit $i$ that fall into category $j$, and $\beta_J$ is a reference category level taken to be 0. From the above, we see that the sufficient statistic for $\alpha_j$ is $\sum_{i=1}^n y_{ij}$, the total number of observations in category $j$, and that the sufficient statistic for $\beta_{jk}$ is $\sum_{i=1}^n x_{ik} y_{ij}$, the covariate-weighted sum of category $j$ responses.
 
-We consider MLEs $\hat{\beta}_1,\ldots,\hat{\beta}_{J-1}$ when they uniquely exist. Note that the total number of (scalar) free parameters is $(J-1)p$ where $p$ is the number of explanatory variables $(\beta_j \in \R^p)$. Substituting the MLEs gives estimated response functions 
+
+Returning to our original parameterization that absorbs the intercept into the coefficient vectors, we consider the MLEs $\hat{\beta}_1,\ldots,\hat{\beta}_{J-1}$ when they uniquely exist. Note that the total number of (scalar) free parameters is $(J-1)p$ where $p$ is the number of explanatory variables $(\beta_j \in \R^p)$. Substituting the MLEs gives estimated response functions 
 $$
   \hat{\pi}_j(x), \qquad (\text{for all}\; j),
 $$
@@ -162,12 +160,12 @@ and the estimated logits, such as
 $$
   \log\left(\frac{\hat\pi_j(x)}{\hat\pi_J(x)}\right) = x^T\hat\beta_j.
 $$
-Many quantities are as they were for binary/binomial models: MLEs, saturated model, deviances, Wald and likelihood ratio tests and confidence intervals, AIC, $G^2$, $X^2$. Previously discussed optimization algorithms can be used for parameter estimation.
+Many concepts and quantities mirror those from the binary/binomial case: MLEs, the saturated model, deviances, Wald and likelihood ratio tests and confidence intervals, AIC, BIC, and more. Previously discussed optimization algorithms can be applied for parameter estimation in this setting.
 
 
 ## Sabermetrics example 
 
-In the game of baseball it is important to understand how the characteristics of a player's swing translate to positive outcomes on the baseball field. We want to estimate the probabilities of different baseball outcomes given quality of swing and hitting tendency variables (obtained by STATCAST). 
+In the game of baseball it is important to understand how the characteristics of a player's swing translate to positive outcomes on the baseball field. We want to estimate the probabilities of different baseball outcomes given quality of swing and hitting tendency variables (obtained from [statcast](https://baseballsavant.mlb.com/leaderboard/statcast)). 
 
 The outcomes of interest are: single (1 base), double (2 bases), triple (3 bases), home runs (4 bases), and outs. The more bases the better, 4 bases = 1 run. The team with the most runs wins the game. An out is a bad outcome for a batter, an out means the batter ended their time at the plate without reaching base. 
 
@@ -399,17 +397,19 @@ We now motivate the \textbf{proportional odds model}. Let $x \in \R^p$ that does
 $$
   \text{logit}\left(\Prob(Y\leq j\mid x)\right) = \alpha_j + x^T\beta, \qquad j = 1,\ldots,J-1,
 $$
-where $\alpha_1 \leq \alpha_2 \leq \cdots \leq \alpha_{J-1}$. For each $j$, this is a logistic regression model, with binary outcome indicating subset $\{1,\ldots,j\}$ versus $\{j+1,\ldots,J\}$.  Also, $\beta$ does not depend on $j$. Why are there order restriction on the $\alpha_j$ values? For $1 \leq j < J-1$,
+where $\alpha_1 \leq \alpha_2 \leq \cdots \leq \alpha_{J-1}$. For each $j$, this is a logistic regression model, with binary outcome indicating subset $\{1,\ldots,j\}$ versus $\{j+1,\ldots,J\}$.  Also, $\beta$ does not depend on $j$. Why are there order restriction on the $\alpha_j$ values? To see this, first observe that for $1 \leq j < J-1$,
 $$
-  0 < \Prob\left(Y \leq j\mid x\right) \leq \Prob\left(Y \leq j+1\mid x\right) < 1,
+  0 < \Prob\left(Y \leq j\mid x\right) \leq \Prob\left(Y \leq j+1\mid x\right) < 1.
 $$
-so, since the logit function is an increasing function, we have that
+Since the logit function is an increasing function, we have that
 \begin{align*}
   0 &\leq \text{logit}\left(\Prob(Y\leq j+1\mid x)\right) - \text{logit}\left(\Prob(Y\leq j\mid x)\right) \\
   &= (\alpha_{j+1} + x^T\beta) - (\alpha_{j} + x^T\beta) \\
   &= \alpha_{j+1} - \alpha_j,
 \end{align*}
-which is true if and only if $\alpha_{j+1} \geq \alpha_{j}$. The same $\beta$ is assumed across $j$ indices, otherwise there would exist $x$ for which the probabilities would be in the wrong order. The probabilities $\pi_j(x)$ can be recovered from the cumulative probabilities:
+which can only be true if and only if $\alpha_{j+1} \geq \alpha_{j}$. The same $\beta$ is assumed across $j$ indices otherwise there would exist $x$ for which the probabilities would be in the wrong order. 
+
+The probabilities $\pi_j(x)$ can be recovered from the cumulative probabilities:
 \begin{itemize}
 \item for $j=1$,
 $$
@@ -458,7 +458,7 @@ with the common value being $e^\beta$.
 
 ## Checking the proportional odds assumptions
 
-One can use a test (eg LRT) of the fitted model versus a more general model that allows a separate $\beta_j$ for each cumulative logit $(j = 1,\ldots,J-1)$. The more general model does not rigidly specify the proportional structure and therefore, allows for non-parallel curves. This leads to possible invalid probabilities. However, it might still fit adequately within the range of the data. See Section 8.2.5 in \cite{agresti2013cat}.
+One can use a test (LRT for example) of the fitted model versus a more general model that allows a separate $\beta_j$ for each cumulative logit $(j = 1,\ldots,J-1)$. The more general model does not rigidly specify the proportional structure and therefore, allows for non-parallel curves. This leads to possible invalid probabilities. However, it might still fit adequately within the range of the data. See Section 8.2.5 in \cite{agresti2013cat}.
 
 We can fit the proportional odds model using maximum likelihood estimation via Newton-Raphson or Fisher scoring. The log likelihood for this model is
 $$

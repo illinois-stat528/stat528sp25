@@ -226,7 +226,7 @@ anova(mod1_pois, mod2_pois, test = "LRT")
 # 1 if very happy 
 # 2 if pretty happy
 # 3 if not too happy
-happiness = read.table("stat528sp24/notes/6-multinomial-regression/happiness.txt", header=TRUE)
+happiness = read.table("stat528sp25/notes/6-multinomial-regression/happiness.txt", header=TRUE)
 colnames(happiness)[1] = c("control")
 happiness
 

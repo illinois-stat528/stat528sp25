@@ -59,7 +59,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 \tableofcontents
 
-We now develop modeling for multinomial responses and ordinal categorical responses. These models arise as a natural extension of the generalized linear modeling framework that we have discussed throughout.
+We now develop modeling for multinomial responses and ordinal categorical responses. These models arise as a natural extension of the generalized linear modeling framework that we have discussed throughout. We will use the notation that $Y$ denotes a random variable and $y$ denotes an observed value of $Y$.
 
 # Introduction to multinomial response models
 
@@ -76,7 +76,7 @@ and note that the multinomial model has the constraint
 $$
   \sum_{j=1}^J \pi_j(x) = 1, \qquad \text{for any} \; x.
 $$
-As usual, there are $n$ observations of $(Y,x)$. Assume that observations of $Y$ are independent (conditional on $x$). Let $x_i$ be the explanatory vector for observation $i$. The response variable $Y$ may be represented in alternative formats. We could use \textbf{ungrouped codes} where $y_i = j$, $j \in \{1,...,J\}$, but this is inconvenient for mathematical expressions. We can use \textbf{ungrouped indicator vectors}: 
+In practical settings we will assume a sample of $n$ observations where multinomial responses $Y_i$ are independent (conditional on $x_i \in \R^p$). The multinomial response variable may be represented in alternative formats. We could use \textbf{ungrouped codes} where $y_i = j$, $j \in \{1,...,J\}$, but this is inconvenient for mathematical expressions. We can express the ungrouped codes using \textbf{ungrouped indicator codes} when mathematical expressions are important: 
 $$
   y_i = (y_{i1},...,y_{iJ})
 $$
@@ -91,7 +91,9 @@ where $\sum_{j=1}^J y_{ij} = 1$ for every $i$. In this ungrouped indicator vecto
 $$
   Y_i \sim \text{Multinomial}(1,\pi(x_i)),
 $$
-\noindent where $\pi(x) = (\pi_1(x),\ldots,\pi_J(x))$. We can also consider \textbf{grouped codes} where we assume observation $i$ represents $n_i$ independent responses having the same explanatory vector $x_i$ (i.e., replicates). Let 
+\noindent where $\pi(x) = (\pi_1(x),\ldots,\pi_J(x))$. 
+
+We can also consider \textbf{grouped codes} where we assume observation $i$ represents $n_i$ independent responses having the same explanatory vector $x_i$ (i.e., replicates). Let 
 $$
   y_i = (y_{i1},\ldots,y_{iJ})
 $$
@@ -99,6 +101,7 @@ with $y_{ij}$ defined as the number of responses in category $j$ (for observatio
 $$
   Y_i \sim \text{Multinomial}(n_i,\pi(x_i)).
 $$
+This formulation exhibits a connection between Poisson regression. 
 
 
 # Nominal responses

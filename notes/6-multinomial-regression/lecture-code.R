@@ -209,11 +209,11 @@ dat
 
 
 mod1_multi = multinom(y~1, weight=freq, data = dat)
-## see Agresti for reasons for Poisson formula
+## see 9.5.3 in Agresti for equivalences between Poisson and multinomial models
 mod1_pois = glm(freq~x+z+x:z+y, family=poisson, data = dat)
 
 mod2_multi = multinom(y~x, weight=freq, data = dat)
-## see Agresti for reasons for Poisson formula
+## see 9.5.3 in Agresti for equivalences between Poisson and multinomial models
 mod2_pois = glm(freq~x+z+x:z+y+y:x, family=poisson, data = dat)
 
 ## Chisq in anova.nnet is the same as LRT in anova.glm

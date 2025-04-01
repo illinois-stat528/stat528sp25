@@ -4,9 +4,10 @@ library(VGAM)  # has model-fitting functions
 library(tidyverse)
 
 ## load data
-bball = read.csv("stat528sp24/notes/6-multinomial-regression/bball.csv")
+bball = read.csv("stat528sp25/notes/6-multinomial-regression/bball.csv")
 bball$events = as.factor(bball$events)
 head(bball)
+dim(bball)
 
 ## summaries of launch angle, launch speed, spray angle
 
@@ -118,7 +119,7 @@ new_data = data.frame(spray_angle = seq(-55,55, by = 0.1),
 
 ### bad balls
 new_data = data.frame(spray_angle = seq(-55,55, by = 0.1), 
-                      launch_speed = 70, 
+                      launch_speed = 50, 
                       launch_angle = 0)
 
 ### bad balls

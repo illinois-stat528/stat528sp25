@@ -6,6 +6,8 @@ See the Syllabus for more details. See the notes directory for course notes.
 
 # News
 
+* Data separation notes now posted.
+
 * HW4 posted. It is due at 11:59 PM on Monday April 7th.
 
 * Multinomial and ordinal regressions notes now posted.

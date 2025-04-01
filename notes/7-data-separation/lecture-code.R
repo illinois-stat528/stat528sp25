@@ -51,6 +51,7 @@ summary(m2)
 ## submodel canonical parameter estimates
 betahat2 = m2$coefficients
 betahat2
+cbind(betahat, betahat2)
 
 ## saturated model canonical parameter estimates
 thetahat2 = as.numeric(M %*% betahat2)

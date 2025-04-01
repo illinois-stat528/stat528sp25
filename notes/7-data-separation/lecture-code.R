@@ -35,6 +35,8 @@ phat
 1/(1 + exp(-thetahat))
 
 ## variance matrices
+### Fisher information completely degenerate 
+### canonical stat M^T Y is estimated to have no variability
 vcov(m1)
 eigen(vcov(m1))$val
 eigen(solve(vcov(m1)))$val
@@ -104,12 +106,15 @@ ggplot(asymptote[25:30, ]) +
         panel.grid.minor.y = element_line("lightgrey", size = 0.07))
 
 
+## verify complete degeneracy
+### M eta != 0. Thus Y = y everywhere
 invFI = vcov(m1)
 FI = solve(invFI)
 eigen(FI)
 M %*% eigen(FI)$vec
 
 
+## one-sided intervals via glmdr
 #devtools::install_github(repo = "cjgeyer/glmdr/package/glmdr")
 library(glmdr)
 eigen(FI)
@@ -133,6 +138,7 @@ box()
 axis(side = 1)
 axis(side = 2)
 points(x, y, pch = 21, bg = "white")
+
 
 #### Pick up here from last time
 

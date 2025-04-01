@@ -397,7 +397,7 @@ We now motivate the \textbf{proportional odds model}. Let $x \in \R^p$ that does
 $$
   \text{logit}\left(\Prob(Y\leq j\mid x)\right) = \alpha_j + x^T\beta, \qquad j = 1,\ldots,J-1,
 $$
-where $\alpha_1 \leq \alpha_2 \leq \cdots \leq \alpha_{J-1}$. For each $j$, this is a logistic regression model, with binary outcome indicating subset $\{1,\ldots,j\}$ versus $\{j+1,\ldots,J\}$.  Also, $\beta$ does not depend on $j$. Why are there order restriction on the $\alpha_j$ values? To see this, first observe that for $1 \leq j < J-1$,
+where $\alpha_1 \leq \alpha_2 \leq \cdots \leq \alpha_{J-1}$. For each $j$, this is a logistic regression model with the same $\beta$, with binary outcome indicating subset $\{1,\ldots,j\}$ versus $\{j+1,\ldots,J\}$.  Why are there order restriction on the $\alpha_j$ values? To see this, first observe that for $1 \leq j < J-1$,
 $$
   0 < \Prob\left(Y \leq j\mid x\right) \leq \Prob\left(Y \leq j+1\mid x\right) < 1.
 $$

@@ -227,7 +227,8 @@ anova(mod1_pois, mod2_pois, test = "LRT")
 # 1 if very happy 
 # 2 if pretty happy
 # 3 if not too happy
-happiness = read.table("stat528sp25/notes/6-multinomial-regression/happiness.txt", header=TRUE)
+happiness = read.table("stat528sp25/notes/6-multinomial-regression/happiness.txt", 
+                       header=TRUE)
 colnames(happiness)[1] = c("control")
 happiness
 
@@ -236,8 +237,6 @@ mod = vglm(happy ~ trauma + control, family=propodds(reverse=FALSE),
            data=happiness)
 
 summary(mod)
-alpha = c(-0.5181, 3.4006)
-beta = c(-0.4056, -2.0361)
 
 ## display predicted probabilities 
 ## across control and trauma
@@ -247,8 +246,6 @@ modred = vglm(happy~trauma, family=propodds(reverse=FALSE),
               data=happiness)
 llrts = deviance(modred) - deviance(mod)
 llrts.df = df.residual(modred) - df.residual(mod)
-llrts
-llrts.df
 pchisq(llrts, llrts.df, lower = FALSE)
 
 ## test proportional odds assumption
@@ -260,8 +257,6 @@ summary(modnotprop)
 
 llrts = deviance(mod) - deviance(modnotprop)
 llrts.df = df.residual(mod) - df.residual(modnotprop)
-llrts
-llrts.df
 pchisq(llrts, llrts.df, lower = FALSE)
 
 ## polr fit

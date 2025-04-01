@@ -197,7 +197,7 @@ eigen(FI)
 
 # Inference in the complete separation setting
 
-Before we discuss such an inferential approach we will give an example as motivation. The details of this example will be left for homework. Suppose that you have a coin that when flipped has a probability $0 < p < 1$ of landing heads, and that we know nothing about $p$. Suppose that you flip the coin four times and all four flips resulted in heads. Derive the MLE of $p$ and the MLE of $\Var(Y_1)$ under the standard Bernoulli model. Now, for some error tolerance $0 < \alpha < 1$, derive a valid one-sided confidence interval for $p$ making use of the statement $\Prob\left(\sum_{i=1}^4 Y_i = 4\right)$.
+Before we discuss such an inferential approach we will give an example as motivation. The details of this example will be left for homework. Suppose that you have a coin that when flipped has a probability $0 < p < 1$ of landing heads, and that we know nothing about $p$. Suppose that you flip the coin four times and all four flips resulted in heads. Derive the MLE of $p$ and the MLE of $\Var(Y) = p(1-p)$ under the standard Bernoulli model. Now, for some error tolerance $0 < \alpha < 1$, derive a valid one-sided confidence interval for $p$ making use of the statement $\Prob\left(\sum_{i=1}^4 Y_i = 4\right)$.
 
 
 ## Some theoretical details
@@ -259,26 +259,26 @@ and the limiting function $h$ is a "generalized affine function." Generalized af
 
 ### Likelihood maximizing sequences
 
-Now suppose that $\theta_n$ be a likelihood maximizing sequence of canonical parameter vectors (think of a Newton-Raphson algorithm where $n$ is the iteration number, and $\theta_n$ is the maximizer at iteration $n$), that is,
+Now suppose that $\theta_n$ be a likelihood maximizing sequence of canonical parameter vectors (think of a IRLS algorithm where $n$ is the iteration number, and $\theta_n$ is the maximizer at iteration $n$), that is,
 $$
 l(\theta_n) \to \sup_{\theta \in \Theta} l(\theta), \qquad as \; n \to \infty, 
 $$
 where $\sup_{\theta\in\Theta} l(\theta) < \infty$. 
 
-Define $h_n(y) = l(\theta_n)$ as in the definition about the completion of exponential families. The limiting density $e^h$ corresponds to the MLE distribution in the completion. Again, these objects are beyond the scope of this course. Further details can be found in [Eck and Geyer (2021)](https://projecteuclid.org/journals/electronic-journal-of-statistics/volume-15/issue-1/Computationally-efficient-likelihood-inference-in-exponential-families-when-the-maximum/10.1214/21-EJS1815.full).
+Define $h_n(y) = l(\theta_n)$ as in the definition about the completion of exponential families. The limiting density $e^h$ corresponds to the MLE distribution in the completion. Theoretical properties of these objects are beyond the scope of this course. Further details can be found in [Eck and Geyer (2021)](https://projecteuclid.org/journals/electronic-journal-of-statistics/volume-15/issue-1/Computationally-efficient-likelihood-inference-in-exponential-families-when-the-maximum/10.1214/21-EJS1815.full).
 
 ### MLE exists in completion and Fisher Information degeneracy
 
-Now suppose that the MLE does not exist in the traditional exist and it exists in the completion of the exponential family, and suppose that we know the convex support set of the MLE distribution in the completion. Call this support set $A$. 
+Now suppose that the MLE does not exist in the traditional exist and it exists in the completion of the exponential family, and suppose that we know the convex support set of the MLE distribution in the completion. Call this support set $C$. 
 
-Since the observed value of the canonical statistic is contained in $A$ with probability one, and the canonical statistic for a GLM is $M^TY$, then we have $A = M^Ty + V$ where $Y$ is the response vector, and $y$ its observed value, and $V$ is a vector space [Geyer (2009), Section 3.9](https://projecteuclid.org/journals/electronic-journal-of-statistics/volume-3/issue-none/Likelihood-inference-in-exponential-families-and-directions-of-recession/10.1214/08-EJS349.full).
+Since the observed value of the canonical statistic is contained in $C$ with probability one, and the canonical statistic for a GLM is $M^TY$, then we have $C = M^Ty + V$ where $Y$ is the response vector, and $y$ its observed value, and $V$ is a vector space [Geyer (2009), Section 3.9](https://projecteuclid.org/journals/electronic-journal-of-statistics/volume-3/issue-none/Likelihood-inference-in-exponential-families-and-directions-of-recession/10.1214/08-EJS349.full).
 
 Then the limiting exponential family model taken along the maximum likelihood sequence $\theta_n$ (referred to as a limiting conditional model, or LCM for short) in which the MLE in the completion is found is the original model (OM) conditioned on the event
 $$
   M^T(Y - y) \in V,\qquad \text{almost surely}.
 $$
 
-Suppose that we can characterize $V$ as the subspace where a finite set of linear equalities are satisfied
+Suppose that we can characterize $V$ as a subspace where a finite set of linear equalities are satisfied
 $$
   V = \{ w \in \R^p : \inner{w,\eta_i} = 0, i=1,\ldots,j\}. 
 $$
@@ -304,7 +304,7 @@ In our motivating Agresti example we see that there no such points where $M\eta_
 M %*% eigen(FI)$vec
 ```
 
-Therefore all components of the response are fixed at their observed value in this example. This data is completely degenerate.
+Therefore all components of the response are fixed at their observed value in this example. This data is completely degenerate with response variables constrained to be their observed values. If inferences are to be made then one-sided confidence intervals are necessary.
 
 
 ## One-sided confidence intervals

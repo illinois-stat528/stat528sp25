@@ -168,7 +168,7 @@ m1 = glm(y ~ x, family = "binomial")
 
 ## summary table
 summary(m1)
-1.963 * 50
+coef(m1)[1] + coef(m1)[2] * 50
 
 ## submodel canonical parameter estimates
 betahat = m1$coefficients
@@ -193,6 +193,7 @@ null_vec = eigen(solve(vcov(m1)))$vec[, 2]
 
 ## check condition
 M %*% null_vec
+abs(M %*% null_vec) < 1e-6
 
 ## LCM
 dat = data.frame(y = y, x = x)
@@ -212,7 +213,6 @@ m2_LCM = glm(y ~ x, family = "binomial",
              data = dat, 
              subset = m1_glmdr$linearity)
 summary(m2_LCM)
-
 
 ## inference
 CIs = inference(m1_glmdr)
@@ -236,9 +236,13 @@ axis(side = 1)
 axis(side = 2)
 points(x, y, pch = 21, bg = "white")
 
-
+## log likelihood taken to infinity in null direction 
+##
+## note: this function only works because the LCM
+## has equal number of successes and failures at each
+## point in its sample space (only one such point)
 loglike = function(s) {
-  p = 1/(1 + exp(-s * M%*%null_vec))
+  p = 1/(1 + exp(-s * zapsmall(M%*%null_vec)))
   p
   #y*log(p) + (1-y)*log(1-p)
 }
@@ -247,10 +251,8 @@ loglike(4)
 loglike(200)
 
 
-## Histology example 
-
+# Histology example 
 library(enrichwith)
-
 ?endometrial
 data(endometrial)
 head(endometrial)
@@ -358,7 +360,7 @@ mtext("p-value", side = 2, line = 2.5)
 
 ## investigate NV
 bayes_mod_small = bayesglm(HG ~ PI + EH, 
-                           data=endometrial, family="binomial")
+  data=endometrial, family="binomial")
 AIC(bayes_mod_small)
 AIC(bayes_mod)
 summary(bayes_mod_small)
@@ -423,5 +425,6 @@ brglm_mod_small = glm(HG~PI + EH, data=endometrial,
 AIC(brglm_mod)
 AIC(brglm_mod_small)
 anova(brglm_mod_small, brglm_mod, test = "LRT")
+
 
 

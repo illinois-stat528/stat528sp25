@@ -571,17 +571,66 @@ brglm_mod_AS_median = glm(HG~.,data=endometrial,family = "binomial",
                          method = "brglm_fit", type = "AS_median")
 brglm_mod_AS_mixed = glm(HG~.,data=endometrial,family = "binomial",
                            method = "brglm_fit", type = "AS_mixed")
-#brglm_mod_AS_correction = glm(HG~.,data=endometrial,family = "binomial",
-#                           method = "brglm_fit", type = "correction")
 summary(brglm_mod)$coef[2,4]
 summary(brglm_mod_AS_mean)$coef[2,4]
 summary(brglm_mod_AS_median)$coef[2,4]
 summary(brglm_mod_AS_mixed)$coef[2,4]
 ```
 
-So which prior do we use?
+### So which prior do we use?
+
+\vspace{12pt}
+- **Gelman**: Our prior [Cauchy $\mu =0$; $\sigma = 2.5$] has the advantage of always giving answers, even when there is complete separation in logistic regression (a common problem, even when the sample size is large and the number of predictors is small), and also automatically applying more shrinkage to higher-order interactions.
+- **Kosmidis and Firth**: Penalization of the likelihood by Jeffreys’ invariant prior, or a positive power thereof, is shown to produce finite-valued maximum penalized likelihood estimates in a broad class of binomial generalized linear models. The class of models includes logistic regression, where the Jeffreys-prior penalty is known additionally to reduce the asymptotic bias of the maximum likelihood estimator
+- **Gelman**: Our approach is similar [to Jeffrey's] but is parameterized in terms of the coefficients and thus allows us to make use of prior knowledge on that scale... We recommend this prior distribution as a default choice for routine applied use.
+- **Kosmidis and Firth**: The apparent finiteness and shrinkage properties of the reduced-bias estimator, together with the fact that the estimator has the same first-order asymptotic distribution as the maximum likelihood estimator, are key reasons for the increasingly widespread use of Jeffreys-prior penalized logistic regression in applied work.
+- **Gelman**: Scale-free prior distributions such as Jeffreys’ do not include enough prior information. 
+
+[What we have here is a failure to communicate](https://www.youtube.com/watch?v=V2f-MZ2HRHQ). 
 
 
+### Using AIC
+AIC is slightly dubious as a model selection metric in this setting since models are not being evaluated at their MLE solutions. Nonetheless, we will investigate using AIC as a guide. Notice that, as expected, AIC is minimized when the standard logistic regression model is used. We also see that the \texttt{bayesglm} fit with the largest prior standard error among the candidate models minimizes AIC, and that the \texttt{brglm2} model with \texttt{type = AS\_median} minimizes AIC among the competing \texttt{brglm2} models.
+
+```{r}
+## bayesglm
+AIC(bayes_mod1, 
+    bayes_mod, 
+    bayes_mod5, 
+    bayes_mod10) 
+
+## brglm2
+AIC(brglm_mod, 
+    brglm_mod_AS_mean, 
+    brglm_mod_AS_median, 
+    brglm_mod_AS_mixed)
+
+## MLE
+AIC(m) 
+```
+
+There is a conflict between AIC and p-values when investigating the importance of NV. This is further complicated by the \texttt{bayesglm} implementation because this procedure only considers the original scale of the covariates.
+
+
+```{r}
+## bayesglm
+bayes_mod10_small = bayesglm(HG ~ PI + EH, 
+                             data=endometrial, family="binomial", 
+                             prior.scale = 10)
+### AIC
+AIC(bayes_mod10_small, bayes_mod10)
+### p-value for NV
+summary(bayes_mod10)$coef[2,4]
+
+## brglm2
+brglm_mod_AS_median_small = glm(HG~ PI + EH, 
+  data=endometrial, family = "binomial",
+  method = "brglm_fit", type = "AS_median")
+### AIC
+AIC(brglm_mod_AS_median_small, brglm_mod_AS_median)
+### p-value for NV
+summary(brglm_mod_AS_median)$coef[2,4]
+```
 
 
 

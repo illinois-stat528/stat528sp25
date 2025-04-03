@@ -319,7 +319,7 @@ library(brglm2) # for brglm2
 # bayesglm (Gelman)
 
 ## fit a few candidate models
-bayes_mod1 = bayesglm(HG~.,data=endometrial,family="binomial",
+bayes_mod1 = bayesglm(HG~.,data=endometrial,family="binomiaxl",
                       prior.scale = 1)
 bayes_mod = bayesglm(HG~.,data=endometrial,family="binomial")
 bayes_mod5 = bayesglm(HG~.,data=endometrial,family="binomial",

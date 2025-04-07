@@ -1,0 +1,85 @@
+---
+title: "Homework 5: Linear Mixed Models"
+author: "your name"
+date: 'Due: April 18th at 11:59 PM'
+output: pdf_document
+header-includes: 
+ - \usepackage{amsthm}
+ - \usepackage{amsmath}
+ - \usepackage{amsfonts}
+ - \usepackage{amscd}
+ - \usepackage{amssymb}
+ - \usepackage{natbib}
+ - \usepackage{url}
+---
+
+\allowdisplaybreaks
+
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\inner}[1]{\langle #1 \rangle}
+\newcommand{\yobs}{y_{\text{obs}}}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+**Problem 1** [10 points]: Do the following with the pulp data set:  
+
+ - **part a** [5 points]:  Analyze the pulp data in the notes using unrestricted maximum likelihood estimation and comment on the differences that such analysis produces when compared to the REML and ANOVA estimates.
+ - **part b** [5 points]:  Interpret the diagnostic plots in the notes corresponding to the analysis with respect to the pulp data set
+
+\vspace*{0.5cm}
+
+**Problem 2** [15 points]: Do the following: 
+
+ - **part a** [5 points]: Compare and contrast the nonparametric bootstrap, residual bootstrap, and parametric bootstraps. Discuss the assumptions that make each bootstrap procedure appropriate. There is a useful guide embedded in the course notes.
+ - **part b** [5 points]: In the notes we developed a parametric bootstrap procedure to approximate the distribution of the LRT corresponding to a test between mixed-effects models. Write your own parametric bootstrap procedure with $B= 1e4$ samples and make it as fast as possible using parallel programming with either \texttt{mclapply} and/or \texttt{foreach} and whatever accompanying software packages are needed.
+ - **part c** [5 points]: Explain how the testing procedure using the \texttt{exactRLRT} function works. See the analysis of the irrigation data in the LMM course notes for context.
+
+\vspace*{0.5cm} 
+
+
+**Problem 3** [20 points]: The \texttt{denim} dataset in the \texttt{faraway} concerns the amount of waste in material cutting for a jeans manufacturer due to five suppliers. 
+
+ - **part a** [2 points]: Plot the data and comment.
+ - **part b** [2 points]: Fit the linear fixed effects model. Is the supplier significant?
+ - **part c** [2 points]: Make a useful diagnostic plot for this model and comment.
+ - **part d** [2 points]: Analyze the data with supplier as a random effect. What are the estimated standard deviations of the effects?
+ - **part e** [3 points]: Test the significance of the supplier term.
+ - **part f** [3 points]: Compute confidence intervals for the random effect SDs.
+ - **part g** [3 points]: Locate two outliers and remove them from the data. Repeat the fitting, testing and computation of the confidence intervals, commenting on the differences you see from the complete data. 
+ - **part h** [3 points]: Estimate the effect of each supplier. If only one supplier will be used, choose the best.	
+
+
+
+\vspace*{0.5cm}
+
+**Problem 4** [20 points]: Load in the \texttt{soybean\_course} dataset and analyze the \texttt{tqM} response variable (labeled mtqM). Refer to the soybean analysis in the course notes, and recall that the researchers are interested in determining which ID variables differ from the RC reference level. Consider response transformations if modeling assumptions are violated. 
+
+Feel free to use this starter code which will correctly compile when the file \texttt{soybean\_course.csv} is in the same directory as this Rmd file 
+
+```{r, eval = FALSE}
+library(tidyverse)
+dat = read_csv("soybean_course.csv") %>% 
+  select(-mAqI, -mtqE, -mAqM, -mAqE, -maxNPQ, -Ta, -VPD, -Precip, 
+         -Fsd, -VPD_7day)
+```
+
+\vspace*{0.5cm}
+
+**Problem 5** [20 points]: The \texttt{nepali} data in the \texttt{faraway} package is a subset of a data from a public health study on Nepalese children. Develop a model for the weight of a child as he or she ages. You may use mage, lit, died, gender, and alive (but not ht) as covariates. Show how you developed your model and interpret your final model.
+
+\vspace*{0.5cm}
+
+**Problem 6** [15 points]: Prove that the penalized weighted residual sum-of-squares problem can be cast as
+$$
+  r^2(\theta,\beta,u) 
+    = r^2(\theta) + \|L_\theta^T(u - \mu_{U|Y=\yobs})  + R_{ZX}(\beta - \hat\beta_\theta)\|^2
+      + \|R_X(\beta - \hat\beta_\theta)\|^2.
+$$
+See the LMM notes for context.

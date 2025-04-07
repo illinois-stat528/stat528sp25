@@ -1,0 +1,16 @@
+ggplot2
+faraway
+Matrix
+lme4
+lattice
+pbkrtest
+RLRsim
+tidyverse
+tibble
+tidyr
+readr
+purrr
+dplyr
+stringr
+forcats
+lubridate

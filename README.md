@@ -6,11 +6,9 @@ See the Syllabus for more details. See the notes directory for course notes.
 
 # News
 
-* Data separation notes now posted.
+* Homework 5 due on Friday, 04/18 at 11:59 PM
 
-* HW4 posted. It is due at 11:59 PM on Monday April 7th.
-
-* Multinomial and ordinal regressions notes now posted.
+* Linear mixed models notes posted
 
 * link to stat528materials R package is [here](https://github.com/DEck13/stat528materials).
 

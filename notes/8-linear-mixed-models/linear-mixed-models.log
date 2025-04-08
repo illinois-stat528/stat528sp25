@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.11.7)  7 APR 2025 21:02
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.11.7)  8 APR 2025 10:08
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -562,176 +562,176 @@ LaTeX Font Info:    Trying to load font information for TS1+lmtt on input line
 (/usr/local/texlive/2022/texmf-dist/tex/latex/lm/ts1lmtt.fd
 File: ts1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [4] [5] [6] [7]
-<linear-mixed-models_files/figure-latex/unnamed-chunk-12-1.pdf, id=117, 424.586
+<linear-mixed-models_files/figure-latex/unnamed-chunk-12-1.pdf, id=119, 424.586
 24pt x 290.08376pt>
 File: linear-mixed-models_files/figure-latex/unnamed-chunk-12-1.pdf Graphic fil
 e (type pdf)
 <use linear-mixed-models_files/figure-latex/unnamed-chunk-12-1.pdf>
 Package pdftex.def Info: linear-mixed-models_files/figure-latex/unnamed-chunk-1
-2-1.pdf  used on input line 716.
+2-1.pdf  used on input line 732.
 (pdftex.def)             Requested size: 424.60463pt x 290.09631pt.
 [8]
-<linear-mixed-models_files/figure-latex/unnamed-chunk-14-1.pdf, id=122, 437.635
+<linear-mixed-models_files/figure-latex/unnamed-chunk-14-1.pdf, id=124, 437.635
 pt x 248.93pt>
 File: linear-mixed-models_files/figure-latex/unnamed-chunk-14-1.pdf Graphic fil
 e (type pdf)
 <use linear-mixed-models_files/figure-latex/unnamed-chunk-14-1.pdf>
 Package pdftex.def Info: linear-mixed-models_files/figure-latex/unnamed-chunk-1
-4-1.pdf  used on input line 752.
+4-1.pdf  used on input line 768.
 (pdftex.def)             Requested size: 437.6406pt x 248.93317pt.
 [9 <./linear-mixed-models_files/figure-latex/unnamed-chunk-12-1.pdf>] [10 <./li
 near-mixed-models_files/figure-latex/unnamed-chunk-14-1.pdf>]
-<linear-mixed-models_files/figure-latex/unnamed-chunk-16-1.pdf, id=147, 419.567
+<linear-mixed-models_files/figure-latex/unnamed-chunk-16-1.pdf, id=149, 419.567
 5pt x 275.0275pt>
 File: linear-mixed-models_files/figure-latex/unnamed-chunk-16-1.pdf Graphic fil
 e (type pdf)
 <use linear-mixed-models_files/figure-latex/unnamed-chunk-16-1.pdf>
 Package pdftex.def Info: linear-mixed-models_files/figure-latex/unnamed-chunk-1
-6-1.pdf  used on input line 889.
+6-1.pdf  used on input line 905.
 (pdftex.def)             Requested size: 419.56647pt x 275.02682pt.
 [11] [12 <./linear-mixed-models_files/figure-latex/unnamed-chunk-16-1.pdf>] [13
 ] [14]
-<linear-mixed-models_files/figure-latex/unnamed-chunk-20-1.pdf, id=190, 436.631
+<linear-mixed-models_files/figure-latex/unnamed-chunk-20-1.pdf, id=192, 436.631
 26pt x 255.95625pt>
 File: linear-mixed-models_files/figure-latex/unnamed-chunk-20-1.pdf Graphic fil
 e (type pdf)
 <use linear-mixed-models_files/figure-latex/unnamed-chunk-20-1.pdf>
 Package pdftex.def Info: linear-mixed-models_files/figure-latex/unnamed-chunk-2
-0-1.pdf  used on input line 1153.
+0-1.pdf  used on input line 1169.
 (pdftex.def)             Requested size: 436.63019pt x 255.95561pt.
-<linear-mixed-models_files/figure-latex/unnamed-chunk-21-1.pdf, id=191, 436.631
+<linear-mixed-models_files/figure-latex/unnamed-chunk-21-1.pdf, id=193, 436.631
 26pt x 248.93pt>
 File: linear-mixed-models_files/figure-latex/unnamed-chunk-21-1.pdf Graphic fil
 e (type pdf)
 <use linear-mixed-models_files/figure-latex/unnamed-chunk-21-1.pdf>
 Package pdftex.def Info: linear-mixed-models_files/figure-latex/unnamed-chunk-2
-1-1.pdf  used on input line 1168.
+1-1.pdf  used on input line 1184.
 (pdftex.def)             Requested size: 436.63019pt x 248.92938pt.
 [15 <./linear-mixed-models_files/figure-latex/unnamed-chunk-20-1.pdf>]
-<linear-mixed-models_files/figure-latex/unnamed-chunk-22-1.pdf, id=207, 436.631
+<linear-mixed-models_files/figure-latex/unnamed-chunk-22-1.pdf, id=209, 436.631
 26pt x 248.93pt>
 File: linear-mixed-models_files/figure-latex/unnamed-chunk-22-1.pdf Graphic fil
 e (type pdf)
 <use linear-mixed-models_files/figure-latex/unnamed-chunk-22-1.pdf>
 Package pdftex.def Info: linear-mixed-models_files/figure-latex/unnamed-chunk-2
-2-1.pdf  used on input line 1183.
+2-1.pdf  used on input line 1199.
 (pdftex.def)             Requested size: 436.63019pt x 248.92938pt.
 
-Underfull \vbox (badness 10000) detected at line 1196
+Underfull \vbox (badness 10000) detected at line 1212
  []
 
 [16 <./linear-mixed-models_files/figure-latex/unnamed-chunk-21-1.pdf> <./linear
 -mixed-models_files/figure-latex/unnamed-chunk-22-1.pdf>]
-<linear-mixed-models_files/figure-latex/unnamed-chunk-23-1.pdf, id=234, 436.631
+<linear-mixed-models_files/figure-latex/unnamed-chunk-23-1.pdf, id=236, 436.631
 26pt x 248.93pt>
 File: linear-mixed-models_files/figure-latex/unnamed-chunk-23-1.pdf Graphic fil
 e (type pdf)
 <use linear-mixed-models_files/figure-latex/unnamed-chunk-23-1.pdf>
 Package pdftex.def Info: linear-mixed-models_files/figure-latex/unnamed-chunk-2
-3-1.pdf  used on input line 1198.
+3-1.pdf  used on input line 1214.
 (pdftex.def)             Requested size: 436.63019pt x 248.92938pt.
-<linear-mixed-models_files/figure-latex/unnamed-chunk-24-1.pdf, id=235, 436.631
+<linear-mixed-models_files/figure-latex/unnamed-chunk-24-1.pdf, id=237, 436.631
 26pt x 253.94875pt>
 File: linear-mixed-models_files/figure-latex/unnamed-chunk-24-1.pdf Graphic fil
 e (type pdf)
 <use linear-mixed-models_files/figure-latex/unnamed-chunk-24-1.pdf>
 Package pdftex.def Info: linear-mixed-models_files/figure-latex/unnamed-chunk-2
-4-1.pdf  used on input line 1213.
+4-1.pdf  used on input line 1229.
 (pdftex.def)             Requested size: 436.63019pt x 253.94812pt.
 [17 <./linear-mixed-models_files/figure-latex/unnamed-chunk-23-1.pdf>]
-<linear-mixed-models_files/figure-latex/unnamed-chunk-25-1.pdf, id=251, 436.631
+<linear-mixed-models_files/figure-latex/unnamed-chunk-25-1.pdf, id=253, 436.631
 26pt x 248.93pt>
 File: linear-mixed-models_files/figure-latex/unnamed-chunk-25-1.pdf Graphic fil
 e (type pdf)
 <use linear-mixed-models_files/figure-latex/unnamed-chunk-25-1.pdf>
 Package pdftex.def Info: linear-mixed-models_files/figure-latex/unnamed-chunk-2
-5-1.pdf  used on input line 1228.
+5-1.pdf  used on input line 1244.
 (pdftex.def)             Requested size: 436.63019pt x 248.92938pt.
 [18 <./linear-mixed-models_files/figure-latex/unnamed-chunk-24-1.pdf> <./linear
 -mixed-models_files/figure-latex/unnamed-chunk-25-1.pdf>] [19] [20]
-<linear-mixed-models_files/figure-latex/unnamed-chunk-27-1.pdf, id=290, 453.695
+<linear-mixed-models_files/figure-latex/unnamed-chunk-27-1.pdf, id=293, 453.695
 pt x 313.17pt>
 File: linear-mixed-models_files/figure-latex/unnamed-chunk-27-1.pdf Graphic fil
 e (type pdf)
 <use linear-mixed-models_files/figure-latex/unnamed-chunk-27-1.pdf>
 Package pdftex.def Info: linear-mixed-models_files/figure-latex/unnamed-chunk-2
-7-1.pdf  used on input line 1400.
+7-1.pdf  used on input line 1416.
 (pdftex.def)             Requested size: 453.6939pt x 313.16922pt.
 [21 <./linear-mixed-models_files/figure-latex/unnamed-chunk-27-1.pdf>] [22]
-<linear-mixed-models_files/figure-latex/unnamed-chunk-33-1.pdf, id=309, 438.638
+<linear-mixed-models_files/figure-latex/unnamed-chunk-33-1.pdf, id=311, 438.638
 75pt x 248.93pt>
 File: linear-mixed-models_files/figure-latex/unnamed-chunk-33-1.pdf Graphic fil
 e (type pdf)
 <use linear-mixed-models_files/figure-latex/unnamed-chunk-33-1.pdf>
 Package pdftex.def Info: linear-mixed-models_files/figure-latex/unnamed-chunk-3
-3-1.pdf  used on input line 1549.
+3-1.pdf  used on input line 1565.
 (pdftex.def)             Requested size: 438.64435pt x 248.93317pt.
 [23 <./linear-mixed-models_files/figure-latex/unnamed-chunk-33-1.pdf>]
-<linear-mixed-models_files/figure-latex/unnamed-chunk-34-1.pdf, id=321, 453.695
+<linear-mixed-models_files/figure-latex/unnamed-chunk-34-1.pdf, id=323, 453.695
 pt x 313.17pt>
 File: linear-mixed-models_files/figure-latex/unnamed-chunk-34-1.pdf Graphic fil
 e (type pdf)
 <use linear-mixed-models_files/figure-latex/unnamed-chunk-34-1.pdf>
 Package pdftex.def Info: linear-mixed-models_files/figure-latex/unnamed-chunk-3
-4-1.pdf  used on input line 1625.
+4-1.pdf  used on input line 1641.
 (pdftex.def)             Requested size: 453.6939pt x 313.16922pt.
 [24] [25 <./linear-mixed-models_files/figure-latex/unnamed-chunk-34-1.pdf>] [26
 ]
-<linear-mixed-models_files/figure-latex/unnamed-chunk-37-1.pdf, id=344, 460.721
+<linear-mixed-models_files/figure-latex/unnamed-chunk-37-1.pdf, id=346, 460.721
 25pt x 310.15875pt>
 File: linear-mixed-models_files/figure-latex/unnamed-chunk-37-1.pdf Graphic fil
 e (type pdf)
 <use linear-mixed-models_files/figure-latex/unnamed-chunk-37-1.pdf>
 Package pdftex.def Info: linear-mixed-models_files/figure-latex/unnamed-chunk-3
-7-1.pdf  used on input line 1824.
+7-1.pdf  used on input line 1840.
 (pdftex.def)             Requested size: 460.72012pt x 310.15799pt.
 [27]
-<linear-mixed-models_files/figure-latex/unnamed-chunk-38-1.pdf, id=351, 459.717
+<linear-mixed-models_files/figure-latex/unnamed-chunk-38-1.pdf, id=353, 459.717
 5pt x 310.15875pt>
 File: linear-mixed-models_files/figure-latex/unnamed-chunk-38-1.pdf Graphic fil
 e (type pdf)
 <use linear-mixed-models_files/figure-latex/unnamed-chunk-38-1.pdf>
 Package pdftex.def Info: linear-mixed-models_files/figure-latex/unnamed-chunk-3
-8-1.pdf  used on input line 1841.
+8-1.pdf  used on input line 1857.
 (pdftex.def)             Requested size: 459.71637pt x 310.15799pt.
 [28 <./linear-mixed-models_files/figure-latex/unnamed-chunk-37-1.pdf>]
-<linear-mixed-models_files/figure-latex/unnamed-chunk-41-1.pdf, id=363, 436.631
+<linear-mixed-models_files/figure-latex/unnamed-chunk-41-1.pdf, id=365, 436.631
 26pt x 250.9375pt>
 File: linear-mixed-models_files/figure-latex/unnamed-chunk-41-1.pdf Graphic fil
 e (type pdf)
 <use linear-mixed-models_files/figure-latex/unnamed-chunk-41-1.pdf>
 Package pdftex.def Info: linear-mixed-models_files/figure-latex/unnamed-chunk-4
-1-1.pdf  used on input line 1887.
+1-1.pdf  used on input line 1903.
 (pdftex.def)             Requested size: 436.63019pt x 250.93687pt.
 [29 <./linear-mixed-models_files/figure-latex/unnamed-chunk-38-1.pdf>]
-<linear-mixed-models_files/figure-latex/unnamed-chunk-41-2.pdf, id=375, 407.522
+<linear-mixed-models_files/figure-latex/unnamed-chunk-41-2.pdf, id=377, 407.522
 5pt x 219.82124pt>
 File: linear-mixed-models_files/figure-latex/unnamed-chunk-41-2.pdf Graphic fil
 e (type pdf)
 <use linear-mixed-models_files/figure-latex/unnamed-chunk-41-2.pdf>
 Package pdftex.def Info: linear-mixed-models_files/figure-latex/unnamed-chunk-4
-1-2.pdf  used on input line 1896.
+1-2.pdf  used on input line 1912.
 (pdftex.def)             Requested size: 407.53394pt x 219.8274pt.
 [30 <./linear-mixed-models_files/figure-latex/unnamed-chunk-41-1.pdf> <./linear
 -mixed-models_files/figure-latex/unnamed-chunk-41-2.pdf>] [31]
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <14.4> not available
-(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 2042.
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 2058.
 
 Package amsmath Warning: Foreign command \atopwithdelims;
 (amsmath)                \frac or \genfrac should be used instead
-(amsmath)                 on input line 2078.
+(amsmath)                 on input line 2094.
 
 [32]
-Overfull \vbox (1.41856pt too high) detected at line 2157
+Overfull \vbox (1.41856pt too high) detected at line 2173
  []
 
 [33] [34] [35] [36] [37] (./linear-mixed-models.bbl) [38] (./linear-mixed-model
 s.aux) ) 
 Here is how much of TeX's memory you used:
- 15121 strings out of 478268
- 244176 string characters out of 5846347
- 598054 words of memory out of 5000000
- 32772 multiletter control sequences out of 15000+600000
+ 15123 strings out of 478268
+ 244196 string characters out of 5846347
+ 598105 words of memory out of 5000000
+ 32773 multiletter control sequences out of 15000+600000
  535611 words of font info for 168 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  74i,14n,77p,1016b,488s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -757,10 +757,10 @@ lm/lmtk10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmtko10
 .pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></usr
 /local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmtti10.pfb></usr/local/te
 xlive/2022/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on linear-mixed-models.pdf (38 pages, 2616535 bytes).
+Output written on linear-mixed-models.pdf (38 pages, 2616967 bytes).
 PDF statistics:
- 647 PDF objects out of 1000 (max. 8388607)
- 510 compressed objects within 6 object streams
- 106 named destinations out of 1000 (max. 500000)
+ 649 PDF objects out of 1000 (max. 8388607)
+ 512 compressed objects within 6 object streams
+ 107 named destinations out of 1000 (max. 500000)
  35073 words of extra memory for PDF output out of 35830 (max. 10000000)
 

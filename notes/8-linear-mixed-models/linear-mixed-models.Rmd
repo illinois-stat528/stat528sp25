@@ -52,9 +52,9 @@ Let’s now consider the simplest possible random effects model: a [one-way ANOV
 $$
   y_{ij} = \mu + \alpha_i + \varepsilon_{ij}; \quad i = 1,\ldots,a; \quad j = 1,\ldots,n,
 $$
-where the $\alpha$'s and the $\varepsilon$'s have zero mean and respective variances $\sigma^2_\alpha$ and $\sigma^2_\varepsilon$. These variances are known as the \textbf{variance components}. Note that this formulation induces an intraclass correlation between observations at the same level that is formally expressed as
+where the $\alpha$'s and the $\varepsilon$'s have zero mean and respective variances $\sigma^2_\alpha$ and $\sigma^2$. These variances are known as the \textbf{variance components}. Note that this formulation induces an intraclass correlation between observations at the same level that is formally expressed as
 $$
-  \rho = \frac{\sigma^2_\alpha}{\sigma^2_\alpha + \sigma^2_\varepsilon}.
+  \rho = \frac{\sigma^2_\alpha}{\sigma^2_\alpha + \sigma^2}.
 $$
 This intraclass correlation quantifies the proportion of total variance that is attributable to differences between groups, and it is an important feature of random effects models.
 
@@ -68,13 +68,13 @@ where $\bar{y}_{i+}$ is the sample mean within group $i$ and $\bar{y}_{++}$ is t
 
 Dividing through by the respective degrees of freedom, we obtain the mean squares, MSE and MSA. Now we find that
 $$
-  E(SSE) = a(n-1)\sigma^2_{\varepsilon}, \qquad  
-  E(SSA) = (a-1)(n\sigma^2_{\alpha} + \sigma^2_{\varepsilon})
+  E(SSE) = a(n-1)\sigma^2, \qquad  
+  E(SSA) = (a-1)(n\sigma^2_{\alpha} + \sigma^2)
 $$
 which use the estimators: 
 $$
-  \hat\sigma^2_\varepsilon = \frac{SSE}{a(n-1)} = MSE, \qquad 
-  \hat\sigma^2_\alpha = \frac{SSA/(a-1) - \hat\sigma^2_\varepsilon}{n} = \frac{MSA - MSE}{n}.
+  \hat\sigma^2 = \frac{SSE}{a(n-1)} = MSE, \qquad 
+  \hat\sigma^2_\alpha = \frac{SSA/(a-1) - \hat\sigma^2}{n} = \frac{MSA - MSE}{n}.
 $$
 These estimators are known as the ANOVA estimators, and this method of estimating the variance components can be used for more complicated designs. These estimators have the advantage that they take explicit form (a major advantage in the precomputing days), but they have a number of disadvantages including: 
 \begin{enumerate}
@@ -102,9 +102,9 @@ $$
 $$
 In principle the above can be estimated by maximum likelihood estimation, but it is difficult in practice. One difficulty is that the final unrestricted estimate may estimate some of the variances in $D$ to be negative, and such estimates  must be constrained to be zero. First order optimization conditions may therefore not be satisfied. 
 
-MLE also suffers bias when estimating random effect parameters. Recall a simple example where $x_1,\ldots,x_n\overset{iid}{\sim} N(\mu,\sigma^2)$, then the MLE of $\sigma^2$ is $\hat\sigma^2 = n^{-1}\sum_i(x_i - \bar x)^2$. This estimate is biased, an unbiased estimator is leading term should be $(n-1)^{-1}$ instead of $n^{-1}$. Conceptually, these problems are driven by estimation of $\mu$. If $\mu$ were known then $n^{-1}\sum_i(x_i - \mu)^2$ is an unbiased estimator for $\sigma^2$. Similar problems occur with the estimation of variance components. Given, that the number of factors may not be large, the bias of the MLE for the variance component associated with that factor may be quite large.
+MLE also suffers bias when estimating random effect parameters. Recall a simple example where $x_1,\ldots,x_n\overset{iid}{\sim} N(\mu,\sigma^2)$, then the MLE of $\sigma^2$ is $\hat\sigma^2 = n^{-1}\sum_i(x_i - \bar x)^2$. This estimate is biased, an unbiased estimator is leading term should be $(n-1)^{-1}$ instead of $n^{-1}$. Conceptually, these problems are driven by estimation of $\mu$. If $\mu$ were known then $n^{-1}\sum_i(x_i - \mu)^2$ is an unbiased estimator for $\sigma^2$. Similar problems occur with the estimation of variance components. Given that the number of observations for some factor may not be large, the bias of the MLE for the variance component associated with that factor may be quite large.
 
-\textbf{Restricted maximum likelihood estimation (REML)} estimators are an attempt to get around problems with standard unrestricted maximum likelihood estimation. The idea of REML is to find all linear combinations of the response, denoted $k$, such that $k^TX = 0$. Form a matrix $K$ with columns $k$, so that 
+\textbf{Restricted maximum likelihood estimation (REML)} estimators are an attempt to get around problems with standard unrestricted maximum likelihood estimation. The idea of REML is to find all linear combinations, denoted $k$, such that $k^TX = 0$. Form a matrix $K$ with columns $k$, so that 
 $$
   K^TY \sim N(0, K^TVK).
 $$
@@ -242,13 +242,13 @@ In this example, the random and fixed effect tests gave similar outcomes. Howeve
 
 ## Predicting random effects
 
-In a model with random effects, the $alpha$s are no longer parameters, but are realizations from a random generative process. Using the standard normal assumption we have that
+In a model with random effects, the $\alpha$'s are no longer parameters, but are realizations from a random generative process. Using the standard normal assumption we have that
 $$
   \alpha_i \sim N(0, \sigma^2_\alpha).
 $$
-It does not make much sense to estimate the $\alpha$s because they are random variables from a common distribution under this setup. So instead we may think of interesting probabilities and expected values corresponding to the random effect distribution. However, $E(\alpha_i) = 0$ for all $i$ which is clearly not very interesting. 
+It does not make much sense to estimate the $\alpha$'s because they are random variables from a common distribution under this setup. So instead we may think of interesting probabilities and expected values corresponding to the random effect distribution. However, $E(\alpha_i) = 0$ for all $i$ which is clearly not very interesting. 
 
-If however, one approaches this problem from a Bayesian perspective then we have a prior density for the $\alpha$s and $E(\alpha_i) = 0$ is just the prior mean. Let $f$ represent a density function, then the posterior density for $\alpha$ is given by
+If however, one approaches this problem from a Bayesian perspective then we have a prior density for the $\alpha$'s and $E(\alpha_i) = 0$ is just the prior mean. Let $f$ represent a density function, then the posterior density for $\alpha$ is given by
 $$
   f(\alpha_i|Y) \propto f(Y|\alpha_i)f(\alpha_i)
 $$
@@ -257,10 +257,17 @@ $$
   E(\alpha_i|Y) = \int \alpha_i f(\alpha_i|Y) d\alpha_i.
 $$
 This works out to be
-$$
-  \hat\alpha = DZ^TV^{-1}(Y - X\beta).
-$$
-A purely Bayesian approach would specify the parameters of the prior (or specify priors for these) and compute a posterior distribution for $\alpha$. We can also take an empirical Bayesian point of view and substitute the MLEs into $D$, $V$, and $\beta$ to obtain predicted random effects. These may be computed as
+\begin{equation} \label{eq:rep}
+  \hat\alpha = DZ^TV^{-1}(Y - X\beta),
+\end{equation}
+where:
+
+ - $D = \Var(b)/\sigma^2$,
+ - $Z$ is the fixed random-effects model matrix,
+ - $V = I + ZDZ^T$,
+ - $Y - X\beta$ are the residuals corresponding to a regression on the fixed-effects.
+
+A purely Bayesian approach would specify the parameters of the prior (or specify priors for these) and compute a posterior distribution for $\alpha$. We can also take an empirical Bayesian point of view and substitute the MLEs into $D$, $V$, and $\beta$ to obtain predicted random-effects. This is the approach implemented in \texttt{lme4} for obtaining $\hat{\alpha}$ in \eqref{eq:rep}:
 
 ```{r}
 ranef(mmod)$operator

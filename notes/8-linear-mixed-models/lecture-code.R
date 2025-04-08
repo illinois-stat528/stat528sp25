@@ -9,13 +9,15 @@ data(pulp)
 ?pulp
 ## note that we are changing the contrasts to sum contrasts
 op = options(contrasts = c("contr.sum", "contr.poly"))
-## aov is another wrapper for lm; results more appropriate for ANOVA models
+## aov is a wrapper for lm; results more appropriate for ANOVA models
 lmod = aov(bright ~ operator, pulp)
 summary(lmod)
 coef(lmod)
 
 ## (MSA - MSE) / n 
-(0.4467 - 0.1062)/5
+pulp %>% group_by(operator) %>%  summarise(n = n())
+sigma.sq_alpha = (0.4467 - 0.1062) / 5
+sigma.sq_alpha
 
 mmod = lmer(bright ~ 1 + (1|operator), pulp)
 summary(mmod)
@@ -186,25 +188,36 @@ m3_mAqE_full = lmer(mAqE ~ ID + Date_num + I(Date_num^2) +
 ## LRT
 
 ### setup
-set.seed(13)
-B = 1000
-lrtstat = numeric(B)
+#set.seed(13)
+#B = 1000
+#lrtstat = numeric(B)
 
 ### parametric bootstrap
-system.time(for(b in 1:B){
-  y = unlist(simulate(m1_mAqE))
-  bnull = lm(y ~ ID + Date_num + I(Date_num^2), data = dat)
-  balt = lmer(y ~ ID + Date_num + I(Date_num^2) + 
-                (1|plot_number_year),
-              data = dat, REML = FALSE, 
-              control = lmerControl(optimizer ="Nelder_Mead"))
-  lrtstat[b] = as.numeric(2*(logLik(balt) - logLik(bnull)))
-})
-mean(lrtstat < 1e-5)
+#system.time(for(b in 1:B){
+#  y = unlist(simulate(m1_mAqE))
+#  bnull = lm(y ~ ID + Date_num + I(Date_num^2), data = dat)
+#  balt = lmer(y ~ ID + Date_num + I(Date_num^2) + 
+#                (1|plot_number_year),
+#              data = dat, REML = FALSE, 
+#              control = lmerControl(optimizer ="Nelder_Mead"))
+#  lrtstat[b] = as.numeric(2*(logLik(balt) - logLik(bnull)))
+#})
+#mean(lrtstat < 1e-5)
 
-pval = mean(lrtstat > 
-              as.numeric(2*(logLik(m1_mAqE_full) - logLik(m1_mAqE))))
-pval
+#pval = mean(lrtstat > 
+#              as.numeric(2*(logLik(m1_mAqE_full) - logLik(m1_mAqE))))
+#pval
+
+## AIC
+AIC(m1_mAqE, m1_mAqE_full)
+AIC(m2_mAqE, m2_mAqE_full) 
+AIC(m3_mAqE, m3_mAqE_full)
+
+## BIC
+BIC(m1_mAqE, m1_mAqE_full)
+BIC(m2_mAqE, m2_mAqE_full) 
+BIC(m3_mAqE, m3_mAqE_full)
+
 
 ## modeling assumptions
 

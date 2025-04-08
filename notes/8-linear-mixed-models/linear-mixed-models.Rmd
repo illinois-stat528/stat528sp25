@@ -33,36 +33,39 @@ Many common statistical models can be expressed as linear models that incorporat
 
 A model with both fixed effects and random effects is called a \emph{mixed-effects model}. The random effects in a mixed-effects model can either be \emph{nested} or \emph{crossed}. When the levels of one factor vary only within the levels of another factor, that factor is said to be nested. For example, when measuring the performance of workers at several different job locations, if the workers only work at one location, the workers are nested within the locations. If the workers work at more than one location, then the workers are crossed with locations. 
 
-So far in this class we have discussed models with fixed effects only. In this sense, regression model parameters are population level parameters or sub-population parameters. Inference for these parameters is at the population level. We will now introduce a simple example of a mixed-effects model.
-
-We will consider a two-way analysis of variance (ANOVA) as a simple example of a mixed-effects model with both fixed and random effects:
+So far in this class, we have discussed models that include fixed effects only. In such models, the regression parameters are interpreted as population-level or sub-population-level quantities, and our inference is directed toward these fixed parameters. We now introduce a simple example of a mixed-effects model, which includes both fixed and random effects. Our illustrative example is a two-way ANOVA model with the following structure:
 $$
   y_{ijk} = \mu + \tau_i + v_j + \varepsilon_{ijk}
 $$
-where $\mu$ a population mean fixed effect, $\tau_i$ is a sub-population fixed-effect, $v_j$ is a random effect, and $\varepsilon_{ijk}$ is an error term. We will assume that $v_j \overset{iid}{\sim} N(0,\sigma^2_v)$ and $\varepsilon_{ijk} \overset{iid}{\sim} N(0,\sigma^2)$ where $v_j$ and $\varepsilon_{ijk}$ are independent. In this model we may want to 
+where $\mu$ is a population mean fixed effect, $\tau_i$ is a sub-population fixed-effect, $v_j$ is a random effect, and $\varepsilon_{ijk}$ is an error term. We will assume that $v_j \overset{iid}{\sim} N(0,\sigma^2_v)$ and $\varepsilon_{ijk} \overset{iid}{\sim} N(0,\sigma^2)$ where $v_j$ and $\varepsilon_{ijk}$ are independent. In this model, we are typically interested in:
 
- - estimate $\tau_i$ and test the hypothesis $H_0: \tau_i = 0$,
- - estimate $\sigma^2_v$ and test $H_0:\sigma^2_v = 0$. 
+  - Estimating and testing the fixed effects $\tau_i$, for example, testing $H_0: \tau_i = 0$.
 
-Notice that we want to estimate and test all of the fixed-effects $\tau_i$ while we only need to estimate and test a single random effects parameter.
+  - Estimating the variance component $\sigma^2_v$ and testing $H_0: \sigma^2_v = 0$.
+
+Notice that for fixed effects (like the $\tau_i$), we estimate each parameter and test them individually. For the random effects, we are usually interested in estimating and testing the variance component $\sigma^2_v$ as a whole, rather than the individual $v_j$ terms.
 
 
-# Basic linear mixed-effects model example
+# Basic linear random effect model example
 
-This is not as simple for fixed effects models. We will start with the simplest possible example random effects model: a [one-way ANOVA](https://en.wikipedia.org/wiki/One-way_analysis_of_variance) design with a factor having $a$ levels:
+Let’s now consider the simplest possible random effects model: a [one-way ANOVA](https://en.wikipedia.org/wiki/One-way_analysis_of_variance) with random group effects. This is a special case of the model above, where there is only one factor with $a$ levels:
 $$
   y_{ij} = \mu + \alpha_i + \varepsilon_{ij}; \quad i = 1,\ldots,a; \quad j = 1,\ldots,n,
 $$
-where the $\alpha$s and the $\varepsilon$s have zero mean and respective variances $\sigma^2_\alpha$ and $\sigma^2_\varepsilon$. These variances are known as the \textbf{variance components}. Note that this formulation induces an intraclass correlation between observations at the same level that is formally expressed as
+where the $\alpha$'s and the $\varepsilon$'s have zero mean and respective variances $\sigma^2_\alpha$ and $\sigma^2_\varepsilon$. These variances are known as the \textbf{variance components}. Note that this formulation induces an intraclass correlation between observations at the same level that is formally expressed as
 $$
   \rho = \frac{\sigma^2_\alpha}{\sigma^2_\alpha + \sigma^2_\varepsilon}.
 $$
-For simplicity, let there be an equal number of observations $n$ per level. Recall that we can decompose the total variation as SST = SSE + SSA,
+This intraclass correlation quantifies the proportion of total variance that is attributable to differences between groups, and it is an important feature of random effects models.
+
+To analyze this model using ANOVA techniques, and for simplicity, assume that each group has an equal number of observations, $n$ per level. The total variation in the data can be decomposed as sum-of-squares total (SST) = sum-of-squres within groups (SSE) + sum-of-squares between groups (SSA),
 $$
   \sum_{i=1}^a\sum_{j=1}^n(y_{ij} - \bar{y}_{++})^2  
     = \sum_{i=1}^a\sum_{j=1}^n(y_{ij} - \bar{y}_{i+})^2
-      + \sum_{i=1}^a\sum_{j=1}^n(\bar{y}_{i+} - \bar{y}_{++})^2.
+      + \sum_{i=1}^a\sum_{j=1}^n(\bar{y}_{i+} - \bar{y}_{++})^2,
 $$
+where $\bar{y}_{i+}$ is the sample mean within group $i$ and $\bar{y}_{++}$ is the overall mean across all observations,
+
 Dividing through by the respective degrees of freedom, we obtain the mean squares, MSE and MSA. Now we find that
 $$
   E(SSE) = a(n-1)\sigma^2_{\varepsilon}, \qquad  
@@ -84,7 +87,7 @@ One technique for estimating parameters in mixed-effect regression models that a
 
 # More general LMM setup
 
-We will now consider models with normal modeling assumptions:
+We now turn to the general framework for linear mixed models under normality assumptions. The model is given by:
 $$
   Y = X\beta + Zb + \varepsilon  \quad \text{or} \quad  
   Y|b \sim N(X\beta + Zb, \sigma^2I),

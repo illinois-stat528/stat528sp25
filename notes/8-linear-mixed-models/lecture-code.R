@@ -19,7 +19,7 @@ pulp %>% group_by(operator) %>%  summarise(n = n())
 sigma.sq_alpha = (0.4467 - 0.1062) / 5
 sigma.sq_alpha
 
-mmod = lmer(bright ~ 1 + (1|operator), pulp)
+mmod = lmer(bright ~ 1 + (1|operator), pulp, REML = TRUE)
 summary(mmod)
 
 

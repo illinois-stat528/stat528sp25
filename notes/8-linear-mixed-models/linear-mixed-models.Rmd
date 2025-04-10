@@ -46,7 +46,7 @@ where $\mu$ is a population mean fixed effect, $\tau_i$ is a sub-population fixe
 Notice that for fixed effects (like the $\tau_i$), we estimate each parameter and test them individually. For the random effects, we are usually interested in estimating and testing the variance component $\sigma^2_v$ as a whole, rather than the individual $v_j$ terms.
 
 
-# Basic linear random effect model example
+# Basic Linear Random Effect Model Example
 
 Let’s now consider the simplest possible random effects model: a [one-way ANOVA](https://en.wikipedia.org/wiki/One-way_analysis_of_variance) with random group effects. This is a special case of the model above, where there is only one factor with $a$ levels:
 $$
@@ -85,7 +85,7 @@ These estimators are known as the ANOVA estimators, and this method of estimatin
 One technique for estimating parameters in mixed-effect regression models that alleviates these concerns is the familiar method of maximum likelihood estimation. Of course, this requires that we assume distributions for the random effects and the errors. 
 
 
-# More general LMM setup
+# More General LMM Setup
 
 We now turn to the general framework for linear mixed models under normality assumptions. The model is given by:
 $$
@@ -119,7 +119,7 @@ $$
 REML generally produces less biased estimates than unconditional MLE. For balanced data, REML estimates are usually the same as ANOVA estimates. 
 
 
-## Example: pulp data set
+## Example: Brightness of Paper Pulp Depending on Shift Operator
 
 We illustrate the fitting methods using some data from an experiment which tests how the paper brightness is influenced by the shift operator on duty. See Section 8.1 in \cite{faraway2016extending} for more details. We start with a fixed effects one-way ANOVA.
 
@@ -153,7 +153,7 @@ In the above, the model fitted has both fixed and random effects components. The
 The default fitting method is the REML procedure mentioned above. We see that this method gives identical estimates to the ANOVA results above. For unbalanced designs, the REML and ANOVA estimators are not necessarily identical. 
 
 
-## Inference for nested models
+## Inferential Challenges for Nested Models
 
 Using standard likelihood theory, we may derive a test to compare two nested hypotheses, $H_0$ and $H_1$, by computing the likelihood ratio test statistic:
 $$
@@ -177,7 +177,7 @@ An alternative approach is to condition on the estimated values of the random ef
 \end{itemize}
 
 
-## Example: pulp data set (continued)
+## Example: Brightness of Paper Pulp Depending on Shift Operator (continued)
 
 In this example the only fixed effect is the mean and there is not much interest in testing that. We first fit the null model
 
@@ -240,7 +240,7 @@ We can be fairly sure that the estimated $p$-value is under a 0.05 nominal level
 In this example, the random and fixed effect tests gave similar outcomes. However, the hypotheses in random and fixed effects are intrinsically different. The conclusions from testing hypotheses involving fixed effects are only relevant to the levels under study. On the other hand, tests of hypotheses involving random effects are relevant of levels of the effect not considered. They are based upon a random generative mechanism that, in this case, are indexed by a single parameter. The conclusions of such test are more meaningful, more general, and should require more care than their fixed effects counterparts. 
 
 
-## Predicting random effects
+## Predicting Random Effects
 
 In a model with random effects, the $\alpha$'s are no longer parameters, but are realizations from a random generative process. Using the standard normal assumption we have that
 $$
@@ -336,13 +336,117 @@ quantile(pv, c(0.025, 0.975))
 ```
 
 
-## Example: Soybean analysis 
+# Split Plot Designs
 
-This is a demonstration from a [paper](https://onlinelibrary.wiley.com/doi/full/10.1111/tpj.17219) on improving the efficiency of crop photosynthesis via genetic manipulation to speed up the relaxation of photoprotective mechanisms during sun-to-shade transitions.
+Split plot designs originated in agriculture, but also occur in many other settings. A split plot design is as follows:
+\begin{itemize}
+\item One starts with a main whole plot in which a level of a factor variable is applied.
+\item The main plot is then divided into sections (split plots) and the levels of another factor variable is applied to each of these split plots.
+\end{itemize}
+The design arises as a result of restrictions on full randomization. For example, consider an agricultural experiment that studies the effects of plant varieties and irrigation techniques. It may be difficult to vary irrigation techniques over a field while it is easy to plant different plant varieties across a field. To overcome this challenge we consider a split plot design in which a sample of main plots (fields) each receive one irrigation technique at random. Each main plot is then divided into a number of split plots equal to the number of levels of plant varieties under study. Then each plant variety is randomly assigned to each split plot at random. Generally speaking, split plot designs arise when one factor is easy to change and another factor takes much more effort to manipulate. [Here is a simple conceptual visual for split plot designs.](https://www.statology.org/split-plot-design/)
 
-In this demonstration the researchers are interested in determining which genotypes are associated with a different expression of apparent quantum efficiency (AqE) from the RC reference genotype. AqE is a part of the photosynthetic process in plants where improvements in AqE allow for improvements in yield. The researchers have collected data across multiple plots for multiple days over two years. The plot effects are not of interest.
 
-It is known that AqE will have a quadratic effect in date, and that AqE may depend on weather conditions. Some weather variables are also collected (Fsd\_7day, Ta\_7day, Precip\_7day, and Precip\_cum).
+## Example: Irrigation Split Plot Design
+
+We now perform a data analysis corresponding to the motivating irrigation example. In this example we want to determine which irrigation and plant variety combination produces the highest yield. There are four irrigation methods and two plant varieties under consideration. Eight fields were available, but only one type of irrigation may be applied to each field. The whole plot factor is the irrigation method which should be randomly assigned to each of the fields. The fields may be divided into two halves with each plant variety randomly assigned to each of the halves. A summary and visualization of the data are included below:
+
+```{r}
+data(irrigation)
+
+## data summary
+summary(irrigation)
+
+## data visualization
+ggplot(irrigation, aes(y=yield, x=field, shape=irrigation, color= variety)) +
+  geom_point(size = 2) +
+  theme_minimal()
+```
+
+Both irrigation and plant variety are fixed effects, but field should be modeled as a random effect (\textbf{Why so?}). We can also consider the interaction between field and variety, which is necessarily also a random effect because one of the two components is random. The fullest model that we might consider is:
+$$
+  y_{ijk} = \mu + r_i + v_j + (rv)_{ij} + f_k + (vf)_{jk} + \varepsilon_{ijk},
+$$
+where
+\begin{itemize}
+\item $\mu$ is a fixed model intercept,
+\item $r_i$ is the fixed effect for irrigation that ranges over $i \in \{1,\ldots,4\}$ levels,
+\item $v_j$ is the fixed effect for plant variety that ranges over $j \in \{1,2\}$ levels,
+\item $(rv)_{ij}$ is the fixed effect interaction between irrigation and plant variety with an index ranging over $i$ and $j$,
+\item $f_k$ is the random effect for field for which there are 8 realizations each indexed by $k$,
+\item $(vf)_{jk}$ is the random effect interaction between plant variety and field with an index ranging over $j$ and $k$, and
+\item $\varepsilon$ is an error term for each observation.
+\end{itemize}
+We assume normal distributions for the random effect terms which are themselves indexed by single variance parameters $\sigma^2_f$, $\sigma^2_{vf}$, and $\sigma^2_\varepsilon$. Note that there is no irrigation and field interaction terms in this model. This is because it would not be possible to estimate such an effect since only one type of irrigation method is assigned to each field; these factors are not crossed. We try to fit this model as follows:
+
+```{r, eval = FALSE}
+lmod = lmer(yield ~ irrigation * variety + (1|field) + (1|field:variety),
+             data = irrigation)
+```
+
+However, when you try to fit such a model, it will fail because it is not possible to distinguish the variety within field variation. We would need more than one observation per variety within each field for us to separate the two variabilities. We are forced to resort to a simpler model that omits the variety by field interaction random effect:
+$$
+  y_{ijk} = \mu + r_i + v_j + (rv)_{ij} + f_k + \varepsilon_{ijk}
+$$
+
+```{r}
+lmod = lmer(yield ~ irrigation * variety + (1|field),
+             data = irrigation)
+sumary(lmod)
+```
+
+Note that \texttt{lmer} does not provide p-values for fixed-effects. Per Ben Bolker, one of the developers of \texttt{lmer}, not printing p-values has been a "feature" of \texttt{lmer} forever. For further discussion, see this [formal technical FAQ]((https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#why-doesnt-lme4-display-denominator-degrees-of-freedomp-values-what-other-options-do-i-have)) and Doug Bates’s [informal and colorful explanation](https://stat.ethz.ch/pipermail/r-help/2006-May/094765.html).
+
+While this omission may seem surprising, it is a deliberate design choice rooted in the nature of mixed models. In classical linear models, p-values are derived from F-tests with clearly defined numerator and denominator degrees of freedom, based on a known distribution of a residual variance estimate. However, in mixed models the residual variance is estimated via REML, and its distribution is not analytically tractable—particularly when random effects are present and variance components are themselves estimated. 
+
+Although \texttt{lmer} uses a shared penalized residual variance across all fixed-effect tests, some software (like SAS) assigns different denominator degrees of freedom to each test using approximations (e.g., Satterthwaite or Kenward-Roger). Doug Bates, the author of \texttt{lmer}, considers this approach conceptually inconsistent: if the denominator variance is common across tests and its distribution is not known, assigning different degrees of freedom per test may give a false sense of precision. As a result, \texttt{lmer} omits p-values altogether. One can make model comparisons with formal inference available through companion tools like \texttt{pbkrtest}.
+
+Returning to our analysis, we can see that the largest variance component is due to the field effect, with $\hat\sigma_f = 4.03$ compared to $\hat\sigma_\varepsilon = 1.45$. The relatively large standard errors, in comparison to the fixed effect estimates, suggest that there may be no significant fixed effects. We can check this sequentially using a backwards model selection procedure with [Kenward-Roger approximate F-tests](https://pubmed.ncbi.nlm.nih.gov/9333350/) that employ adjusted degrees of freedom and are implemented in the previously mentioned \texttt{pbkrtest} package.
+
+```{r}
+library(pbkrtest)
+lmoda = lmer(yield ~ irrigation + variety + (1|field), data=irrigation)
+KRmodcomp(lmod, lmoda)
+```
+
+We find there is no significant interaction term. We can now test each of the main effects starting with the fixed effect for plant variety:
+
+```{r}
+lmodi = lmer(yield ~ irrigation + (1|field), irrigation)
+KRmodcomp(lmoda, lmodi)
+```
+
+Dropping variety from the model seems reasonable since the p-value of 0.25 is large. We can test irrigation in a similar manner:
+
+```{r}
+lmodv = lmer(yield ~ variety + (1|field), irrigation)
+KRmodcomp(lmoda, lmodv)
+```
+
+Irrigation also fails to be significant. We should check the diagnostic plots to make sure there is nothing amiss:
+
+```{r}
+par(mfrow = c(1,2))
+plot(fitted(lmod), residuals(lmod), xlab="Fitted", ylab="Residuals", pch = 19)
+qqnorm(residuals(lmod), main="", pch = 19)
+```
+
+We can see that there is no problem with the nonconstant variance, but that the residuals indicate a bimodal distribution caused by the pairs of observations in each field. This type of divergence from normality is unlikely to cause any major problems with the estimation and inference. We can test the random effects using the \texttt{exactRLRT} function which performs a likelihood ratio test based on simulated values from the finite sample distribution for testing whether the variance of a random effect is 0 in a linear mixed model with known correlation structure of the tested random effect and iid errors:
+
+```{r bootLRT2, cache = TRUE}
+library(RLRsim)
+exactRLRT(lmod)
+```
+
+We see that yields does seem to vary across fields as the result is significant.
+
+
+# Example: Modeling Photoprotection Dynamics in Soybean
+
+This example is a mixed-effects modeling demonstration adapted from a [recent study](https://onlinelibrary.wiley.com/doi/full/10.1111/tpj.17219) on improving the efficiency of crop photosynthesis via genetic manipulation to speed up the relaxation of photoprotective mechanisms during sun-to-shade transitions.
+
+n this demonstration, the researchers aim to identify genotypes that differ in their expression of apparent quantum efficiency (AqE) relative to a reference genotype (RC). AqE is a component of the photosynthetic process, and improvements in AqE can potentially lead to increased yield. The dataset includes repeated measurements across multiple plots, days, and two field seasons. Plot effects are treated as nuisance variation.
+
+It is known that AqE exhibits a quadratic trend over the growing season (date), and may also depend on environmental conditions. Several weather-related covariates are available: (Fsd\_7day, Ta\_7day, Precip\_7day, and Precip\_cum).
 
 ```{r, warning=FALSE, message=FALSE}
 library(tidyverse)
@@ -379,7 +483,9 @@ This gives a total of six candidate models fit in a common order:
 5. m3\_mAqE
 6. m3\_mAqE\_full
 
-Our procedure for determining influential genotypes for each response will follow these steps:
+The goal of this modeling framework is to identify genotypes whose expression of AqE differs meaningfully from the reference line (RC). Our procedure was designed to balance principled statistical modeling with a highly selective threshold for declaring genotype influence, reflecting the level of caution and robustness the researchers deemed necessary for biological interpretation.
+
+Our selection pipeline proceeds as follows:
 
 1. Investigate model diagnostics for the six candidate models. Refit with transformations if needed.
 2. Determine if each genotype provides a better fit over reference level through a leave-one-variable-out AIC procedure. We refit the model with the genotype under investigation removed and record AIC values for this model and the original model with the genotype included. The models are fit so that the genotype effect is interpreted as its difference from the RC reference level (the RC level is encoded in the model intercept). 
@@ -422,7 +528,7 @@ m3_mAqE_full = lmer(mAqE ~ ID + Date_num + I(Date_num^2) +
                     control = lmerControl(optimizer ="Nelder_Mead"))
 ```
 
-Just as before we can use a parametric bootstrap to compare nested models. In this case we compare the linear regression model to a mixed-effects model containing a random effect for plots. In this example we can see that the parametric bootstrap is fairly time-consuming.
+Just as before we can use a parametric bootstrap to compare nested models. In this case we compare the linear regression model to a mixed-effects model containing a random effect for plots. In this example we can see that the parametric bootstrap is prohibitively time-consuming.
 
 ```{r boot_soy1, warning = FALSE, message = FALSE, cache = TRUE}
 set.seed(13)
@@ -456,7 +562,7 @@ pval = mean(lrtstat >
 pval
 ```
 
-We now compare the mixed-effects model containing a random effect for plots with a larger mixed-effects model containing fixed effects for weather variables. Again, the parametric bootstrap is fairly time-consuming. A quicker decision can be made using model selection criteria. Both AIC and BIC select the largest model with random effects for plots and fixed effects for weather variables.
+We now compare the mixed-effects model containing a random effect for plots with a larger mixed-effects model containing fixed effects for weather variables. Given the computational cost of the parametric bootstrap, we could proceed with model selection criteria such as AIC and BIC, which in this case strongly support the more complex model with random effects for plots and fixed effects for weather variables.
 
 ```{r}
 ## AIC
@@ -470,7 +576,7 @@ BIC(m2_mAqE, m2_mAqE_full)
 BIC(m3_mAqE, m3_mAqE_full)
 ```
 
-We see that the modeling assumptions of constant variance and normality of residuals are satisfied in all candidate models.
+Below we see that the modeling assumptions of constant variance and normality of residuals are satisfied in all candidate models.
 
 ```{r}
 ## model m1_mAqE
@@ -604,115 +710,17 @@ coefs_mAqE = round(cbind(summary(m1_mAqE)$coefficients[2:41, 1],
                          summary(m3_mAqE_full)$coefficients[2:41, 1]), 3)
 inference_mAqE = sign(coefs_mAqE) * sign(AIC_IDs_mAqE < 0)
 
-## influential genotype 
+## influential genotypes 
 rownames(coefs_mAqE)[abs(rowSums(inference_mAqE)) == 6]
 coefs_mAqE[abs(rowSums(inference_mAqE)) == 6, ]
 ```
 
 
-# Split plots
-
-Split plot designs originated in agriculture, but also occur in many other settings. A split plot design is as follows:
-\begin{itemize}
-\item One starts with a main whole plot in which a level of a factor variable is applied.
-\item The main plot is then divided into sections (split plots) and the levels of another factor variable is applied to each of these split plots.
-\end{itemize}
-The design arises as a result of restrictions on full randomization. For example, consider an agricultural experiment that studies the effects of plant varieties and irrigation techniques. It may be difficult to vary irrigation techniques over a field while it is easy to plant different plant varieties across a field. To overcome this challenge we consider a split plot design in which a sample of main plots (fields) each receive one irrigation technique at random. Each main plot is then divided into a number of split plots equal to the number of levels of plant varieties under study. Then each plant variety is randomly assigned to each split plot at random. Generally speaking, split plot designs arise when one factor is easy to change and another factor takes much more effort to manipulate. [Here is a simple conceptual visual for split plot designs.](https://www.statology.org/split-plot-design/)
 
 
-## Example: irrigation split plot design
+# Example: Nested Random Effects in a Laboratory Setting
 
-We now perform a data analysis corresponding to the motivating irrigation example. In this example we want to determine which irrigation and plant variety combination produces the highest yield. There are four irrigation methods and two plant varieties under consideration. Eight fields were available, but only one type of irrigation may be applied to each field. The whole plot factor is the irrigation method which should be randomly assigned to each of the fields. The fields may be divided into two halves with each plant variety randomly assigned to each of the halves. A summary and visualization of the data are included below:
-
-```{r}
-data(irrigation)
-
-## data summary
-summary(irrigation)
-
-## data visualization
-ggplot(irrigation, aes(y=yield, x=field, shape=irrigation, color= variety)) +
-  geom_point(size = 2) +
-  theme_minimal()
-```
-
-Both irrigation and plant variety are fixed effects, but the field is clearly a random effect (\textbf{Why so?}). We must also consider the interaction between field and variety, which is necessarily also a random effect because one of the two components is random. The fullest model that we might consider is:
-$$
-  y_{ijk} = \mu + r_i + v_j + (rv)_{ij} + f_k + (vf)_{jk} + \varepsilon_{ijk},
-$$
-where
-\begin{itemize}
-\item $\mu$ is a fixed model intercept,
-\item $r_i$ is the fixed effect for irrigation that ranges over $i \in \{1,\ldots,4\}$ levels,
-\item $v_j$ is the fixed effect for plant variety that ranges over $j \in \{1,2\}$ levels,
-\item $(rv)_{ij}$ is the fixed effect interaction between irrigation and plant variety with an index ranging over $i$ and $j$,
-\item $f_k$ is the random effect for field for which there are 8 realizations each indexed by $k$,
-\item $(vf)_{jk}$ is the random effect interaction between plant variety and field with an index ranging over $j$ and $k$, and
-\item $\varepsilon$ is an error term for each observation.
-\end{itemize}
-We consider normal distributions for the random effect terms that are indexed by single variance parameters $\sigma^2_f$, $\sigma^2_{vf}$, and $\sigma^2_\varepsilon$. Note that there is no irrigation and field interaction terms in this model. This is because it would not be possible to estimate such an effect since only one type of irrigation method is assigned to each field; these factors are not crossed. We try to fit this model as follows:
-
-```{r, eval = FALSE}
-lmod = lmer(yield ~ irrigation * variety + (1|field) + (1|field:variety),
-             data = irrigation)
-```
-
-However, if you try to fit such a model, it will fail because it is not possible to distinguish the variety within field variation. We would need more than one observation per variety within each field for us to separate the two variabilities. We resort to a simpler model that omits the variety by field interaction random effect:
-$$
-  y_{ijk} = \mu + r_i + v_j + (rv)_{ij} + f_k + \varepsilon_{ijk}
-$$
-
-```{r}
-lmod = lmer(yield ~ irrigation * variety + (1|field),
-             data = irrigation)
-sumary(lmod)
-```
-
-Note that \texttt{lmer} does not provide p-values for fixed-effects. Per Ben Bolker, one of the developers of \texttt{lmer}, not printing p-values has been a "feature" of \texttt{lmer} forever (see a formal technical report on LMM and GLMM on this issue [here](https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#why-doesnt-lme4-display-denominator-degrees-of-freedomp-values-what-other-options-do-i-have) and Doug Bate's less than formal take [here](https://stat.ethz.ch/pipermail/r-help/2006-May/094765.html)).
-
-We can see that the largest variance component is that due to the field effect, with $\hat\sigma_f = 4.03$ compared to $\hat\sigma_\varepsilon = 1.45$. The relatively large standard errors compared to the fixed effect estimates suggest that there may be no significant fixed effects. We can check this sequentially using a backwards model selection procedure with F-tests with adjusted degrees of freedom:
-
-```{r}
-library(pbkrtest)
-lmoda = lmer(yield ~ irrigation + variety + (1|field), data=irrigation)
-KRmodcomp(lmod, lmoda)
-```
-
-We find there is no significant interaction term. We can now test each of the main effects starting with the fixed effect for plant variety:
-
-```{r}
-lmodi = lmer(yield ~ irrigation + (1|field), irrigation)
-KRmodcomp(lmoda, lmodi)
-```
-
-Dropping variety from the model seems reasonable since the p-value of 0.25 is large. We can test irrigation in a similar manner:
-
-```{r}
-lmodv = lmer(yield ~ variety + (1|field), irrigation)
-KRmodcomp(lmoda, lmodv)
-```
-
-Irrigation also fails to be significant. We should check the diagnostic plots to make sure there is nothing amiss:
-
-```{r}
-par(mfrow = c(1,2))
-plot(fitted(lmod), residuals(lmod), xlab="Fitted", ylab="Residuals", pch = 19)
-qqnorm(residuals(lmod), main="", pch = 19)
-```
-
-We can see that there is no problem with the nonconstant variance, but that the residuals indicate a bimodal distribution caused by the pairs of observations in each field. This type of divergence from normality is unlikely to cause any major problems with the estimation and inference. We can test the random effects using the \texttt{exactRLRT} function which performs a likelihood ratio test based on simulated values from the finite sample distribution for testing whether the variance of a random effect is 0 in a linear mixed model with known correlation structure of the tested random effect and iid errors:
-
-```{r bootLRT2, cache = TRUE}
-library(RLRsim)
-exactRLRT(lmod)
-```
-
-We see that the fields do seem to vary as the result is significant.
-
-
-# Nested random effects via an example
-
-In this section we provide an example of nesting. Consistency between laboratory tests is important and yet the results may depend on who did the test and where the test was performed. In an experiment to test levels of consistency, a large jar of dried egg powder was divided up into a number of samples. Because the powder was homogenized, the fat content of the samples is the same, but this fact is withheld from the laboratories. Four samples were sent to each of six laboratories. Two of the samples were labeled as G and two as H, although in fact they were identical. The laboratories were instructed to give two samples to two different technicians. The technicians were then instructed to divide their samples into two parts and measure the fat content of each. So each laboratory reported eight measures, each technician four measures, that is, two replicated measures on each of two samples. The data comes from Bliss (1967):
+In this section we provide an example of nesting. Consistency between laboratory tests is important and yet the results may depend on who did the test and where the test was performed. In an experiment to test levels of consistency, a large jar of homogenized dried egg powder was divided up into a number of samples. Because the powder was homogenized, the fat content of the samples is the same, but this fact is withheld from the laboratories. Four samples were sent to each of six laboratories. Two of the samples were labeled as G and two as H, although in fact they were identical. The laboratories were instructed to give two samples to two different technicians. The technicians were then instructed to divide their samples into two parts and measure the fat content of each. So each laboratory reported eight measures, each technician four measures, that is, two replicated measures on each of two samples. The data comes from Bliss (1967):
 
 ```{r}
 data(eggs)
@@ -755,7 +763,7 @@ confint(cmod, method="boot")
 We might drop any of the three random effect terms but it is not possible to be sure which is best to go. It is safest to conclude there is some variation in the fat measurement coming from all three sources.
 
 
-# Repeated measures and longitudinal data
+# Repeated Measures and Longitudinal Data
 
 In repeated measures designs there are several individuals (or units) under study and multiple measurements are taken repeatedly on each individual. When these repeated measurements are taken over time, it is called a longitudinal study or, in some applications, a panel study. Typically there are various covariates concerning the individual that are also recorded and interest centers on how the response depends on these covariates over time. Often it is reasonable to believe that the response of each individual has several components:
 
@@ -909,7 +917,7 @@ Now the random effects. We know the mean for males and females, but individuals 
 
 ***
 
-# How to fit a mixed-effects model using \texttt{lme4}
+# How \texttt{lme4} fits Mixed-Effects Models
 
 This Section will follow the package vignette corresponding to the \texttt{lme4} package. This vignette can be seen [here](https://cran.r-project.org/web/packages/lme4/vignettes/lmer.pdf). We will consider the simple mixed-effects structure
 \begin{align*}
@@ -961,7 +969,7 @@ $\Lambda_i$ & $q_i \times q_i$ & Term-wise relative covariance factor \\
 \textbf{It is important to note} that $X_i$ is a raw-random effects matrix and \textbf{NOT} a subpart of the fixed-effects model matrix $X$. This is a notational choice used in the [lme4 vignette](https://cran.r-project.org/web/packages/lme4/vignettes/lmer.pdf).
 
 
-## Algebraic and computational account of mixed-model formulas
+## Algebraic and Computational Accounting of Mixed-Model Input Formulas
 
 The fixed-effects terms of a mixed-model formula are parsed to produce the fixed-effects model matrix, $X$, in the same way that the R \texttt{lm} function generates model matrices.
 
@@ -986,7 +994,7 @@ When $k > 1$ we order the random-effects terms so that $l_1 \geq l_2 \geq \cdots
 \textbf{Examples}: The PSID example above considered $k=1$ term \texttt{(cyear|person)} which corresponded to a random intercept and a random slope for an individual's income over time. In this example $X_i, i=k=1$, with $p_i  = 2$ corresponding to a model matrix consisting of an intercept and a column for years centered around 1978, the median value, and $J_i$ provides indexes for each individual in the study. The Bliss (1967) example above concerning consistency of measurements considered $k=3$ terms \texttt{(1|Lab)},\texttt{(1|Lab:Technician)}, and \texttt{(1|Lab:Technician:Sample)}. Here, $X_i, i=1,2,3,$ with $p_i = 1, i = 1,2,3$, corresponding to intercept vectors and the $J_i$ matrices consider separate grouping factors which reflect the nested random effects.
 
 
-## Constructing the random-effects model matrix
+## Constructing the Random-Effects Model Matrix
 
 The $i$th random-effects term contributes $q_i = l_ip_i$ columns to the model matrix $Z$. These columns are grouped into a matrix $Z_i$, which is referred to as the \emph{term-wise model matrix} for the $i$th term. Thus $q$, the number of columns in $Z$ and the dimension of the random variable $b$ is
 $$
@@ -1030,7 +1038,7 @@ $$
 Therefore, the sparsity of $Z^T$ increases with the number of grouping factor levels. As the number of levels is often large in practice, it is essential for speed and efficiency to take account of this sparsity, for example by using sparse matrix methods, when fitting mixed models.
 
 
-## Constructing the relative covariance factor
+## Constructing the Relative Covariance Factor
 
 The $q \times q$ covariance factor $\Lambda_\theta$ is a block diagonal matrix whose $i$th diagonal block $\Lambda_i$ is of size $q_i$, $i=1,\ldots,k$. We refer to $\Lambda_i$ as the \emph{term-wise relative covariance factor}. 
 
@@ -1040,7 +1048,7 @@ More details are given in the [lme4 vignette](https://cran.r-project.org/web/pac
 
 
 
-## Objective function
+## Objective Function
 
 In the initial parameterization of the linear mixed-effects model, the covariance parameter $\theta$ appears only in the marginal distribution of the random effects through the variance matrix $\Sigma_\theta$. However, from the perspective of computational stability and efficiency, it is advantageous to reformulate the model such that $\theta$ appears only in the conditional distribution for the response vector given the random effects. Such a reparameterization allows us to work with singular covariance matrices, which regularly arise in practice.
 
@@ -1063,7 +1071,7 @@ $$
 is a vector of linear predictors, which can be interpreted as a conditional mean (or mode in the case of normality). Similarly, we also define $\mu_{U|Y=\yobs}$ as the conditional mean (or mode in the case of normality) of the spherical random effects given the observed response vector. Note also that we use the $u$ symbol throughout to represent a specific value of the random variable $U$.
 
 
-## Penalized least squares (PLS)
+## Penalized Least Squares (PLS)
 
 The computational methods for maximum likelihood estimation of the mixed-effects model involve repeated applications of the PLS method. In particular, the PLS problem is to minimize the penalized residual sum-of-squares,
 $$
@@ -1129,7 +1137,7 @@ $$
 The above derivation is an important expression in the underlying \texttt{lme4}. It relates the penalized residuals sum-of-squares with its minimum value and is extremely useful when we integrate out the random effects, which is required for maximum likelihood estimation. Note that we have simplified notation by writing $r^2(\theta,\hat\beta_\theta,\mu_{U|Y=\yobs})$ as $r^2(\theta)$.
 
 
-## Probability densities
+## Probability Densities
 
 The residual sums-of-squares discussed in the previous section can be used to express various probability densities, which are required for maximum likelihood estimation,
 \begin{align*}
@@ -1167,7 +1175,7 @@ $$
 $$
 
 
-## Evaluating and profiling the deviance
+## Evaluating and Profiling the Deviance
 
 We are able to explicitly profile $\beta$ and $\sigma$ out of the log-likelihood, to find a compact expression for the profiled deviance (negative twice the profiled log-likelihood) and the profiled REML criterion as a function of the relative covariance parameters, $\theta$, only. Furthermore these criteria can be evaluated quickly and accurately. To estimate the parameters, $\theta$, $\beta$, and $\sigma^2$, we minimize negative twice the log-likelihood, which can be written as,
 $$
@@ -1194,7 +1202,7 @@ $$
 This expression for the profiled deviance depends only on $\theta$. Although $q$, the number of columns in $Z$ and the size of $\Sigma_\theta$, can be very large indeed, the dimension of $\theta$ is small, frequently less than 10. The \texttt{lme4} package uses generic nonlinear optimizers to optimize this expression over $\theta$ to find its maximum likelihood estimate.
 
 
-## The REML criterion
+## The REML Criterion
 
 The REML criterion can be obtained by integrating the marginal density for $Y$ with respect to the fixed effects,
 $$

@@ -140,8 +140,46 @@ data.frame(
   geom_vline(aes(xintercept = 60.4))
   
 
+# split plot analysis (irrigation)
 
-# Soybean analysis
+## "follow the randomness"
+?irrigation
+data(irrigation)
+
+## data summary
+summary(irrigation)
+
+## data visualization
+ggplot(irrigation, aes(y=yield, x=field, shape=irrigation, color= variety)) +
+  geom_point(size = 2) +
+  theme_minimal()
+
+lmod = lmer(yield ~ irrigation * variety + (1|field) + (1|field:variety),
+            data = irrigation)
+
+lmod = lmer(yield ~ irrigation * variety + (1|field),
+            data = irrigation)
+sumary(lmod)
+
+## Kenward-Roger approximate F-test
+library(pbkrtest)
+lmoda = lmer(yield ~ irrigation + variety + (1|field), data=irrigation)
+?KRmodcomp
+KRmodcomp(lmoda, lmod)
+
+lmodi = lmer(yield ~ irrigation + (1|field), irrigation)
+KRmodcomp(lmodi, lmoda)
+
+lmodv = lmer(yield ~ variety + (1|field), irrigation)
+KRmodcomp(lmodv, lmoda)
+
+par(mfrow = c(1,2))
+plot(fitted(lmod), residuals(lmod), xlab="Fitted", ylab="Residuals", pch = 19)
+qqnorm(residuals(lmod), main="", pch = 19)
+
+
+
+# Soybean Photoprotection Dynamics under Field Conditions
 dat = read_csv("soybean_course.csv") %>% 
   select(-mAqI, -mtqE, -mAqM, -mtqM, -maxNPQ, -Ta, -VPD, -Precip, 
          -Fsd, -VPD_7day)
@@ -186,6 +224,8 @@ m3_mAqE_full = lmer(mAqE ~ ID + Date_num + I(Date_num^2) +
                     control = lmerControl(optimizer ="Nelder_Mead"))
 
 ## LRT
+
+### takes too long, commented out
 
 ### setup
 #set.seed(13)
@@ -345,4 +385,57 @@ inference_mAqE
 ## reference material because of updates to lme4 (updated on March 26, 2025)
 rownames(coefs_mAqE)[abs(rowSums(inference_mAqE)) == 6]
 coefs_mAqE[abs(rowSums(inference_mAqE)) == 6, ]
+
+
+
+# Nested random effects via an example
+
+## "follow the randomness"
+?eggs
+data(eggs)
+summary(eggs)
+
+ggplot(eggs, aes(y=Fat, x=Lab, color=Technician, shape=Sample)) +
+  geom_point(size = 2, 
+             position = position_jitter(width=0.1, height=0.0)) +
+  scale_color_grey() +
+  theme_minimal()
+
+cmod = lmer(Fat ~ 1 + (1|Lab) + (1|Lab:Technician) + (1|Lab:Technician:Sample), data=eggs)
+sumary(cmod)
+confint(cmod, method="boot")
+
+cmod2 = lmer(Fat ~ 1 + 
+               (1|Lab) + 
+               (1|Lab:Technician), data=eggs)
+as.matrix(model.matrix(cmod2, type = "random"))
+confint(cmod2, method="boot")
+
+cmod3 = lmer(Fat ~ 1 + (1|Lab), data=eggs)
+confint(cmod3, method="boot")
+
+
+cmod = lmer(Fat ~ 1 + 
+              (1|Lab) + 
+              (1|Lab:Technician) + 
+              (1|Lab:Technician:Sample), data=eggs, 
+            REML = FALSE)
+cmod2 = lmer(Fat ~ 1 + 
+               (1|Lab) + 
+               (1|Lab:Technician), data=eggs, 
+             REML = FALSE)
+cmod3 = lmer(Fat ~ 1 + (1|Lab), data=eggs, REML = FALSE)
+
+AIC(cmod)
+AIC(cmod2)
+AIC(cmod3)
+
+confint(cmod, method="boot")
+confint(cmod2, method="boot")
+confint(cmod3, method="boot")
+
+
+
+
+
 

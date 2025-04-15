@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.11.7)  10 APR 2025 09:25
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.11.7)  15 APR 2025 17:37
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -719,15 +719,12 @@ Package pdftex.def Info: linear-mixed-models_files/figure-latex/unnamed-chunk-4
 [30 <./linear-mixed-models_files/figure-latex/unnamed-chunk-41-1.pdf> <./linear
 -mixed-models_files/figure-latex/unnamed-chunk-41-2.pdf>] [31]
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <14.4> not available
-(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 2092.
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 2094.
+[32]
 
 Package amsmath Warning: Foreign command \atopwithdelims;
 (amsmath)                \frac or \genfrac should be used instead
-(amsmath)                 on input line 2128.
-
-[32]
-Overfull \vbox (1.41856pt too high) detected at line 2207
- []
+(amsmath)                 on input line 2130.
 
 [33] [34] [35] [36] [37] (./linear-mixed-models.bbl) [38] (./linear-mixed-model
 s.aux) ) 
@@ -761,7 +758,7 @@ lm/lmtk10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmtko10
 .pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></usr
 /local/texlive/2022/texmf-dist/fonts/type1/public/lm/lmtti10.pfb></usr/local/te
 xlive/2022/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on linear-mixed-models.pdf (38 pages, 2620509 bytes).
+Output written on linear-mixed-models.pdf (38 pages, 2621539 bytes).
 PDF statistics:
  650 PDF objects out of 1000 (max. 8388607)
  513 compressed objects within 6 object streams

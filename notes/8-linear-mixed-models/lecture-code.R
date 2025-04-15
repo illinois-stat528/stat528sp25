@@ -180,6 +180,7 @@ qqnorm(residuals(lmod), main="", pch = 19)
 
 
 # Soybean Photoprotection Dynamics under Field Conditions
+## might have to change path to soybean_course.csv
 dat = read_csv("soybean_course.csv") %>% 
   select(-mAqI, -mtqE, -mAqM, -mtqM, -maxNPQ, -Ta, -VPD, -Precip, 
          -Fsd, -VPD_7day)
@@ -189,39 +190,34 @@ head(dat)
 ## weather variables importance
 pairs(dat %>% select(mAqE, Ta_7day, Fsd_7day, Precip_7day, Precip_cum))
 
+
 ## modeling
 ### full data
 m1_mAqE = lmer(mAqE ~ ID + Date_num + I(Date_num^2) + 
                  (1|plot_number_year), 
-               data = dat5, REML = FALSE, 
-               control = lmerControl(optimizer ="Nelder_Mead"))
+               data = dat, REML = FALSE)
 m1_mAqE_full = lmer(mAqE ~ ID + Date_num + I(Date_num^2) + 
                       Fsd_7day + Ta_7day + Precip_7day + Precip_cum + 
                       (1|plot_number_year), 
-                    data = dat5, REML = FALSE, 
-                    control = lmerControl(optimizer ="Nelder_Mead"))
+                    data = dat, REML = FALSE)
 
 ### year 2021 data
 m2_mAqE = lmer(mAqE ~ ID + Date_num + I(Date_num^2) +  
                  (1|plot_number), 
-               data = dat5 %>% filter(year == 2021), REML = FALSE, 
-               control = lmerControl(optimizer ="Nelder_Mead"))
+               data = dat %>% filter(year == 2021), REML = FALSE)
 m2_mAqE_full = lmer(mAqE ~ ID + Date_num + I(Date_num^2) + 
                       Fsd_7day + Ta_7day + Precip_7day + Precip_cum +  
                       (1|plot_number), 
-                    data = dat5 %>% filter(year == 2021), REML = FALSE, 
-                    control = lmerControl(optimizer ="Nelder_Mead"))
+                    data = dat %>% filter(year == 2021), REML = FALSE)
 
 ### year 2022 data
 m3_mAqE = lmer(mAqE ~ ID + Date_num + I(Date_num^2) + 
                  (1|plot_number), 
-               data = dat5 %>% filter(year == 2022), REML = FALSE, 
-               control = lmerControl(optimizer ="Nelder_Mead"))
+               data = dat %>% filter(year == 2022), REML = FALSE)
 m3_mAqE_full = lmer(mAqE ~ ID + Date_num + I(Date_num^2) + 
                       Fsd_7day + Ta_7day + Precip_7day + Precip_cum + 
                       (1|plot_number), 
-                    data = dat5 %>% filter(year == 2022), REML = FALSE, 
-                    control = lmerControl(optimizer ="Nelder_Mead"))
+                    data = dat %>% filter(year == 2022), REML = FALSE)
 
 ## LRT
 
@@ -337,25 +333,25 @@ M2022_full = model.matrix(mAqE ~ ID + Date_num + I(Date_num^2) +
 library(parallel)
 ncores = detectCores() - 2
 AIC_IDs_mAqE = do.call(rbind, mclapply(
-  grep("IDNA", colnames(M)), function(j){
+  grep("ID", colnames(M)), function(j){
     M1 = M[, -j]
     foo = lmer(mAqE ~ -1 + M1 + (1|plot_number_year),
-               data = dat5, REML = FALSE)
+               data = dat, REML = FALSE)
     M1_full = M_full[, -j]
     foo_full = lmer(mAqE ~ -1 + M1_full + (1|plot_number_year),
-                    data = dat5, REML = FALSE)
+                    data = dat, REML = FALSE)
     M12021 = M2021[, -j]
     bar = lmer(mAqE ~ -1 + M12021 + (1|plot_number),
-               data = dat5 %>% filter(year == 2021), REML = FALSE)
+               data = dat %>% filter(year == 2021), REML = FALSE)
     M12021_full = M2021_full[, -j]
     bar_full = lmer(mAqE ~ -1 + M12021_full + (1|plot_number),
-                    data = dat5 %>% filter(year == 2021), REML = FALSE)
+                    data = dat %>% filter(year == 2021), REML = FALSE)
     M12022 = M2022[, -j]
     baz = lmer(mAqE ~ -1 + M12022 + (1|plot_number),
-               data = dat5 %>% filter(year == 2022), REML = FALSE)
+               data = dat %>% filter(year == 2022), REML = FALSE)
     M12022_full = M2022_full[, -j]
     baz_full = lmer(mAqE ~ -1 + M12022_full + (1|plot_number),
-                    data = dat5 %>% filter(year == 2022), REML = FALSE)
+                    data = dat %>% filter(year == 2022), REML = FALSE)
     
     c(AIC(m1_mAqE) - AIC(foo),
       AIC(m1_mAqE_full) - AIC(foo_full), 
@@ -364,7 +360,7 @@ AIC_IDs_mAqE = do.call(rbind, mclapply(
       AIC(m3_mAqE) - AIC(baz),
       AIC(m3_mAqE_full) - AIC(baz_full))
   }, mc.cores = ncores))
-rownames(AIC_IDs_mAqE) = colnames(M)[grep("IDNA", colnames(M))] 
+rownames(AIC_IDs_mAqE) = colnames(M)[grep("ID", colnames(M))] 
 sign(AIC_IDs_mAqE < 0)
 
 ## regression coefficients
@@ -435,7 +431,80 @@ confint(cmod2, method="boot")
 confint(cmod3, method="boot")
 
 
+# Panel Study of Income Dynamics
+library(faraway)
+library(lme4)
+library(tidyverse)
+data(psid)
+head(psid)
+?psid
+
+## income of first 20 individuals
+psid20 = filter(psid, person <= 20)
+ggplot(psid20, aes(x=year, y=income)) +
+  geom_line() +
+  facet_wrap(~ person) +
+  theme_minimal()
+
+## income of individuals broken up by sex
+ggplot(psid20, aes(x=year, y=income+100, group=person)) +
+  geom_line() +
+  facet_wrap(~ sex) +
+  scale_y_log10() +
+  theme_minimal()
+
+## intercept at 1978 instead of 1900
+lmod = lm(log(income) ~ I(year-78), subset=(person==1), psid)
+coef(lmod)
+
+## response feature analysis. It requires choosing an important characteristic. 
+### We have chosen two here: the slope and the intercept (income on year by sex)
+ml = lmList(log(income) ~ I(year-78) | person, psid)
+intercepts = sapply(ml,coef)[1,]
+slopes = sapply(ml,coef)[2,]
+
+plot(intercepts,slopes, xlab="Intercept", ylab="Slope")
+psex = psid$sex[match(1:85, psid$person)]
+
+boxplot(split(intercepts,psex))
+boxplot(split(slopes,psex))
+
+### strong statistical significance in intercepts
+t.test(intercepts[psex=="M"], intercepts[psex=="F"])
+
+### weak statistical significance in slopes
+t.test(slopes[psex=="M"], slopes[psex=="F"])
+
+## repeated measures with LMM 
+foo = psid
+foo$cyear = psid$year - 78
+
+mmod = lmer(log(income) ~ cyear*sex + age + educ + (cyear|person), foo, 
+            ## this set of controls fixes the mismatch between
+            ## compiled markdown and an active R session
+            control = lmerControl(
+              optimizer = "bobyqa", 
+              calc.derivs = TRUE, 
+              optCtrl = list(maxfun = 1e5)))
+
+summary(mmod)
+sumary(mmod, digits=3)
 
 
 
+
+# LMM coding 
+
+## construction of model matrix
+library(Matrix)
+
+## first argument is the number of levels
+## second argument is the number of replications
+(f = gl(3,2))
+(Ji = t(as(f, Class = "sparseMatrix")))
+
+## treatment/control study 
+(Xi = cbind(1,rep.int(c(-1,1), 3L)))
+
+(Zi = t(KhatriRao(t(Ji), t(Xi))))
 

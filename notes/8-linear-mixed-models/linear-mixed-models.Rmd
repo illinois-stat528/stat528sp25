@@ -773,21 +773,21 @@ In repeated measures designs there are several individuals (or units) under stud
 
   - and an error, which is due to measurement or unrecorded variables.
 
-In a repeated measures design we will suppose that each individual has a response $y_i$ which is now a vector of length $n_i$ and is modeled conditionally on the random effect $b_i$ as
+In a repeated measures design we will suppose that each individual has a response $Y_i$ which is now a vector of length $n_i$ and is modeled conditionally on the random effect $b_i$ as
 $$
-  y_i | b_i \sim N(X_i\beta + Z_i b_i, \sigma^2 \Lambda_i).
+  Y_i | b_i \sim N(X_i\beta + Z_i b_i, \sigma^2 \Lambda_i).
 $$
 Note that this is a very similar model used in the linear mixed-effects model construction above, with the exception that we now allow for the individuals to have a more general covariance structure $\Lambda_i$. As before, we will assume that $b_i \sim N(0, \sigma^2 D)$ so that
 $$
-  y_i \sim N(X_i\beta, \Sigma_i)
+  Y_i \sim N(X_i\beta, \Sigma_i)
 $$
 where $\Sigma_i = \sigma^2(\Lambda_i + Z_iDZ_i^T)$. Now suppose that we have $N$ individuals and assume that the measurement errors and random effects between individuals are uncorrelated. Then we can combine the data as:
 $$
   Y = \left[\begin{array}{c}
-  y_1 \\
-  y_2 \\
+  Y_1 \\
+  Y_2 \\
   \vdots \\
-  y_N
+  Y_N
   \end{array}\right], \qquad
   X = \left[\begin{array}{c}
   X_1 \\
@@ -812,7 +812,7 @@ and
 
   - $\Lambda = \text{diag}(\Lambda_1,\Lambda_2,\ldots,\Lambda_N)$, where
 
-$y_i \in \R^{n_i}$, $X_i \in \R^{n_i\times p}$, $\beta \in \R^p$, $b_i \in \R^{q}$, $Z_i \in \R^{n_i \times q}$, and the rest of the quantities in the above follow from these specifications. With this setup we can write the model as
+$Y_i \in \R^{n_i}$, $X_i \in \R^{n_i\times p}$, $\beta \in \R^p$, $b_i \in \R^{q}$, $Z_i \in \R^{n_i \times q}$, and the rest of the quantities in the above follow from these specifications. With this setup we can write the model as
 $$
   Y \sim N(X\beta, \Sigma) \qquad \text{where} \qquad \Sigma = \sigma^2(\Lambda + Z\tilde{D}Z^T).
 $$
@@ -820,10 +820,10 @@ The log-likelihood for the data is then computed as previously and estimation, t
 
 ## Example: Panel Study of Income Dynamics
 
-The Panel Study of Income Dynamics (PSID), begun in 1968, is a longitudinal study of a representative sample of U.S. individuals described in Hill (1992). The study is conducted at the Survey Research Center, Institute for Social Research, University of Michigan, and is still continuing. There are currently 8700 households in the study and many variables are measured. We chose to analyze a random subset of this data, consisting of 85 heads of household who were aged 25–39 in 1968 and had complete data for at least 11 of the years between 1968 and 1990. The variables included were annual income, sex, years of education and age in 1968:
+The Panel Study of Income Dynamics (PSID), begun in 1968, is a longitudinal study of a representative sample of U.S. individuals described in Hill (1992). The study is conducted at the Survey Research Center, Institute for Social Research, University of Michigan, and is still continuing. There are currently 8700 households in the study and many variables are measured. We chose to analyze a random subset of this data, consisting of 85 heads of household who were aged 25–39 in 1968 and had complete data for at least 11 of the years between 1968 and 1990. The variables included were annual income, biological sex, years of education and age in 1968:
 
 ```{r, message = FALSE, warning = FALSE}
-library(tidyverse)
+library(faraway)
 data(psid)
 ```
 
@@ -886,11 +886,12 @@ We see that men have significantly higher incomes.
 
 This is an example of a response feature analysis. It requires choosing an important characteristic. We have chosen two here: the slope and the intercept. For many datasets, this is not an easy choice and at least some information is lost by doing this. Response feature analysis is attractive because of its simplicity. By extracting a univariate response for each individual, we are able to use a wide array of well-known statistical techniques. However, it is not the most efficient use of the data as all the additional information besides the chosen response feature is discarded. Notice that having additional data on each subject would be of limited value.
 
-Suppose that the income change over time can be partly predicted by the subject’s age, sex and educational level. We do not expect a perfect fit. The variation may be partitioned into two components. Clearly there are other factors that will affect a subject’s income. These factors may cause the income to be generally higher or lower or they may cause the income to grow at a faster or slower rate. We can model this variation with a random intercept and slope, respectively, for each subject. We also expect that there will be some year-to-year variation within each subject. For simplicity, let us initially assume that this error is homogeneous and uncorrelated, that is, $\Lambda_i = I$. We also center the year to aid interpretation as before. We may express these notions in the model:
+Suppose that the income change over time can be partly predicted by the subject’s age, sex and educational level. We do not expect a perfect fit as there are other factors that will affect a subject’s income. These factors may cause the income to be generally higher or lower or they may cause the income to grow at a faster or slower rate. The variation may be partitioned into two components. We can model this variation with a random intercept and slope, respectively, for each subject. We also expect that there will be some year-to-year variation within each subject. For simplicity, let us initially assume that this error is homogeneous and uncorrelated, that is, $\Lambda_i = I$. We also center the year to aid interpretation as before. We may express these notions in the model:
 
 ```{r}
 psid$cyear = psid$year - 78
-mmod = lmer(log(income) ~ cyear*sex + age + educ + (cyear|person), psid)
+mmod = lmer(log(income) ~ cyear*sex + age + educ + (cyear|person), psid, 
+            control = lmerControl(optimizer = "bobyqa"))
 ```
 
 This model can be written as:
@@ -905,13 +906,14 @@ $$
   \gamma_j^1
 \end{pmatrix} \sim N(0, \sigma^2D)
 $$
-The model summary is:
+The model summary is
 
 ```{r}
+#summary(mmod, digits=3)
 sumary(mmod, digits=3)
 ```
 
-We now analyze this summary table. Lets start with the fixed effects. We see that income increases about 10% for each additional year of education (exp(0.104)). We see that age does not appear to be significant. For females, the reference level in this example, income increases about 8.5% a year, while for men, it increases about 8.5% - 2.6% = 5.9% a year. We see that, for this data, the incomes of men in 1978 are exp(1.150) = 3.16 times higher (far higher!) than for women. 
+We now analyze this summary table. Lets start with the fixed effects. We see that income increases about 10% for each additional year of education (exp(0.104)). We see that age does not appear to be significant. For females, the reference level in this example, income increases about 8.5% a year, while for men, it increases about 7.2% a year. We see that, for this data, the incomes of women in 1978 are exp(-0.575) = 0.56% that of men! 
 
 Now the random effects. We know the mean for males and females, but individuals will vary about this. The standard deviation for the intercept and slope are 0.531 and 0.049 ($\sigma\sqrt{D_{11}}$ and $\sigma\sqrt{D_{22}}$), respectively. These have a correlation of 0.187 (cor$(\gamma^0,\gamma^1)$). Finally, there is some additional variation in the measurement not so far accounted for having standard deviation of 0.684 (sd($\varepsilon_{ij}$)). We see that the variation in increase in income is relatively small while the variation in overall income between individuals is quite large. Furthermore, given the large residual variation, there is a large year-to-year variation in incomes.
 

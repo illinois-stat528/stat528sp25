@@ -31,13 +31,15 @@ ggplot(subsum, aes(x=Sex,y=stable)) + theme_minimal() + geom_boxplot()
 gf = glm(stable ~ Sex + Age + Height + Weight + Surface + Vision, 
          family = "binomial",
          data = ctsib)
-sumary(gf)
+summary(gf)
 
 
 
 ## glmer's convergence is quite finicky, best to rescale predictors up front
 ctsib = ctsib %>% 
-  mutate(Age = scale(Age), Height = scale(Height), Weight = scale(Weight))
+  mutate(Age = scale(Age), 
+         Height = scale(Height), 
+         Weight = scale(Weight))
 
 # PQL
 library(MASS)
@@ -93,7 +95,10 @@ ggplot(dd, aes(sample=.resid)) +
 # model fit
 library(INLA)
 formula = stable ~ Surface + Vision + f(Subject, model="iid")
-result = inla(formula, family="binomial", data=ctsib)
+system.time({
+  result = inla(formula, family="binomial", data=ctsib)  
+})
+
 
 ## converts the posterior of precision into a posterior 
 ## for the standard deviation

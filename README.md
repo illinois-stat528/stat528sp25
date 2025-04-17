@@ -6,9 +6,9 @@ See the Syllabus for more details. See the notes directory for course notes.
 
 # News
 
-* Homework 5 due on Friday, 04/18 at 11:59 PM
+* Generalized linear mixed models and generalized estimating equation notes posted
 
-* Linear mixed models notes posted
+* Homework 5 due on Friday, 04/18 at 11:59 PM
 
 * link to stat528materials R package is [here](https://github.com/DEck13/stat528materials).
 
@@ -361,20 +361,20 @@ A list of the designated University employees who, as counselors, confidential a
 
 * Week 13 [04/14 - 04/18]
   + LMM
-  + GLMM/GEE
+  + LMM/GLMM
   + **Reading**: course notes, chapters 10-11, 13 of Faraway
   + Homework 5 due on Friday, 04/18 at 11:59 PM
   
 * Week 14 [04/21 - 04/25]
+  + GLMM/GEE
   + Aster models 
   + **Reading**: course notes, chapter 13 of Faraway, materials cited in aster notes
   + **Background Reading**: Section 1 and 5 of the Stanford Encyclopedia of Philosophy entry on [Population Genetics](https://plato.stanford.edu/entries/population-genetics/#PopGenCri). Section 6 is also good.
-  + Homework 6 due on Friday, 04/25 at 11:59 PM
 
 * Week 15 [04/28 - 05/02]
   + Multivariate regression and envelope basics
   + **Reading**: course notes
-
+  + Homework 6 due on Monday, 04/28 at 11:59 PM
 
 * Week 16 [05/05 - 05/09]
   + Review day, open discussion

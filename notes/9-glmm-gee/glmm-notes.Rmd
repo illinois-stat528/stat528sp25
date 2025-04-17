@@ -1,0 +1,791 @@
+---
+title: "Generalized Linear Mixed Models (GLMMs) and Generalized Estimating Equations (GEE) Notes"
+author: "Daniel J. Eck"
+date: ""
+output: pdf_document
+header-includes: 
+ - \usepackage{amsthm}
+ - \usepackage{amsmath}
+ - \usepackage{amsfonts}
+ - \usepackage{amscd}
+ - \usepackage{amssymb}
+ - \usepackage{natbib}
+ - \usepackage{url}
+urlcolor: blue  
+---
+
+\allowdisplaybreaks
+
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\inner}[1]{\langle #1 \rangle}
+\newcommand{\yobs}{y_{\text{obs}}}
+
+\tableofcontents
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Generalized linear mixed models (GLMMs) are a natural extension that combines the GLM modeling framework with the ideas of random effects modeling. In this setting the response variables $Y_i$ take observed values $y_i$ which follow a (potentially over/under dispersed) exponential family with density of the form 
+\begin{equation} \label{expofamdisp}
+  f(y_i|\theta_i,\phi) =\exp\left(\frac{y_i\theta_i- c(\theta_i)}{a_i(\phi)} - b(y_i,\phi) \right),
+\end{equation}
+where $y_i \in \R$ and $\theta_i \in \R$ are as before except that they are scalars, $\phi$ is a dispersion parameter, $a_i(\phi)$ is now a subject specific function of the dispersion parameter $\phi$, and $b(y_i,\phi)$ is a function of the data $y_i$ and the dispersion parameter $\phi$. From the perspective of the canonical exponential families that we have motivated throughout, the function $b(y_i,\phi)$ is similar to the base measure $h$ that was dropped from consideration in log likelihood based arguments that focused on the parameters. 
+
+Notice that the density \eqref{expofamdisp} is a generalization of the exponential family density which specifies that $a_i(\phi) = 1$ and $b(y_i,\phi) = \log(h(y_i))$ and $c(\theta_i)$ is as before. 
+
+<!-- Note that the dispersion parameter can be estimated using -->
+<!-- $$ -->
+<!--   \hat{\phi} = \frac{\sum_{i=1}^n(y_i - \hat\mu_i)^2/\hat\mu_i}{n-p} -->
+<!-- $$ -->
+
+Let $\E Y_i = \mu_i$ and let this be connected to the linear predictor using the change-of-parameter mapping $g$ by $\mu_i = g(\theta_i)$. Now let the random effects $b$ have distribution $h(b|V)$ for parameters $V$. The fixed effects are $\beta$. Conditional on the random effects $b$, 
+$$
+  \theta_i = x_i^T\beta + z_i^Tb
+$$
+where $x_i$ and $z_i$ are the corresponding rows of the the design matrices $X$ and $Z$ for the respective fixed and random effects. Now, the likelihood can be written as: 
+$$
+  L(\beta,\phi,V|y) = \prod_{i=1}^n \int f(y_i|\beta,\phi,b)h(b|V) db.
+$$
+Typically, the random effects are also assumed to be normal $b \sim N(0, D)$. However, unless $f$ is also normal like in LMMs, the integral remains in the likelihood, which becomes difficult to compute, particularly if the random effects structure is complicated.
+
+
+
+## Overview of implementations
+
+A variety of possible approaches are available for fitting GLMMs and obtaining inferences of model parameters. These approaches each have their own strengths and weaknesses, there is not one approach that is universally recognized as the best in all scenarios. We  will present an overview of the theory behind these approaches before demonstrating the implementation on examples.
+
+
+\textbf{Penalized Quasi-Likelihood (PQL)}: Earlier in the course, we discussed how GLM optimization relates to weighted least squares (WLS) regression in linear models via the IRLS algorithm (see the exponential family notes for details). A modified version of this algorithm, using slightly different notation (described below), can be applied to fit GLMMs. In this context, the pseudo-response at iteration $k$ is defined as
+  $$
+    \tilde y^k = \hat\theta^k + (y - \hat\mu^k)\frac{\partial\theta}{\partial\mu}|_{\hat\theta^k}.
+  $$
+Here we will suppose that the conditional expectation of the pseudo-response is written as
+$$
+  \E(\tilde y_i|\beta,b) \approx x_i^T\beta + z_i^Tb.
+$$ 
+This transforms the GLMM fitting problem at iteration $k$ into a weighted linear mixed model problem. To apply standard LMM machinery, we also approximate the conditional variance $\mathrm{Var}(\tilde y_i^k \mid b)$ using exponential family theory and a first-order Taylor expansion around the current estimates. This yields the working weights used in each iteration of the IRLS algorithm (see derivation below).
+
+At each step, we can then fit a weighted LMM to the pseudo-response using standard LMM optimization techniques. While the method is often referred to as penalized quasi-likelihood (PQL), the name is somewhat misleading. True quasi-likelihood methods make minimal distributional assumptions (as we will see later with generalized estimating equations), whereas PQL still relies on normality assumptions for the random effects and uses a working Gaussian likelihood at each iteration. The PQL method is relatively easy to implement, as it allows existing LMM optimization techniques to be adapted for the GLMM setting. However, inference based on PQL is only asymptotically valid. Biased estimates are most likely to occur for binomial responses with small group sizes (i.e., few observations per covariate pattern), and are particularly problematic for Bernoulli responses. Similar issues arise for Poisson responses when counts are low. A PQL method is implemented using \texttt{glmmPQL} in the \texttt{MASS} package.
+
+\textbf{Numerical Integration}: When the dimension of the random effects is not too large then it is possible to use numerical integration methods to approximate the likelihood. The [Laplace approximation](https://bookdown.org/rdpeng/advstatcomp/laplace-approximation.html) is one of the least demanding methods for computing integrals of the form $\int\exp(g(x))dx$. We need only find the maximum of $g$ and the second derivative of $g(x)$ at the maximizer. For the integral in the GLMM likelihood, this can provide a surprisingly good approximation despite the integrand being evaluated at just one point. We can do better with more function evaluations. For these kinds of integrals, [Gauss-Hermite quadrature](https://en.wikipedia.org/wiki/Gauss%E2%80%93Hermite_quadrature) is appropriate. The Gauss-Hermite quadrature method approximates integrals of the form:
+$$
+  \int g(x)\exp(-x^2)dx \approx \sum_k w_kg(x_k),
+$$
+where the best choice of weights $w_k$ and knotpoints $x_k$ have been determined. This method is more accurate than the Laplace approach, but its computational cost can become prohibitive. Furthermore, the Gauss-Hermite quadrature is noted to provide [solid performance](https://arxiv.org/pdf/2101.09501.pdf) when the function $g$ is of low polynomial order which typically is the case in the GLMM setting (exponential family density and normal random effects). The Laplace approximation is a special case of The Gauss-Hermite quadrature method. Numerical integration methods can be performed using \texttt{glmer} in the \texttt{lme4} package. \cite{faraway2016extending} suggests that numerical integration methods are superior to PQL. The drawback is that they may be time-consuming or impossible to compute for more complex models.
+
+\textbf{Bayes}: As with LMMs, there is good reason to consider Bayesian methods as an alternative to the standard likelihood-based methods. There are several advantages: Complex models can be fit with a high degree of accuracy; we can incorporate useful prior information; we have the flexibility to modify the models to allow for nonstandard features (such as non-Gaussian random effects, spatial correlation structures, or custom link functions). The disadvantages are that these models may require more programming to implement and may take substantial computing resources. Furthermore, one must address technical concerns about the quality of the fit (posterior approximation). Finally, the inferential conclusions are of a different form. This is either an advantage or disadvantage depending on your point of view. We can use the integrated nested laplace approximation (INLA), implemented in the \texttt{INLA} package, for a Bayesian approach to fitting GLMMs (see the intro\_INLA slide deck which is in the same directory as these notes). One could also use \texttt{STAN} software but we will not discuss this implementation. See \cite{faraway2016extending} for more details. 
+
+\textbf{Monte Carlo Likelihood Approximation}: The \texttt{R} package \texttt{glmm} enables likelihood-based inference for GLMMs with a canonical link \citep{knudson2021likelihood}. No other publicly-available software accurately conducts likelihood-based inference for generalized linear mixed models with crossed random effects. \texttt{glmm} is able to do so by approximating the likelihood function and two derivatives using [importance sampling](https://www2.stat.duke.edu/~st118/Publication/impsamp.pdf). The importance sampling distribution is an essential piece of Monte Carlo likelihood approximation and developing a good one is the main challenge in implementing it. The package \texttt{glmm} uses the data to tailor the importance sampling distribution and is constructed to ensure finite Monte Carlo standard errors. While this software is great for the models that it works for, it is currently only applicable for canonical GLMMs with Binomial or Poisson responses. It can also be time consuming and a streamlined convergence threshold is not yet provided by \texttt{glmm}.
+
+
+
+
+## Revisting the IRLS algorithm
+
+Here, the pseudo-response at iteration $k$ will be defined as 
+$$
+    \tilde y^k = \hat\theta^k + (y - \hat\mu^k)\frac{\partial\theta}{\partial\mu}|_{\hat\theta^k}.
+  $$
+Assume density \eqref{expofamdisp} and suppose that $a_i(\phi) = \phi/w_i$. Then the log likelihood as a function of $\beta$ is
+$$
+  l(\beta) \propto \frac{1}{\phi}\sum_i w_i\left[y_i\theta_i - c(\theta_i)\right], 
+$$
+where we note that our submodel is of the form $\theta_i = x_i^T\beta$. We now take a derivative with respect to components $\beta_j$:
+$$
+  \frac{\partial l(\beta)}{\partial \beta_j} 
+    = \frac{1}{\phi}\sum_i w_i\left[y_i\frac{\partial\theta_i}{\partial\beta_j} - c'(\theta_i)\frac{\partial \theta_i}{\partial\beta_j}\right], 
+$$
+where $c'(\theta_i)$ denotes the first derivative with respect to $\theta_i$. The chain rule gives us:
+$$
+  \frac{\partial\theta_i}{\partial\beta_j} = \frac{\partial\theta_i}{\partial\mu_i}\frac{\partial \mu_i}{\partial\beta_j},
+$$
+where, from exponential family theory, we have that $\frac{\partial\mu_i}{\partial\theta_i} = c''(\theta_i)$, and this gives us
+$$
+  \frac{\partial l(\beta)}{\partial \beta_j} 
+    = \frac{1}{\phi}\sum_i \left[\frac{y_i - c'(\theta)}{c''(\theta_i)/w_i}\right]\frac{\partial \mu_i}{\partial\beta_j}.
+$$
+We now substitute in known quantities given to us for free from exponential family theory, and we pose the above as a maximum likelihood estimation problem which arrives at:
+$$
+  \sum_i \left[\frac{y_i - \mu_i}{\mathrm{Var}(\mu_i)}\right]\frac{\partial \mu_i}{\partial\beta_j} = 0, \qquad \text{for all} \; j,
+$$
+where we note that $\Var(\mu_i) = c''(\theta_i)a_i(\phi)$ in the dispersed model \eqref{expofamdisp}. Now suppose for a minute that we know $\mathrm{Var}(\mu_i)$, then the above obtimization problem is equivalent to minimizing the WLS loss:
+$$
+  \sum_i\frac{(y_i - \mu_i)^2}{\mathrm{Var}(\mu_i)}
+$$
+This motivates an IRLS algorithm like the one seen before where one initializes $\hat\mu^0$ and $\hat\beta^0$ and, at iteration $k$:
+
+1. form the pseudo response $\tilde y_i^k = \hat{\theta}^k + (y - \hat\mu^k)\frac{\partial \theta}{\partial\mu}|_{\hat\theta^k}$.
+
+2. form the weights $1/w^k = (\frac{\partial\theta}{\partial\mu})^2|_{\hat\theta^k} \mathrm{\Var}(\hat\mu^k)$
+
+3. Reestimate to get $\hat\beta^{k+1}$ and hence $\hat\theta^{k+1}$.
+
+Repeat until convergence. See the exponential family notes, Section 8.2 of \cite{faraway2016extending}, and Chapter 4 of \cite{agresti2013cat} for more details. Here's a short script to try:
+
+\vspace{6pt}
+
+```{r, eval = FALSE}
+## use built in GLM
+data(bliss, package="faraway")
+?bliss
+modl = glm(cbind(dead,alive) ~ conc, family=binomial, bliss)
+summary(modl)$coef
+
+## IRLS algorithm
+y = bliss$dead/30; mu = y
+library(faraway)
+theta = logit(mu)
+z = theta + (y-mu)/(mu*(1-mu))
+w = 30*mu*(1-mu)
+lmod = lm(z ~ conc, weights=w, bliss)
+
+for(i in 1:5){
+  theta = lmod$fit
+  mu = ilogit(theta)
+  z = theta + (y-mu)/(mu*(1-mu))
+  w = 30*mu*(1-mu)
+  lmod = lm(z ~ bliss$conc, weights=w)
+  cat(i,coef(lmod),"\n")
+}
+```
+
+# Binary response implementations
+
+We will first consider GLMM modeling for binary response data.
+
+## Example 
+
+An experiment was conducted to study the effects of surface and vision on balance. The balance of subjects was observed for two different surfaces and for restricted and unrestricted vision. Balance was assessed qualitatively on an ordinal four-point scale based on observation by the experimenter. Forty subjects were studied, 20 males and 20 females ranging in age from 18 to 38, with heights given in cm and weights in kg. The subjects were tested while standing on foam or a normal surface and with their eyes closed or open or with a dome placed over their head. Each subject was tested twice in each of the surface and eye combinations for a total of 12 measures per subject.
+
+For the purposes of this analysis, we will reduce the response to a two-point scale: whether the subject was judged completely stable (=1) or not (=0).
+
+```{r, message = FALSE}
+library(faraway)
+library(tidyverse)
+library(ggplot2)
+data(ctsib)
+ctsib$stable = ifelse(ctsib$CTSIB==1,1,0)
+```
+
+Here is the mean response for the combined conditions:
+
+```{r}
+xtabs(stable ~ Surface + Vision, ctsib)/80
+```
+
+We see that the normal surface with open vision leads to the highest stability. We can group the data by subject and average over the 12 observations (6 conditions, replicated twice). The plots are seen below.
+
+```{r,out.width='.49\\linewidth', fig.width=3, fig.height=3,fig.show='hold',fig.align='center'}
+subsum = ctsib %>% group_by(Subject) %>% summarise(Height=Height[1],
+  Weight=Weight[1], stable=mean(stable), Age=Age[1], Sex=Sex[1])
+par(mfrow = c(2,2))
+ggplot(subsum, aes(x=Height,y=stable)) + theme_minimal() + geom_point()
+ggplot(subsum, aes(x=Weight,y=stable)) + theme_minimal() + geom_point()
+ggplot(subsum, aes(x=Age,y=stable)) + theme_minimal() + geom_point()
+ggplot(subsum, aes(x=Sex,y=stable)) + theme_minimal() + geom_boxplot()
+```
+
+We could fit a logistic regression model that ignores subject information entirely:
+```{r}
+gf = glm(stable ~ Sex+Age+Height+Weight+Surface+Vision,binomial,data=ctsib)
+sumary(gf)
+```
+This assumes we have 480 independent observations but, in reality, we have only 40
+subjects whose responses will be correlated. This analysis is likely to underestimate
+the standard errors and so exaggerate the significance of the experimental effects. \textbf{Why?}
+
+### PQL methods
+
+We now try GLMM methods. First we demonstrate the PQL method implemented in the \texttt{MASS} package:
+```{r, message=FALSE}
+## glmer's convergence is quite finicky, best to rescale predictors
+ctsib = ctsib %>% 
+  mutate(Age = scale(Age), Height = scale(Height), Weight = scale(Weight))
+library(MASS)
+modpql = glmmPQL(stable ~ Sex + Age + Height + Weight + Surface + 
+  Vision, random=~1|Subject, family=binomial,data=ctsib)
+summary(modpql)
+```
+The SD for the subject effect is 3.06. We can use the same ideas from logistic regression to interpret this value. We have exp(3.06) = 21.3 so the odds of stability are multiplied by this factor. Hence we can see that there is substantial variation in the inherent stability of individuals. Indeed, this variation is of comparable magnitude to the treatment effects.
+
+We see strongly significant surface and vision effects while some other effects have marginally significant p-values. However, this inference is based on the linearized model and rather dubious assumptions as explained in Section 10.2 in \cite{faraway2016extending}, so these results cannot be relied upon. Furthermore, the Bernoulli response may lead to biased estimates of regression coefficients. 
+
+
+### Numerical integration
+
+The numerical integration-based methods are implemented in the \texttt{lme4} package. The default choice of method is the Laplace approximation. We can change this to the Gauss-Hermite quadrature by specifying the \texttt{nACQ} argument to be any integer between 2 and 25. The default value of 1 corresponds to the Laplace approximation. Note that \texttt{glmer} is quite sensitive to measurement scale so we have rescaled the predictors. For more convergence issues [see here](https://rstudio-pubs-static.s3.amazonaws.com/33653_57fc7b8e5d484c909b615d8633c01d51.html).
+
+```{r, message = FALSE}
+library(lme4)
+system.time({
+  modlap = glmer(stable ~ Sex + Age + Height + Weight + 
+    Surface + Vision + (1|Subject), family=binomial, 
+    data=ctsib)
+})
+
+system.time({
+  modgh = glmer(stable ~ Sex + Age + Height + Weight + Surface + 
+    Vision + (1|Subject), nAGQ=25, family=binomial, data=ctsib, 
+    control=glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+})
+```
+```{r}
+summary(modgh)
+```
+Notice that we have AIC/BIC values for model comparison purposes. These are not available from PQL because it is not a true likelihood method. As it happens, the parameter estimates are quite similar to PQL which provides some reassurance.
+
+We might ask whether any of the subject-specific variables have an effect. We can test this by fitting a model without these terms and comparing the two:
+```{r}
+modgh2 = glmer(stable ~ Surface + Vision + (1|Subject), nAGQ=25, 
+                family=binomial, data=ctsib)
+anova(modgh, modgh2)
+```
+This uses the standard likelihood-based methods to construct a chi-squared test. We have the same reasons as with LMMs to view these results with some skepticism. 
+
+Even so, this is a balanced experiment of a reasonable size so this provides some confidence in the result. We see that a simplification to just the treatment variables as fixed effects seems reasonable. If we feel uncomfortable with this conclusion, we may further point to the minimization of AIC (or BIC) as a justification for choosing the smaller model. One could also run a parametric bootstrap to help decide which model fits the best.
+
+We now check model diagnostics. Here are the QQ plots subsetted by the treatment variables:
+```{r}
+dd = fortify.merMod(modgh2)
+ggplot(dd, aes(sample=.resid)) + stat_qq() + 
+  theme_minimal() + facet_grid(Surface~Vision)
+```
+
+We see that the residuals are close to zero for two of the six combinations. This is because these were universally unstable conditions and have been predicted as such by the model. In the most stable, normal and open condition, larger positive residuals are not seen because there is no headroom for such cases. It would be a mistake to view this plot as indicating heteroscedascity as we have seen there are more convincing explanations for the differences in spread.
+
+
+### Bayesian methods
+
+We use INLA for a Bayesian approach to fitting generalized linear mixed-effects models. INLA is a fast, deterministic alternative to Markov Chain Monte Carlo (MCMC) for approximate Bayesian inference in latent Gaussian models (LGMs), a class that includes most GLMMs. These models consist of:
+\begin{itemize}
+\item A data model $p(y_i|\theta_i,\psi_1)$ where $\psi_1$ are likelihood-specific hyperparameters (dispersion for example).
+\item A latent Gaussian field $\theta|\psi_2 \sim N(\mu(\psi_2), Q(\psi_2)^{-1})$ where $Q$ is a precision matrix. Precision matrices are inverse covariance matrices and they encode conditional independence which is relevant in this modeling formulation.
+\item Low-dimensional hyperparameters $\psi = (\psi_1,\psi_2)$
+\end{itemize}
+INLA approximates the marginal posteriors $p(\theta_i|y)$ and $p(\psi_j|y)$, where $y$ is the full data set, using nested Laplace approximations. Specifically, it first approximates $p(\psi|y)$, then approximates $p(\theta_i|\psi,y)$ for each $\psi$, and then finally integrates over $\psi$ numerically. This requires one to specify a prior distribution for $\psi$. INLA is particularly effective when $\psi$ is low-dimensional.
+
+The code below installs the \texttt{INLA} package.
+
+```{r, eval = FALSE}
+## code chuck does not run (eval = FALSE)
+install.packages("INLA",repos=c(getOption("repos"),
+  INLA="https://inla.r-inla-download.org/R/stable"), 
+  dep=TRUE)
+```
+
+
+See Section 12.2 in \cite{faraway2016extending} for an introduction. For ease of exposition, we use only the surface and vision as fixed effect predictors. The default, noninformative priors, are satisfactory:
+
+```{r, warning = FALSE, message = FALSE}
+library(INLA)
+formula = stable ~ Surface + Vision + f(Subject, model="iid")
+result = inla(formula, family="binomial", data=ctsib)
+```
+
+We compute the SD for the subject random effect:
+
+```{r}
+sigmaalpha = inla.tmarginal(function(x) 1/sqrt(x), 
+    result$marginals.hyperpar$"Precision for Subject")
+```
+
+The posterior density for this SD is shown below: 
+
+```{r}
+x = seq(0,7,length.out = 100)
+sdf = data.frame(effect = x, density=inla.dmarginal(x, sigmaalpha))
+ggplot(sdf,aes(x=effect,y=density)) + 
+  ggtitle("Posterior distribution for SD") + 
+  geom_line() + 
+  theme_minimal()
+```
+
+We see that the subject effect is clear since the distribution is well away from zero but there is some uncertainty regarding the size of the effect. We can produce a numerical summary of the posteriors:
+
+```{r}
+restab = sapply(result$marginals.fixed, 
+  function(x) inla.zmarginal(x, silent=TRUE))
+restab = cbind(restab, inla.zmarginal(sigmaalpha,silent=TRUE))
+colnames(restab) = c("intercept","norm","dome","open","SD")
+data.frame(restab)
+```
+
+We see that the posterior means are quite similar to the last \texttt{glmer}-based fit. We can plot the posterior densities of the fixed effects as seen below:
+
+```{r}
+x = seq(-2,11,length.out = 100)
+rden = sapply(result$marginals.fixed, 
+  function(y) inla.dmarginal(x, y))[,-1]
+ddf = data.frame(effect=rep(x,3), density=as.vector(rden), 
+  treat=gl(3,100, labels=c("norm","dome","open")))
+ggplot(ddf, aes(x=effect, y=density, linetype=treat)) + 
+  ggtitle("Posterior densities of the fixed effects") + 
+  theme_minimal() + 
+  geom_line()
+```
+
+\textbf{Note}: The reference level for the surface factor is `foam` and the reference level for the vision factor is `closed`. Thus the above distributions are for the effect that `norm` has over `foam` and the effects that `open` and `dome` have over `closed`.  The plot does not explicitly present this information.
+
+The `norm` level of surface and the `open` level of vision are clearly different from the respective reference levels since the densities are well separated from zero. In contrast, we see there may not be much difference between the `dome` and `closed` levels of vision as this density overlaps zero. We can compute a "Bayesian p-value" as:
+
+```{r}
+2*inla.pmarginal(0, result$marginals.fixed$Visiondome)
+```
+
+We have multiplied by two to account for the usual two-sided testing argument. In this context, p-values do not have the same meaning (Exercise for the reader: Why does this Bayesian p-value not have the same meaning as the conventional p-value? What is an intuitive meaning for this Bayesian p-value?). Nonetheless, it does serve as a measure of how the posterior density relates to zero. This confirms our impression that there is not much difference between the levels.
+
+
+### Monte Carlo likelihood approximation
+
+With the release of the R package \texttt{glmm}, frequentist likelihood-based inference is available in Binomial or Poisson GLMMs, including calculating Fisher information, hypothesis testing, and constructing likelihood-based confidence intervals. It is the only publicly-available software that accurately conducts likelihood-based inference for GLMMs for both nested and crossed random effects. The \texttt{glmm} package uses Monte Carlo likelihood approximation (MCLA) to approximate the likelihood function \citep{geyer1994convergence, geyer1992constrained}. MCLA is an instance of [importance sampling](https://www2.stat.duke.edu/~st118/Publication/impsamp.pdf) and the essential innovation that allowed effective use of MCLA in \texttt{glmm} is the development of a novel importance sampling distribution.
+
+We will reexpress the likelihood of the GLMM in terms of the response vector $y$ rather than a product of independent components $y_i$,
+\begin{equation} \label{eq:GLMM}
+  L(\beta,\phi,V|y) 
+    =  \int f(y|\beta,\phi,b)h(b|V) db 
+    = \int f(y, b|\beta,\phi,V) db. 
+\end{equation}
+It is important to recognize that the likelihood that we wish to maximize requires one to integrate out the random effects. MCLA uses importance sampling to approximate the above integral. This technique requires an importance sampling distribution, which we will denote as $\tilde{f}(b)$. With this in mind, we can rewrite \eqref{eq:GLMM} as 
+$$
+  L(\beta,\phi,V|y) = \E_{\tilde f}\left[\frac{f(y, b|\beta,\phi,V)}{\tilde{f}(b)}\right].
+$$
+If $b_1$,$\ldots$,$b_m$ are realizations from $\tilde{f}$, then the Monte Carlo likelihood approximation is 
+\begin{equation} \label{eq:GLMMsamp}
+  L_m(\beta,\phi,V|y) = \frac{1}{m}\sum_{k=1}^m \frac{f(y, b_k|\beta,\phi,V)}{\tilde{f}(b_k) }.
+\end{equation}
+We then maximize the Monte Carlo likelihood approximation \eqref{eq:GLMMsamp}. The maximizer of \eqref{eq:GLMMsamp} is called the Monte Carlo maximum likelihood estimator (MCMLE). Under a Wald-type integrability condition, the likelihood approximation converges almost surely to the likelihood function and the MCMLE converges to the MLE almost surely as the Monte Carlo sample size increases \citep{geyer1994convergence}.
+
+The \texttt{glmm} package constructs a novel importance sampling distribution $\tilde{f}$ to compute \eqref{eq:GLMMsamp} and obtain the MCMLE. We now run MCLA using \texttt{glmm}.
+
+```{r GLMMctsib, cache = TRUE, warning = FALSE, message = FALSE}
+library(glmm)
+# subject needs to be a factor
+ctsib$SubjectF = as.factor(ctsib$Subject)
+
+set.seed(13)
+nCores = detectCores() - 2
+clust = makeCluster(nCores)
+system.time({
+  m1 = glmm(stable ~ Sex + Age + Height + 
+    # random effect distribution centered at 0; no reference group
+    Weight + Surface + Vision, random = list(~0+SubjectF), 
+    family.glmm=bernoulli.glmm, m = 2e4, 
+    varcomps.names = c("Subject"), cluster = clust, 
+    data=ctsib)
+})
+summary(m1)
+```
+
+Note that the above code allowed for one to specify a cluster as an argument of the \texttt{glmm} fitting function. This greatly speeds up the MCLA technique and is valid since Monte Carlo simulation is parallelizable (each iteration is independent of all other iterations). Also note that the p-value for the fixed effects is calculated using a two-sided alternative hypothesis ($H_A: \beta \neq 0$) while the p-value for the variance components is calculated using a one-sided alternative hypothesis ($H_A: \nu >0$) because variance components must be nonnegative.
+
+
+With maximum likelihood performed by Monte Carlo likelihood approximation, there are two sources of variability: there is variability inherent in the sample and from the Monte Carlo sample (of generated random effects). The first source of variability is measured using the usual standard error. The second source of variability is assessed by the Monte Carlo standard error. The standard error decreases as the (observed data) sample size increases; similarly, the Monte Carlo standard error decreases as the Monte Carlo sample size increases. These errors are displayed below.
+
+```{r stderror, cache = TRUE}
+# standard error
+se_glmm = se(m1)
+se_glmm
+
+# Monte Carlo standard error
+MCse_glmm = mcse(m1)
+MCse_glmm
+```
+
+Users can inspect the Monte Carlo standard error to decide whether the Monte Carlo sample was large enough: each Monte Carlo standard error should be small compared to its corresponding standard error.
+
+```{r}
+se_glmm / MCse_glmm
+```
+
+<!-- ```{r, eval = FALSE, echo = FALSE} -->
+<!-- library(glmm) -->
+<!-- data(salamander) -->
+<!-- names(salamander) -->
+<!-- head(salamander) -->
+<!-- summary(salamander) -->
+<!-- ``` -->
+
+
+<!-- We use the \texttt{salamander} dataset as an example in this vignette. For your convenience, it is already included in the \texttt{glmm} package. The data arose from an experiment conducted at the University of Chicago in 1986 and were first presented by \citet[section 14.5]{mcc:nelder:1989}. Scientists paired female and male salamanders of two types (Rough Butt and White Side) and collected data on whether or not they mated.  \\ -->
+
+<!-- The variable \texttt{Mate} tells us whether the pair of salamanders mated. The value is $1$ if they successfully mated and $0$ if they did not. The variable \texttt{Cross} describes the type of female and male salamander. For example, \texttt{Cross = W/R} indicates a White Side female was crossed with a Rough Butt male. The variable \texttt{Female} contains the identification number of the female salamander, and the variable \texttt{Male} contains the identification number of the male salamander. \\  -->
+
+<!-- There is likely to be variability among the females and variability among the males. That is, some females will be more likely to mate than other females, and we would like the model to reflect the tendencies of the individual salamanders. We incorporate this into the model by including a random effect for each female salamander and a random effect for each male salamander. We believe the female salamanders' random effects are i.i.d. draws from $N(0, \nu_F)$, where $\nu_F$ is an unknown parameter to be estimated. Similarly, we believe the male salamanders' random effects are i.i.d. draws from $N(0,\nu_M)$, where $\nu_M$ is an unknown parameter to be estimated. Finally, we believe the female and male random effects are independent of one another. \\ -->
+
+<!-- ```{r, eval = FALSE} -->
+<!-- set.seed(13)  -->
+<!-- clust = makeCluster(2) -->
+<!-- sal = glmm(Mate ~ 0 + Cross, random = list(~ 0 + Female,  -->
+<!-- ~ 0 + Male), varcomps.names = c("F", "M"), data = salamander,  -->
+<!-- family.glmm = bernoulli.glmm, m = 10^4, debug = TRUE, cluster = clust) -->
+<!-- stopCluster(clust) -->
+<!-- @ -->
+<!-- ``` -->
+
+
+<!-- Note that the p-value for the fixed effects is calculated using a two-sided alternative hypothesis ($H_A: \beta \neq 0$) while the p-value for the variance components is calculated using a one-sided alternative hypothesis ($H_A: \nu >0$) because variance components must be nonnegative.\\ -->
+
+<!-- To view the model summary, we use the \texttt{summary} command. -->
+<!-- ```{r} -->
+<!-- summary(sal) -->
+<!-- ``` -->
+
+
+# Count response implementations
+
+We now consider GLMM modeling for count response data.
+
+## Example
+
+In this example, we have data from a clinical trial of 59 epileptics. For a baseline, patients were observed for 8 weeks and the number of seizures recorded. The patients were then randomized to treatment by the drug Progabide (31 patients) or to the placebo group (28 patients). They were observed for four 2-week periods and the number of seizures recorded. We are interested in determining whether Progabide reduces the rate of seizures.
+
+We first perform some data manipulations and then look at the first two patients:
+
+```{r}
+data(epilepsy, package="faraway")
+epilepsy$period = rep(0:4, 59)
+epilepsy$drug = factor(c("placebo","treatment")[epilepsy$treat+1])
+epilepsy$phase = factor(c("baseline","experiment")[epilepsy$expind +1])
+epilepsy[epilepsy$id < 2.5,]
+```
+
+Both of these individuals were not treated. The \texttt{expind} variable indicates the baseline phase by 0 and the treatment phase by 1. The length of these time phases is recorded in the \texttt{timeadj} variable. Three new convenience variables are created: \texttt{period}, denoting the 2- or 8- week periods, \texttt{drug} recording the type of treatment in nonnumeric form and \texttt{phase} indicating the phase of the experiment.
+
+We now compute the mean number of seizures per week broken down by the treatment and baseline vs. experimental period.
+
+```{r, message = FALSE, warning = FALSE}
+epilepsy %>% 
+  group_by(drug, phase) %>% 
+  summarise(rate=mean(seizures/timeadj)) %>%
+xtabs(formula=rate ~ phase + drug)
+```
+
+We see that the rate of seizures in the treatment group actually increases during the period in which the drug was taken. The rate of seizures increases even more in the placebo group. Perhaps some other factor is causing the rate of seizures to increase during the treatment period and the drug is actually having a beneficial effect. 
+
+Now we make some plots to show the difference between the treatment and the control. The first plot shows the difference between the two groups during the experimental period only:
+
+```{r}
+ggplot(epilepsy, aes(x=period, y=seizures, linetype=drug, group=id)) + 
+  geom_line() + 
+  xlim(1,4) + 
+  scale_y_sqrt(breaks=(0:10)^2) + 
+  theme(legend.position = "top", legend.direction = "horizontal") + 
+  theme_minimal()
+```
+
+We now compare the average seizure rate to the baseline for the two groups. The square-root transform is used to stabilize the variance; this is often used with count data.
+
+```{r}
+ratesum = epilepsy %>%
+  group_by(id, phase, drug) %>%
+  summarise(rate=mean(seizures/timeadj))
+comsum = spread(ratesum, phase, rate)
+ggplot(comsum, aes(x=baseline, y=experiment, shape=drug)) + 
+  geom_point() + 
+  scale_x_sqrt() + 
+  scale_y_sqrt() + 
+  geom_abline(intercept=0, slope=1) + 
+  theme(legend.position = "top", legend.direction = "horizontal") + 
+  theme_minimal()
+```
+
+A treatment effect, if one exists, is not readily apparent. Now we fit GLMM models. Patient #49 is unusual because of the high rate of seizures observed. We exclude it:
+
+```{r}
+epilo = filter(epilepsy, id != 49)
+```
+
+Excluding a case should not be taken lightly. For projects where the analyst works with producers of the data, it will be possible to discuss substantive reasons for excluding cases. 
+
+It is worth starting with a GLM even though the model is not correct due to the grouping of the observations. We must use an offset to study seizure rate instead of seizures. This is due to data collection having different time windows at different periods in the study design.
+
+```{r}
+modglm = glm(seizures ~offset(log(timeadj)) + expind + treat + 
+  I(expind*treat), family=poisson, data=epilo)
+summary(modglm)
+```
+
+The interaction term is the primary parameter of interest. All the subjects were untreated in the baseline, even the ones who were subsequently treated. This means that the main effect for treatment does not properly measure the response to treatment because it includes the baseline period.
+
+As we have observed already, we suspect the response may have been different during the baseline time and the active period of the experiment. The interaction term represents the effect of the treatment during the baseline period after adjustment. In the output above we see that this interaction seems highly significant and negative (which is good since we want to reduce seizures).
+
+But this inference is suspect because we have made no allowance for the correlated responses within individuals. The p-value is far smaller than it should be. We might also consider allowing for overdispersion in the response by using a quasi-Poisson model. However, this is a different consideration to the correlated response.
+
+
+### PQL methods
+
+We move through the estimation options in the same order as with the binary response example earlier, starting with PQL:
+
+```{r, message = FALSE, warning = FALSE}
+modpql = glmmPQL(seizures ~offset(log(timeadj)) + expind + treat + 
+  I(expind*treat), random = ~1|id, family=poisson, data=epilo)
+summary(modpql)
+```
+
+The parameter estimates from the PQL fit are comparable to the GLM fit. However, the standard errors are larger in the PQL fit as might be expected given that the correlated responses have been allowed for. As with the binary response example, we still have some doubts about the accuracy of the inference. This is a particular concern when some count responses are small.
+
+### Numerical integration
+
+Numerical quadrature can also be used. We use Gauss-Hermite in preference to Laplace as the model random effect structure is simple and so the computation is fast even though we have used the most expensive \texttt{nAGQ=25} setting.
+
+```{r}
+modgh = glmer(seizures ~offset(log(timeadj)) + expind + treat + 
+  I(expind*treat)+ (1|id), nAGQ=25, family=poisson, data=epilo)
+summary(modgh)
+```
+
+We see that the interaction effect is significant. Notice that the estimate of this effect has been quite consistent over all the estimation methods so we draw some confidence from this. We have
+```{r}
+exp(-0.302)
+```
+So the drug is estimated to reduce the rate of seizures by about 26\%. However, the subject SD is more than twice the drug effect of -0.3 at 0.718. This indicates that the expected improvement in the drug is substantially less than the variation between individuals.
+
+Interpretation of the main effect terms is problematic in the presence of an interaction. For example, the treatment effect reported here represents the predicted difference in the response during the baseline period (i.e., \texttt{expind=0}). Since none of the subjects are treated during the baseline period, we are reassured to see that this effect is not significant. However, this does illustrate the danger in naively presuming that this is the treatment effect.
+
+
+### Bayesian methods
+
+We can also take a Bayesian approach using \texttt{INLA}.
+
+<!-- \texttt{vector[Nobs] offset;} -->
+
+<!-- in the data block and replace the model line with  -->
+
+<!-- \texttt{y[n] ~ poisson_log(log(offset[n])+x[n]*beta + subeff[subject[n]] );} -->
+
+<!-- We prepare the data into the required format using: -->
+<!-- ```{r} -->
+<!-- epilo$id[epilo$id == 59] = 49 -->
+<!-- xm = model.matrix( ~ expind + treat + I(expind*treat), epilo) -->
+<!-- epildat = with(epilo,list(Nobs=nrow(epilo), Nsubs=length(unique(id)),  -->
+<!--   Npreds=ncol(xm),  -->
+<!--   y=seizures,  -->
+<!--   subject=id,  -->
+<!--   x=xm, offset=timeadj)) -->
+<!-- ``` -->
+<!-- Note that we have renumbered case 59 into the previously deleted case 49 slot. This is ugly but -->
+<!-- we need the subjects to be consecutively numbered. -->
+
+```{r}
+formula = seizures ~ offset(log(timeadj)) + expind + treat + 
+  I(expind*treat) + f(id,model="iid")
+result = inla(formula, family="poisson", data = epilo)
+```
+
+We obtain a summary of the posteriors as: 
+
+```{r}
+sigmaalpha = inla.tmarginal(function(x) 1/sqrt(x), 
+  result$marginals.hyperpar$"Precision for id")
+restab = sapply(result$marginals.fixed, 
+  function(x) inla.zmarginal(x, silent=TRUE))
+restab = cbind(restab, 
+  inla.zmarginal(sigmaalpha, silent=TRUE))
+colnames(restab) = c("mu","expind","treat",
+  "interaction","alpha")
+data.frame(restab)
+```
+We see that the results are similar to those obtained previously. We observe that the 95\% credible interval for the interaction is (-0.44,-0.17) so we are sure that this parameter differs from zero. We compute similar plots as we did in the binary response example.
+
+```{r}
+x = seq(-0.75,0.75,length.out = 100)
+rden = sapply(result$marginals.fixed,function(y) inla.dmarginal(x, y))[,-1]
+ddf = data.frame(domain=rep(x,3), 
+  density=as.vector(rden), 
+  treat=gl(3,100, labels=c("expind","treat","interaction")))
+ggplot(ddf, aes(x=domain, y=density, linetype=treat)) + 
+  geom_line() + 
+  theme_minimal()
+```
+
+### Monte Carlo likelihood approximation
+
+We can use the \texttt{glmm} package to implement the MCLA approach to fitting GLMM models with Poisson responses. 
+
+```{r eplioglmm, cache = TRUE, message = FALSE, warning = FALSE}
+epilo$idF = as.factor(epilo$id)
+epilo$seizures = as.integer(epilo$seizures)
+set.seed(13)
+nCores = detectCores() - 2
+clust = makeCluster(nCores)
+system.time({
+  m1 = glmm(seizures ~ offset(log(timeadj)) + 
+    expind + treat + I(expind*treat), random = list(~0+idF), 
+    family.glmm = poisson.glmm, m = 7e4, 
+    varcomps.names = c("idF"), cluster = clust, data=epilo)
+})
+```
+
+We obtain summary information. However, the fit is buggy. The Monte Carlo standard error is not returned and the summary table estimates are not depicted.
+
+
+```{r, cache = TRUE, warning = FALSE, message = FALSE, error = TRUE}
+# summary table (takes awhile to load)
+summary(m1)
+
+# Monte Carlo standard errors
+mcse_glmm = mcse(m1)
+mcse_glmm
+```
+
+That being said, we can obtain estimates of fixed effects and their standard errors from objects in the \texttt{glmm} object.
+
+
+```{r, cache = TRUE, warning = FALSE, message = FALSE}
+# standard errors
+se_glmm = se(m1)
+
+# table for fixed effects
+tab = cbind(m1$beta, se_glmm[-5], m1$beta/se_glmm[-5])
+colnames(tab) = c("Estimate", "Std. Error", "z value")
+round(tab, 3)
+```
+We can also obtain estimates of random effect parameters and their standard errors from objects in the \texttt{glmm} object.
+
+```{r}
+c(m1$nu, se_glmm[5])
+```
+
+Parameter estimates are similar to the other fitting techniques which instills confidence. 
+
+# Generalized Estimating Equations (GEE)
+
+We will now develop a quasi-likelihood approach that is called generalized estimating equations. The advantage of this approach is that one does not to make strong distributional assumptions on the response variable in order to estimate model parameters. Instead, we only need to specify the link function and the variance.
+
+In this section we will let $Y_i$, $i = 1,\ldots,N$ be a vector of random variables representing the responses on a given individual or cluster, and let $E(Y_i) = \mu_i$ which is then linked to the linear predictor using $\mu_i = g(x_i^T\beta)$ where $g$ is a change of parameters mapping. We will also specify a variance function $a$ that satisfies
+$$
+ \text{Var}(Y_i) = \phi a(\mu_i)
+$$
+Appropriate choices of the $a$ function will depend on the type of response being modeled. The $\phi$ term is a scale parameter.
+
+We also must specify how the responses within an individual or cluster are correlated with each other. We set a \emph{working correlation matrix} $R_i(\alpha)$ depending on a parameter $\alpha$ which requires estimation. This yields a \emph{working covariance matrix} for $Y_i$: 
+$$
+  V_i = \phi A_i^{1/2}R_i(\alpha)A_i^{1/2}
+$$
+where $A_i$ is a diagonal matrix formed from $a(\mu_i)$.
+
+Provided estimates of $\phi$ and $\alpha$, we can estimate $\beta$ by setting the multivariate score function equal to zero and solving:
+$$
+  \sum_{i=1}D_i^TV_i^{-1}(Y_i - \mu_i) = 0.
+$$
+where $D_i = \frac{\partial \mu_i}{\partial \beta}$. These are called generalized estimating equations \citep{liang1986longitudinal}.
+
+Since $\text{Var}(Y)$ also depends on $\alpha$, we can substitute any $\sqrt{N}$ consistent estimate of $\alpha$ in this equation and still obtain an estimate as asymptotically efficient as if $\alpha$ were known. We will express this estimator as $\hat\alpha = \hat\alpha(\beta, \phi)$. Except for particular choices of $R$ and $\alpha$, the scale parameter $\phi$ will generally remain in the GEE. To complete the process, we replace $\phi$ by $\hat\phi(Y,\beta)$, a $\sqrt{N}$ consistent estimator when $\beta$ is known. Let $U_i(\beta, \alpha) = D_i^TV_i^{-1}(Y_i - \mu_i)$, and with these estimators we have
+\begin{equation} \label{eq:GEE}
+  \sum_{i=1}^N U_i(\beta, \hat\alpha(\beta, \hat\phi(\beta)) ) = 0.
+\end{equation}
+The above estimation \eqref{eq:GEE} can be performed iteratively where one alternates between estimating $\beta$ with $(\hat\alpha,\hat\phi)$  fixed, and estimating $(\alpha,\phi)$ with $\hat\beta$ fixed. The solution of the above equation $\hat\beta$ has an asymptotic multivariate normal distribution of the form
+$$
+  \sqrt{N}\left(\hat\beta - \beta\right) \to N(0,\Sigma)
+$$
+where $\Sigma = \lim_{N\to\infty} = N\Sigma_0^{-1}\Sigma_1\Sigma_0^{-1}$, and 
+$$
+  \Sigma_0 = \sum_{i=1}^N D_i^TV_iD_i, \qquad \Sigma_1 = \sum_{i=1}^N D_i^TV_i^{-1}\text{Cov}(Y_i)V_i^{-1}D_i.
+$$
+Replacing $\beta$, $\phi$, and $\alpha$ by consistent estimates and the covariance matrix $\text{Cov}(Y_i)$ by $(Y_i - \mu_i)(Y_i - \mu_i)^T$ in the above yields the sandwich estimate $\widehat\Sigma$ of $\Sigma$. The estimate $\widehat\Sigma$ is a consistent estimate of $\Sigma$ even if the working correlation matrices $R_i(\alpha)$ are misspecified. For instance, it is often convenient to use a working independence model where $R_i(\alpha) = I$. Other popular choices include compound symmetry (i.e.,  exchangeable) with $R_{ij} = \alpha$ for any $i \neq j$ or first-order autoregressive with $R_{ij} = \alpha^{|i-j|}$, where $R_{ij}$ denotes the (i,j)th element of R \citep{pan2001akaike}. 
+
+<!-- A similar set of equations can be derived representing the score with respect to $\alpha$, which may be similarly solved. We iterate between estimating $\alpha$ and $\beta$ until we converge at a solution.  -->
+
+We will use the \texttt{geepack} package \citep{halekoh2006r} to fit GEEs. We will reanalyze the stability dataset using generalized estimating equations.
+
+```{r}
+library(geepack)
+modgeep = geeglm(stable ~ Sex + Age + Height + Weight + Surface + Vision, 
+                  id=Subject, corstr="exchangeable", scale.fix=TRUE, 
+                  data=ctsib, family=binomial)
+```
+
+We have specified the same fixed effects as in the corresponding GLMM earlier. Only simple groups are allowed while nested grouping variables cannot be accommodated easily in this function. 
+
+We are required to choose the correlation structure within each group. If we choose no correlation, then the problem reduces to a standard GLM. For this data, compound symmetry is selected as a covariance structure, since it seems reasonable that any pair of observations between subjects has the same correlation (ignoring a learning effect). Note that compound symmetry is referred to as exchangeable correlation in the \texttt{corstr} argument of the \texttt{geeglm} fitting function. Also note that we have chosen to fix $\phi$ at the default value of 1 to ensure that our analysis is comparable with the GLMM fit. Otherwise, there would not be a strong reason to fix this. 
+
+Here is the summary information:
+
+```{r}
+summary(modgeep)
+```
+
+We can see that the estimated correlation between observations on the same subject is 0.22 with a standard error of 0.04. This suggests that there is correlation between responses within individuals. The standard errors are constructed using a sandwich estimator mentioned above. Further motivation for sandwich estimation is described in Section 8.5 of \citep{faraway2016extending}. Note that sandwich estimation typically, but not always, leads to standard errors larger than those obtained directly from likelihood calculations. [There is no free lunch](https://www.youtube.com/watch?v=caBOkyguZ_c). 
+
+These standard errors can be used to construct Wald statistics. We see that the treatment factors, surface and vision, are significant. Height and possibly gender are marginally significant. This part of the conclusion is similar to our GLMM results.
+
+There is one clear difference with the GLMM output: the estimates for the GEE are about half the size of the GLMM $\beta$. It is expected that the GEE estimates are smaller because GLMMs model the data at the subject or individual level. The correlation between the measurements on the individual is generated by the random effect. Thus the $\beta$s for the GLMM represent the effect on an individual. A GEE models the data at the population level. The $\beta$s for a GEE represent the effect of the predictors averaged across all individuals with the same predictor values. GEEs do not use random effects but model the correlation at the marginal or correlation level. [This is a major distinction](https://www.jstor.org/stable/25680575?seq=1#metadata_info_tab_contents).
+
+The testing for vision is not entirely satisfactory since it has three levels meaning two tests—one being highly significant and the other not at all. If we want a single test for the significance of vision, we need to refit the model without vision and make the standard anova-type comparison:
+
+```{r}
+modgeep2 = geeglm(stable ~ Sex + Age + Height + Weight + Surface,
+  id =Subject, corstr="exchangeable", scale.fix=TRUE, data=ctsib, 
+  family=binomial)
+anova(modgeep2, modgeep)
+```
+As expected, we see that vision is strongly significant.
+
+The \texttt{geepack} package provides the flexibility of modeling an ordinal response
+with clusters using the \texttt{ordgee()} function. This would be appropriate for the original form of this data where the response is actually measured on a four-point scale. Recall that we dichotomized stable to be 1 if completely stable, and 0 otherwise.
+
+We will now model the epilepsy data using GEEs. We exclude the 49th case as before (all the same caveats apply). An autoregressive AR(1) model for the correlation structure seems to be the most natural since consecutive measurements will be more correlated than measurements separated in time. Note that this does require that the clusters be sorted in time order (they are in this case).
+
+```{r}
+modgeep = geeglm(seizures ~offset(log(timeadj)) + expind + treat + 
+  I(expind*treat), id=id, family=poisson, corstr="ar1", data=epilepsy, 
+  subset=(id!=49))
+summary(modgeep)
+```
+
+The drug effects, as measured by the interaction term, has a weakly significant effect. The dispersion parameter is estimated as 10.6. This means that if we did not account for the overdispersion, the standard errors would be much larger. The AR(1) correlation structure can be seen in the working correlation where adjacent measurements have 0.78 correlation.
+
+
+## Computing details for GEEs
+
+
+#### Estimating $\beta$
+
+We now discuss some computing details of iterative algorithms used to obtain $(\hat\beta, \hat\alpha, \hat\phi)$ in \cite{liang1986longitudinal}. In order to estimate $\hat\beta$ we alternate between a modified Fisher scoring algorithm for $\beta$ with $(\hat\alpha,\hat\phi)$ fixed, and moment based estimation methods for $\alpha$ and $\phi$. Given current estimates of the nuisance parameters $\hat\alpha$ and $\hat\phi$ at iteration $j$, we obtain $\hat{\beta}_{j+1}$ as
+\begin{equation} \label{eq:betaopt}
+  \hat{\beta}_{j+1} = \hat{\beta}_j - \left[\sum_{i=1}^N D_i^T(\hat\beta_j)\widehat{V}_i(\hat\beta_j)D_i(\hat\beta_j)\right]^{-1}\left[\sum_{i=1}^N D_i(\hat\beta_j)\widehat{V}_i(\hat\beta_j)S_i(\hat\beta_j)\right],
+\end{equation}
+where 
+\begin{align*}
+  \widehat V_i(\beta) &= V_i(\beta,\hat\alpha(\beta,\hat\phi(\beta))), \\
+  S_i(\beta) &= Y_i - \mu_i(\beta).
+\end{align*}
+This procedure can be viewed as a modification of Fisher's scoring method in that the limiting value of the expectation of the derivative of $\sum U_i(\beta, \hat\alpha(\beta,\hat\phi(\beta)))$ is used for correction. Now, define $D = (D_1^T,\ldots,D_N^T)^T$, $S = (S_1^T,\ldots,S_N^T)$ and let $\widetilde V$ be a block diagonal matrix with $\widehat V_i$s as the diagonal elements. Define modified responses as 
+$$
+  Z = D\beta - S,
+$$
+then we see that the iterative procedure in \eqref{eq:betaopt} is equivalent to an IRLS of $Z$ on $D$ with weights $\widehat V_i^{-1}$.
+
+#### Estimating $\alpha$ and $\phi$
+
+At a given iteration $j$ the correlation parameters $\alpha$ and scale parameter $\phi$ can be estimated from the current Pearson residuals defined by 
+$$
+  r_{it} = \frac{y_{it} - \mu_{it}(\hat\beta_j)}{\sqrt{ a(\mu_{it}(\hat\beta_j))}}
+$$
+where $i = 1,\ldots,N$ and $t = 1,\ldots,n_i$. We can estimate 
+$$
+  \hat\phi^{-1} = \frac{\sum_{i=1}^N\sum_{t=1}^{n_i} \hat r_{it}^2}{K - p}
+$$
+where $K = \sum n_i$. To estimate $\alpha$ consistently we borrow strength over the $N$ subjects. The specific estimator depends on the choice of $R(\alpha)$. The general approach is to estimate $\alpha$ through a simple function of 
+$$
+  \widehat R_{uv} = \frac{\sum_{i=1} \hat r_{iu}\hat r_{iv}}{K - p}.
+$$
+For example, let $\alpha_i = (\alpha_{i1},\ldots,\alpha_{i n_i-1})$ where $\alpha_{it} = \text{corr}(Y_{it},Y_{it+1})$. A natural estimator for $\alpha_i$, given $\beta$ and $\phi$, is 
+$$
+  \hat{\alpha_t} = \frac{\phi\sum_{i=1}^N \hat r_{it} \hat r_{it+1}}{N - p},
+$$
+where this estimator is better utilized in the setting where $n_i = n$. Note that the asymptotic distribution of $\hat\beta$ does not depend on the specific choices of estimators for $\alpha$ and $\phi$ provided that these choices are $\sqrt{N}$ consistent. Remember that estimators $\hat\beta$ and $\widehat V$ will be consistent no matter the choice of $R(\alpha)$. However, choosing $R(\alpha)$ closer to the true correlation gives increased efficiency. 
+
+
+
+# Acknowledgments
+
+\noindent These notes are from \cite{faraway2016extending}. We also borrow materials from \cite{pinheiro2006mixed}, \cite{agresti2013cat}, \cite{knudson2018glmm}, \cite{knudson2021likelihood}, \cite{halekoh2006r}, and \cite{liang1986longitudinal}.
+
+
+\bibliographystyle{plainnat}
+\bibliography{../note_sources}

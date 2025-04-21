@@ -6,9 +6,9 @@ See the Syllabus for more details. See the notes directory for course notes.
 
 # News
 
-* Generalized linear mixed models and generalized estimating equation notes posted
+* Homework 6 due on Monday, 04/28 at 11:59 PM.
 
-* Homework 5 due on Friday, 04/18 at 11:59 PM
+* Generalized linear mixed models and generalized estimating equation notes posted.
 
 * link to stat528materials R package is [here](https://github.com/DEck13/stat528materials).
 

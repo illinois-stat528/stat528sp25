@@ -238,7 +238,6 @@ formula = seizures ~ offset(log(timeadj)) + expind + treat +
   I(expind*treat) + f(id,model="iid")
 result = inla(formula, family="poisson", data = epilo)
 
-
 sigmaalpha = inla.tmarginal(function(x) 1/sqrt(x), 
   result$marginals.hyperpar$"Precision for id")
 restab = sapply(result$marginals.fixed, 

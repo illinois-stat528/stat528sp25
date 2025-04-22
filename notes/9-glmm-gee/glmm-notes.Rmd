@@ -29,6 +29,8 @@ urlcolor: blue
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Generalized Linear Mixed Models
+
 Generalized linear mixed models (GLMMs) are a natural extension that combines the GLM modeling framework with the ideas of random effects modeling. In this setting the response variables $Y_i$ take observed values $y_i$ which follow a (potentially over/under dispersed) exponential family with density of the form 
 \begin{equation} \label{expofamdisp}
   f(y_i|\theta_i,\phi) =\exp\left(\frac{y_i\theta_i- c(\theta_i)}{a_i(\phi)} - b(y_i,\phi) \right),
@@ -652,41 +654,63 @@ c(m1$nu, se_glmm[5])
 
 Parameter estimates are similar to the other fitting techniques which instills confidence. 
 
-# Generalized Estimating Equations (GEE)
 
-We will now develop a quasi-likelihood approach that is called generalized estimating equations. The advantage of this approach is that one does not to make strong distributional assumptions on the response variable in order to estimate model parameters. Instead, we only need to specify the link function and the variance.
+# Generalized Estimating Equations 
 
-In this section we will let $Y_i$, $i = 1,\ldots,N$ be a vector of random variables representing the responses on a given individual or cluster, and let $E(Y_i) = \mu_i$ which is then linked to the linear predictor using $\mu_i = g(x_i^T\beta)$ where $g$ is a change of parameters mapping. We will also specify a variance function $a$ that satisfies
+When analyzing correlated or clustered data, GLMMs offer a powerful framework by explicitly modeling subject-specific variability through random effects. However, GLMMs come with several limitations. They require full distributional assumptions for the response and random effects, can be computationally intensive, and their fixed effects are interpreted conditionally on the random effects. This interpretation may not always align with scientific goals focused on population-level inference.
+
+As an alternative, we now consider generalized estimating equations (GEE), which retain the structure of generalized linear models while relaxing the need to fully specify the joint distribution. GEE offers a flexible approach to estimating marginal (population-averaged) effects in the presence of correlation. It only requires specifying a link function and a variance function relating the mean to the variance, avoiding the strong distributional assumptions required by GLMMs. In contrast, the fixed effects in a GLMM describe changes in the response \emph{conditional} on the random effects. Recall that
 $$
- \text{Var}(Y_i) = \phi a(\mu_i)
+  g^{-1}\left(\mathbb{E}[Y_i \mid b_i]\right) = x_i^T\beta + z_i^T b_i.
+$$
+Thus, fixed effects in a GLMM quantify how predictors influence the response for a given individual or group, holding the unobserved random effect constant.
+
+
+<!-- The random effects themselves can be viewed as shrinkage estimates of what one would obtain by treating each group as a fixed effect (as seen in the LMM notes, particularly the section on predicting random effects). These estimates borrow strength across clusters, pulling extreme group-level estimates toward the overall mean and improving inference in settings with sparse or unbalanced data. -->
+
+We now describe the methodological details of GEEs. We will let $Y_i$, $i = 1,\ldots,N$ be a vector of random variables representing the responses on a given individual or cluster. Let
+$$
+  E(Y_i) = \mu_i  
+$$  
+which is then linked to the linear predictor using 
+$$
+\mu_i = g(x_i^T\beta)
+$$ 
+where $g$ is a change of parameters mapping. We will also specify a variance function $a$ that satisfies
+$$
+ \text{Var}(Y_i) = \phi a(\mu_i).
 $$
 Appropriate choices of the $a$ function will depend on the type of response being modeled. The $\phi$ term is a scale parameter.
 
-We also must specify how the responses within an individual or cluster are correlated with each other. We set a \emph{working correlation matrix} $R_i(\alpha)$ depending on a parameter $\alpha$ which requires estimation. This yields a \emph{working covariance matrix} for $Y_i$: 
+We also must specify how the responses within an individual or cluster are correlated with each other. We set a \emph{working correlation matrix} $R_i(\alpha)$ depending on a parameter $\alpha$ which requires estimation. This yields a \emph{working covariance matrix} for $Y_i$ denoted as  
 $$
-  V_i = \phi A_i^{1/2}R_i(\alpha)A_i^{1/2}
+  V_i = \phi A_i^{1/2}R_i(\alpha)A_i^{1/2},
 $$
 where $A_i$ is a diagonal matrix formed from $a(\mu_i)$.
 
-Provided estimates of $\phi$ and $\alpha$, we can estimate $\beta$ by setting the multivariate score function equal to zero and solving:
-$$
-  \sum_{i=1}D_i^TV_i^{-1}(Y_i - \mu_i) = 0.
-$$
-where $D_i = \frac{\partial \mu_i}{\partial \beta}$. These are called generalized estimating equations \citep{liang1986longitudinal}.
+The "sandwich" form ensures that $V_i$ has the correct marginal variances (from the variance function $a(\mu_i)$) while imposing a structured pattern of correlation across responses within cluster $i$ (from $R_i(\alpha)$). So the full structure of $V_i$ reflects both the mean–variance relationship and the within-cluster correlation.
 
-Since $\text{Var}(Y)$ also depends on $\alpha$, we can substitute any $\sqrt{N}$ consistent estimate of $\alpha$ in this equation and still obtain an estimate as asymptotically efficient as if $\alpha$ were known. We will express this estimator as $\hat\alpha = \hat\alpha(\beta, \phi)$. Except for particular choices of $R$ and $\alpha$, the scale parameter $\phi$ will generally remain in the GEE. To complete the process, we replace $\phi$ by $\hat\phi(Y,\beta)$, a $\sqrt{N}$ consistent estimator when $\beta$ is known. Let $U_i(\beta, \alpha) = D_i^TV_i^{-1}(Y_i - \mu_i)$, and with these estimators we have
+Provided estimates of $\phi$ and $\alpha$, we can estimate $\beta$ by setting the multivariate score function equal to zero and solving the generalized estimating equation
+$$
+  \sum_{i=1}D_i^TV_i^{-1}(Y_i - \mu_i) = 0,
+$$
+where $D_i = \frac{\partial \mu_i}{\partial \beta}$ \citep{liang1986longitudinal}. This estimating equation resembles the score equation from GLMs, where we set the derivative of the log-likelihood to zero. In GEE, this idea is generalized by constructing a score-like equation based on the mean and covariance structure, without requiring a full likelihood.
+
+Since variances also depend on $\alpha$, we can substitute any $\sqrt{N}$ consistent estimate of $\alpha$ in this equation and still obtain an estimate as asymptotically efficient as if $\alpha$ were known. We denote this estimator by $\hat\alpha = \hat\alpha(\beta, \phi)$. Except for particular choices of $R$ and $\alpha$, the scale parameter $\phi$ will generally remain in the GEE. To complete the process, we replace $\phi$ by $\hat\phi(Y,\beta)$, a $\sqrt{N}$ consistent estimator when $\beta$ is known. Let $U_i(\beta, \alpha) = D_i^TV_i^{-1}(Y_i - \mu_i)$, and with these estimators we have
 \begin{equation} \label{eq:GEE}
   \sum_{i=1}^N U_i(\beta, \hat\alpha(\beta, \hat\phi(\beta)) ) = 0.
 \end{equation}
-The above estimation \eqref{eq:GEE} can be performed iteratively where one alternates between estimating $\beta$ with $(\hat\alpha,\hat\phi)$  fixed, and estimating $(\alpha,\phi)$ with $\hat\beta$ fixed. The solution of the above equation $\hat\beta$ has an asymptotic multivariate normal distribution of the form
+The above estimation \eqref{eq:GEE} can be performed iteratively where one alternates between estimating $\beta$ with $(\hat\alpha,\hat\phi)$  fixed, and estimating $(\alpha,\phi)$ with $\hat\beta$ fixed. 
+
+The solution of the \eqref{eq:GEE}, denoted $\hat\beta$, has an asymptotic multivariate normal distribution of the form
 $$
   \sqrt{N}\left(\hat\beta - \beta\right) \to N(0,\Sigma)
 $$
-where $\Sigma = \lim_{N\to\infty} = N\Sigma_0^{-1}\Sigma_1\Sigma_0^{-1}$, and 
+where $\Sigma = \lim_{N\to\infty} ( N\Sigma_0^{-1}\Sigma_1\Sigma_0^{-1})$, and 
 $$
   \Sigma_0 = \sum_{i=1}^N D_i^TV_iD_i, \qquad \Sigma_1 = \sum_{i=1}^N D_i^TV_i^{-1}\text{Cov}(Y_i)V_i^{-1}D_i.
 $$
-Replacing $\beta$, $\phi$, and $\alpha$ by consistent estimates and the covariance matrix $\text{Cov}(Y_i)$ by $(Y_i - \mu_i)(Y_i - \mu_i)^T$ in the above yields the sandwich estimate $\widehat\Sigma$ of $\Sigma$. The estimate $\widehat\Sigma$ is a consistent estimate of $\Sigma$ even if the working correlation matrices $R_i(\alpha)$ are misspecified. For instance, it is often convenient to use a working independence model where $R_i(\alpha) = I$. Other popular choices include compound symmetry (i.e.,  exchangeable) with $R_{ij} = \alpha$ for any $i \neq j$ or first-order autoregressive with $R_{ij} = \alpha^{|i-j|}$, where $R_{ij}$ denotes the (i,j)th element of R \citep{pan2001akaike}. 
+Replacing $\beta$, $\phi$, and $\alpha$ by consistent estimates and the covariance matrix $\text{Cov}(Y_i)$ by $(Y_i - \mu_i)(Y_i - \mu_i)^T$ in the above yields a [sandwich estimate](http://ibg.colorado.edu/cdrom2011/medland/fri2011/HWSE.pdf) $\widehat\Sigma$ of $\Sigma$. The estimate $\widehat\Sigma$ is a consistent estimate of $\Sigma$ even if the working correlation matrices $R_i(\alpha)$ are misspecified. For instance, it is often convenient to use a working independence model where $R_i(\alpha) = I$. Other popular choices include compound symmetry (i.e.,  exchangeable) with $R_{ij} = \alpha$ for any $i \neq j$ or first-order autoregressive with $R_{ij} = \alpha^{|i-j|}$, where $R_{ij}$ denotes the (i,j)th element of R \citep{pan2001akaike}. 
 
 <!-- A similar set of equations can be derived representing the score with respect to $\alpha$, which may be similarly solved. We iterate between estimating $\alpha$ and $\beta$ until we converge at a solution.  -->
 
@@ -713,7 +737,8 @@ We can see that the estimated correlation between observations on the same subje
 
 These standard errors can be used to construct Wald statistics. We see that the treatment factors, surface and vision, are significant. Height and possibly gender are marginally significant. This part of the conclusion is similar to our GLMM results.
 
-There is one clear difference with the GLMM output: the estimates for the GEE are about half the size of the GLMM $\beta$. It is expected that the GEE estimates are smaller because GLMMs model the data at the subject or individual level. The correlation between the measurements on the individual is generated by the random effect. Thus the $\beta$s for the GLMM represent the effect on an individual. A GEE models the data at the population level. The $\beta$s for a GEE represent the effect of the predictors averaged across all individuals with the same predictor values. GEEs do not use random effects but model the correlation at the marginal or correlation level. [This is a major distinction](https://www.jstor.org/stable/25680575?seq=1#metadata_info_tab_contents).
+As discussed earlier, this difference in interpretation helps explain why GEE coefficient estimates tend to be smaller in magnitude than their GLMM counterparts. This is a major distinction between these two approaches. Feel free to read more about this distinction [here](https://www.jstor.org/stable/25680575?seq=1#metadata_info_tab_contents).
+
 
 The testing for vision is not entirely satisfactory since it has three levels meaning two tests—one being highly significant and the other not at all. If we want a single test for the significance of vision, we need to refit the model without vision and make the standard anova-type comparison:
 
@@ -725,8 +750,7 @@ anova(modgeep2, modgeep)
 ```
 As expected, we see that vision is strongly significant.
 
-The \texttt{geepack} package provides the flexibility of modeling an ordinal response
-with clusters using the \texttt{ordgee()} function. This would be appropriate for the original form of this data where the response is actually measured on a four-point scale. Recall that we dichotomized stable to be 1 if completely stable, and 0 otherwise.
+The \texttt{geepack} package provides the flexibility of modeling an ordinal response with clusters using the \texttt{ordgee()} function. This would be appropriate for the original form of this data where the response is actually measured on a four-point scale. Recall that we dichotomized stable to be 1 if completely stable, and 0 otherwise.
 
 We will now model the epilepsy data using GEEs. We exclude the 49th case as before (all the same caveats apply). An autoregressive AR(1) model for the correlation structure seems to be the most natural since consecutive measurements will be more correlated than measurements separated in time. Note that this does require that the clusters be sorted in time order (they are in this case).
 
@@ -742,43 +766,53 @@ The drug effects, as measured by the interaction term, has a weakly significant 
 
 ## Computing details for GEEs
 
+To estimate the GEE parameters $(\hat\beta, \hat\alpha, \hat\phi)$, we use an iterative procedure that alternates between updating the regression coefficients $\beta$ and the nuisance parameters $\alpha$ (correlation) and $\phi$ (scale). This general strategy is akin to IRLS in GLMs but extended to account for intra-cluster correlation. More details can be found in \cite{liang1986longitudinal}.
 
 #### Estimating $\beta$
 
-We now discuss some computing details of iterative algorithms used to obtain $(\hat\beta, \hat\alpha, \hat\phi)$ in \cite{liang1986longitudinal}. In order to estimate $\hat\beta$ we alternate between a modified Fisher scoring algorithm for $\beta$ with $(\hat\alpha,\hat\phi)$ fixed, and moment based estimation methods for $\alpha$ and $\phi$. Given current estimates of the nuisance parameters $\hat\alpha$ and $\hat\phi$ at iteration $j$, we obtain $\hat{\beta}_{j+1}$ as
+Here, we use a modified IRLS algorithm to update estimation for $\beta$ with $(\hat\alpha,\hat\phi)$ fixed. Given current estimates of the nuisance parameters $\hat\alpha$ and $\hat\phi$ at iteration $k$, we obtain $\hat{\beta}_{k+1}$ as
 \begin{equation} \label{eq:betaopt}
-  \hat{\beta}_{j+1} = \hat{\beta}_j - \left[\sum_{i=1}^N D_i^T(\hat\beta_j)\widehat{V}_i(\hat\beta_j)D_i(\hat\beta_j)\right]^{-1}\left[\sum_{i=1}^N D_i(\hat\beta_j)\widehat{V}_i(\hat\beta_j)S_i(\hat\beta_j)\right],
+  \hat{\beta}_{k+1} = \hat{\beta}_k - \left[\sum_{i=1}^N D_i^T(\hat\beta_k)\widehat{V}_i(\hat\beta_k)D_i(\hat\beta_k)\right]^{-1}\left[\sum_{i=1}^N D_i(\hat\beta_k)\widehat{V}_i(\hat\beta_k)S_i(\hat\beta_k)\right],
 \end{equation}
 where 
 \begin{align*}
   \widehat V_i(\beta) &= V_i(\beta,\hat\alpha(\beta,\hat\phi(\beta))), \\
   S_i(\beta) &= Y_i - \mu_i(\beta).
 \end{align*}
-This procedure can be viewed as a modification of Fisher's scoring method in that the limiting value of the expectation of the derivative of $\sum U_i(\beta, \hat\alpha(\beta,\hat\phi(\beta)))$ is used for correction. Now, define $D = (D_1^T,\ldots,D_N^T)^T$, $S = (S_1^T,\ldots,S_N^T)$ and let $\widetilde V$ be a block diagonal matrix with $\widehat V_i$s as the diagonal elements. Define modified responses as 
-$$
-  Z = D\beta - S,
-$$
-then we see that the iterative procedure in \eqref{eq:betaopt} is equivalent to an IRLS of $Z$ on $D$ with weights $\widehat V_i^{-1}$.
+This update is equivalent to solving a weighted least squares problem, where the weights reflect both heteroscedasticity and within-cluster correlation.
 
-#### Estimating $\alpha$ and $\phi$
 
-At a given iteration $j$ the correlation parameters $\alpha$ and scale parameter $\phi$ can be estimated from the current Pearson residuals defined by 
+### Estimating $\alpha$ and $\phi$
+
+Here we use moment based estimation methods to update estimation for $\alpha$ and $\phi$ with $\hat\beta$ fixed. At a given iteration $k$ the correlation parameters $\alpha$ and scale parameter $\phi$ can be estimated from the current Pearson residuals defined by 
 $$
-  r_{it} = \frac{y_{it} - \mu_{it}(\hat\beta_j)}{\sqrt{ a(\mu_{it}(\hat\beta_j))}}
+  r_{i,t} = \frac{y_{i,t} - \mu_{i,t}(\hat\beta_k)}{\sqrt{ a(\mu_{i,t}(\hat\beta_k))}}
 $$
-where $i = 1,\ldots,N$ and $t = 1,\ldots,n_i$. We can estimate 
+where $i = 1,\ldots,N$ denotes the cluster and $t = 1,\ldots,n_i$ denotes a specific measurement within the cluster.
+
+
+#### Estimating $\phi$ 
+
+We can estimate the scale parameter as 
 $$
-  \hat\phi^{-1} = \frac{\sum_{i=1}^N\sum_{t=1}^{n_i} \hat r_{it}^2}{K - p}
+  \hat\phi^{-1} = \frac{\sum_{i=1}^N\sum_{t=1}^{n_i} \hat r_{i,t}^2}{K - p}
 $$
-where $K = \sum n_i$. To estimate $\alpha$ consistently we borrow strength over the $N$ subjects. The specific estimator depends on the choice of $R(\alpha)$. The general approach is to estimate $\alpha$ through a simple function of 
+where $K = \sum n_i$. This is the average squared Pearson residual, scaled by degrees of freedom. This is similar to over-dispersion in GLM. Recall that in a well-specified GLM with correctly modeled variance, the sum of squared Pearson residuals is approximately equal to the degrees of freedom. So if the total is greater than the degrees of freedom, one is  underestimating the variance and can therefore inflate with $\hat\phi$.
+
+#### Estimating $\alpha$
+
+Estimation of the correlation structure relies on empirical correlations of the residuals, computed across individuals. The specific form of the estimator depends on the choice of working correlation matrix $R(\alpha)$. As a general starting point, we compute empirical residual correlations between time points $u$ and $v$,
 $$
-  \widehat R_{uv} = \frac{\sum_{i=1} \hat r_{iu}\hat r_{iv}}{K - p}.
+  \widehat{\mathrm{Corr}}_{u,v} = \frac{1}{N} \sum_{i=1}^N \hat r_{i,u} \hat r_{i,v}.
 $$
-For example, let $\alpha_i = (\alpha_{i1},\ldots,\alpha_{i n_i-1})$ where $\alpha_{it} = \text{corr}(Y_{it},Y_{it+1})$. A natural estimator for $\alpha_i$, given $\beta$ and $\phi$, is 
+These are used to construct an estimator $\hat\alpha$ consistent with the assumed structure of $R(\alpha)$. For example, under an AR(1) structure (where $\alpha$ represents the lag-1 autocorrelation), we use
 $$
-  \hat{\alpha_t} = \frac{\phi\sum_{i=1}^N \hat r_{it} \hat r_{it+1}}{N - p},
+\hat\alpha = \frac{\hat\phi \sum_{i=1}^N \sum_{t=1}^{n_i - 1} \hat r_{i,t} \hat r_{i,t+1}}{K-N}.
 $$
-where this estimator is better utilized in the setting where $n_i = n$. Note that the asymptotic distribution of $\hat\beta$ does not depend on the specific choices of estimators for $\alpha$ and $\phi$ provided that these choices are $\sqrt{N}$ consistent. Remember that estimators $\hat\beta$ and $\widehat V$ will be consistent no matter the choice of $R(\alpha)$. However, choosing $R(\alpha)$ closer to the true correlation gives increased efficiency. 
+
+This mimics an [empirical autocorrelation](https://stats.stackexchange.com/questions/294407/how-does-the-empirical-correlation-function-differ-from-rs-acf-function), scaled by $\hat\phi$ to account for the variance normalization. This approach works best in settings where all clusters are balanced (i.e., $n_i = n$ for all $i$).
+
+Note that the asymptotic distribution of $\hat\beta$ does not depend on the specific choices of estimators for $\alpha$ and $\phi$ provided that these choices are $\sqrt{N}$ consistent. Remember that estimators $\hat\beta$ and $\widehat V$ will be consistent no matter the choice of $R(\alpha)$. However, choosing $R(\alpha)$ closer to the true correlation gives increased efficiency. 
 
 
 

@@ -264,6 +264,7 @@ ggplot(ddf, aes(x=domain, y=density, linetype=treat)) +
 library(geepack)
 
 ## Binary response
+## exchangeable correlation
 modgeep = geeglm(stable ~ Sex + Age + Height + Weight + Surface + Vision, 
                  id=Subject, corstr="exchangeable", scale.fix=TRUE, 
                  data=ctsib, family=binomial)
@@ -272,10 +273,10 @@ modgeep = geeglm(stable ~ Sex + Age + Height + Weight + Surface + Vision,
 ## same subject is 0.22 with a standard error of 0.04.
 summary(modgeep)
 
-## exchangeable correlation
+## no vision
 modgeep2 = geeglm(stable ~ Sex + Age + Height + Weight + Surface,
-                  id =Subject, corstr="exchangeable", scale.fix=TRUE, data=ctsib, 
-                  family=binomial)
+                  id =Subject, corstr="exchangeable", scale.fix=TRUE, 
+                  data=ctsib, family=binomial)
 anova(modgeep2, modgeep)
 
 

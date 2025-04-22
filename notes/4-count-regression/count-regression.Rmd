@@ -274,7 +274,7 @@ Residuals represent the discrepancy between the model and the observed data, and
 $$
   r_P = \frac{y - \hat\mu}{\sqrt{\widehat{\mathrm{Var}}(\hat\mu)}}
 $$
-where $\widehat{\mathrm{Var}}$ is the estimated variance under the original exponential family. Notice that $\sum_{i=1}^n r_{P,i}^2$ is the [Pearson $\chi^2$ statistic](https://en.wikipedia.org/wiki/Pearson%27s_chi-squared_test), hence the name. And note that Pearson residuals can be skewed for nonnormal responses. 
+where $\widehat{\mathrm{Var}}$ is the estimated variance under the original exponential family. Notice that $\sum_{i=1}^n r_{P,i}^2$ is the [Pearson $\chi^2$ statistic](https://en.wikipedia.org/wiki/Pearson%27s_chi-squared_test), hence the name. And note that Pearson residuals can be skewed for nonnormal responses. A useful result for Pearson residuals is that $\sum_{i=1}^n r_{P,i}^2 \approx n-p$. This is because $E(r_{P,i}^2) \approx 1$ and  $\sum_{i=1}^n r_{P,i}^2 \approx \chi^2_{n-p}$.
 
 \vspace*{0.3cm}\noindent\textbf{Deviance residuals}: The deviance residuals are defined by analogy to the Pearson residuals. In other words, we set the deviance residual $r_D$ so that 
 $$

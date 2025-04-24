@@ -1,0 +1,1808 @@
+---
+title: "STAT 528 - Advanced Regression Analysis II"
+author: "Aster models"
+institute: |
+  | Daniel J. Eck
+  | Department of Statistics
+  | University of Illinois
+date: ""
+output: 
+    beamer_presentation:
+        keep_tex: true
+        fig_width: 11
+        fig_height: 7.5
+        includes:
+urlcolor: blue
+header-includes:
+- \usepackage{graphicx}
+- \usepackage{bm}
+- \definecolor{foreground}{RGB}{255,255,255}
+- \definecolor{background}{RGB}{34,28,54}
+- \definecolor{title}{RGB}{105,165,255}
+- \definecolor{gray}{RGB}{175,175,175}
+- \definecolor{lightgray}{RGB}{225,225,225}
+- \definecolor{subtitle}{RGB}{232,234,255}
+- \definecolor{hilight}{RGB}{112,224,255}
+- \definecolor{vhilight}{RGB}{255,111,207}
+- \setbeamertemplate{footline}[page number]
+- \usepackage{amsthm}
+- \usepackage{amsmath}
+- \usepackage{amsfonts}
+- \usepackage{amscd}
+- \usepackage{amssymb}
+- \usepackage{natbib}
+- \usepackage{url}
+- \usepackage{tikz}
+---
+
+\newcommand{\R}{\mathbb{R}}
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE,tidy.opts=list(width.cutoff=40))
+library(ggplot2)
+
+mycols     = c("chartreuse3", "orangered", "deepskyblue3", "darkorchid1", "yellow")
+dark_theme = theme(plot.background   = element_blank(), 
+                   panel.background  = element_blank(),
+                   #legend.background = element_blank(), legend.key = element_blank(),
+                   axis.title.x      = element_text(size = 26, colour = "grey80",
+                                                    margin=margin(10,0,0,0)),
+                   axis.title.y      = element_text(size = 26, colour = "grey80",
+                                                    margin=margin(0,20,0,0)),
+                   axis.text         = element_text(size=18, color = "grey80"), 
+                   text              = element_text(size=20),
+                   axis.title        = element_text(size = 26),
+                   legend.title      = element_text(size = 26, colour = "grey80"),
+                   panel.border      = element_blank(),
+                   panel.grid.major  = element_line(colour = "grey50"), 
+                   panel.grid.minor  = element_line(colour = "grey30"))
+```
+
+
+## Learning Objectives Today
+
+- aster model example
+- aster analyses
+
+
+## 
+
+The variables under consideration: 
+
+- \texttt{nsloc} north-south location of each individual in the experimental plot
+- \texttt{ewloc} east-west location of each individual in the experimental plot 
+- \texttt{pop} the ancestral population of each individual
+
+\vspace{12pt}
+Each individual was grown from seed taken from a surviving population in a prairie remnant in western Minnesota near the Echinacea Project field site.
+
+Darwinian fitness (our best surrogate of Darwinian fitness) is total flower head count over the years of data collection.
+
+We are interested in estimated expected Darwinian fitness for the different ancestral populations.
+
+
+## The aster graph for \emph{Echinacea angustifolia} ([aster plants](http://echinaceaproject.org/)) 
+
+\begin{figure}
+\begin{tikzpicture}
+\put(-100,50){\makebox(0,0){$1$}}
+\put(-50,50){\makebox(0,0){$M_1$}}
+\put(0,50){\makebox(0,0){$M_2$}}
+\put(50,50){\makebox(0,0){$M_3$}}
+\put(-87.5,50){\vector(1,0){25}}
+\put(-37.5,50){\vector(1,0){25}}
+\put(12.5,50){\vector(1,0){25}}
+\put(-50,0){\makebox(0,0){$F_1$}}
+\put(0,0){\makebox(0,0){$F_2$}}
+\put(50,0){\makebox(0,0){$F_3$}}
+\put(-50,37.5){\vector(0,-1){25}}
+\put(0,37.5){\vector(0,-1){25}}
+\put(50,37.5){\vector(0,-1){25}}
+\put(-50,-50){\makebox(0,0){$H_1$}}
+\put(0,-50){\makebox(0,0){$H_2$}}
+\put(50,-50){\makebox(0,0){$H_3$}}
+\put(-50,-12.5){\vector(0,-1){25}}
+\put(0,-12.5){\vector(0,-1){25}}
+\put(50,-12.5){\vector(0,-1){25}}
+\end{tikzpicture}
+\label{fig:astergraph}
+\end{figure}
+
+
+
+##
+
+We load in necessary packages:
+
+\vspace{12pt}
+```{r, message = FALSE}
+library(tidyverse)
+library(ggplot2)
+library(aster)
+library(aster2)
+```
+
+
+## Initial data processing
+
+Here is a brief look at the data:
+
+\vspace{12pt}
+\tiny
+```{r}
+data("echinacea")
+names(echinacea)
+head(echinacea$redata)
+```
+
+
+##
+
+\tiny
+```{r}
+echinacea$redata %>% filter(id == 1)
+echinacea$redata %>% filter(id == 6)
+```
+
+
+##
+
+We can see the proportion of individuals that survive each year.
+
+\vspace{12pt}
+\tiny
+```{r}
+## M1
+echinacea$redata %>% filter(varb == "ld02") %>% pull(resp) %>% table()
+
+## M2
+echinacea$redata %>% filter(id %in% (echinacea$redata %>% 
+                                       filter(varb == "ld02" & resp == 1) %>% 
+                                       pull(id)) & varb == "ld03") %>% 
+  pull(resp) %>% table()
+
+## M3
+echinacea$redata %>% filter(id %in% (echinacea$redata %>% 
+                                       filter(varb == "ld03" & resp == 1) %>% 
+                                       pull(id)) & varb == "ld04") %>% 
+  pull(resp) %>% table()
+```
+
+
+
+##
+
+We can see the proportion of individuals that flower each year.
+
+\vspace{12pt}
+\tiny
+```{r}
+## F1
+echinacea$redata %>% filter(id %in% (echinacea$redata %>% 
+                                       filter(varb == "ld02" & resp == 1) %>% 
+                                       pull(id)) & varb == "fl02") %>% 
+  pull(resp) %>% table()
+
+## F2
+echinacea$redata %>% filter(id %in% (echinacea$redata %>% 
+                                       filter(varb == "ld03" & resp == 1) %>% 
+                                       pull(id)) & varb == "fl03") %>% 
+  pull(resp) %>% table()
+
+## F3
+echinacea$redata %>% filter(id %in% (echinacea$redata %>% 
+                                       filter(varb == "ld04" & resp == 1) %>% 
+                                       pull(id)) & varb == "fl04") %>% 
+  pull(resp) %>% table()
+```
+
+
+
+##
+
+We can see the distribution of head counts each year.
+
+\vspace{12pt}
+\tiny
+```{r}
+echinacea$redata %>% filter(id %in% (echinacea$redata %>% 
+                                       filter(varb == "fl02" & resp == 1) %>% 
+                                       pull(id)) & varb == "hdct02") %>% 
+  pull(resp) %>% hist(., main = "Distribution of hdct02")
+```
+
+
+##
+
+\tiny
+```{r}
+echinacea$redata %>% filter(id %in% (echinacea$redata %>% 
+                                       filter(varb == "fl03" & resp == 1) %>% 
+                                       pull(id)) & varb == "hdct03") %>% 
+  pull(resp) %>% hist(., main = "Distribution of hdct03")
+```
+
+
+##
+
+\tiny
+```{r}
+echinacea$redata %>% filter(id %in% (echinacea$redata %>% 
+                                       filter(varb == "fl04" & resp == 1) %>% 
+                                       pull(id)) & varb == "hdct04") %>% 
+  pull(resp) %>% hist(., main = "Distribution of hdct04")
+```
+
+
+##
+
+\tiny
+```{r}
+echinacea$redata %>% group_by(id) %>% 
+  filter(varb %in% c("hdct02","hdct03","hdct04")) %>% 
+  summarise(fitness = sum(resp)) %>% 
+  pull(fitness) %>% hist(., main = "Distribution of fitness", breaks = 20)
+```
+
+
+
+## Aster analysis preliminaries
+
+The variables that correspond to nodes of the graph are, in the order they are numbered in the graph 
+\vspace{12pt}
+```{r}
+vars <- c("ld02", "ld03", "ld04", "fl02", "fl03", 
+					"fl04", "hdct02", "hdct03", "hdct04")
+```
+
+##
+
+The graphical structure is specified by a vector that gives for each node the index (not the name) of the predecessor node or zero if the predecessor is an initial node.
+
+\vspace{12pt}
+```{r}
+pred <- c(0, 1, 2, 1, 2, 3, 4, 5, 6)
+```
+
+\vspace{12pt}
+This says the predecessor of the first node given by the \texttt{vars} vector is initial (because \texttt{pred[1] == 0}), the predecessor of the second node given by the \texttt{vars} vector is the first node given by the \texttt{vars} vector (because \texttt{pred[2] == 1}), and so forth. 
+
+##
+
+\tiny
+```{r}
+foo <- rbind(vars, c("initial", vars)[pred + 1]) 
+rownames(foo) <- c("successor", "predecessor")
+foo
+```
+
+\vspace{12pt}
+\normalsize
+That's right.
+
+
+## 
+
+The last part of the specification of the graph is given by a corresponding vector of integers coding families (distributions). The default is to use the codes:  
+
+- 1 = Bernoulli 
+- 2 = Poisson 
+- 3 = zero-truncated Poisson 
+
+
+##
+
+Optionally, the integer codes specify families given by an optional argument \texttt{famlist} to functions in the \texttt{aster} package, and this can specify other distributions besides those in the default coding.
+
+\vspace{12pt}
+\tiny
+```{r}
+fam <- c(1, 1, 1, 1, 1, 1, 3, 3, 3)
+rbind(vars, fam)
+```
+
+
+## 
+
+There is one more step before we can fit models. 
+
+The R function \texttt{aster} which fits aster models wants the data in long rather than wide format, the former having one line per node of the graph rather than one per individual.
+
+\vspace{12pt}
+\tiny
+```{r}
+## aster example already in long format
+redata <- data.frame(echinacea$redata, root = 1)
+head(redata)
+```
+
+
+## 
+
+All of the variables in \texttt{echinacea} that are named in \texttt{vars} are gone. They are packed into the variable \texttt{resp}. 
+
+Which components of \texttt{resp} correspond to which components of \texttt{vars} is shown by the new variable \texttt{varb}.
+
+\vspace{12pt}
+\tiny
+```{r}
+levels(redata$varb)
+```
+
+
+## Fitting aster models
+
+We will now discuss fitting aster models. 
+
+Different families for different nodes of the graph means it makes no sense to have terms of the regression formula applying to different nodes. 
+
+In particular, it makes no sense to have one *intercept* for all nodes. To in effect get a different *intercept* for each node in the graph, include \texttt{varb} in the formula
+\begin{center}
+  \texttt{y $\sim$ varb + ...}
+\end{center}
+
+The categorical variable \texttt{varb} gets turned into as many dummy variables as there are nodes in the graph, one is dropped, and the *intercept* dummy variable.
+
+
+## 
+
+Similar thinking says we want completely different regression coefficients of all kinds of predictors for each node of the graph. 
+
+That would lead us to formulas like
+\begin{center}
+  \texttt{y $\sim$ varb + varb:(...)}
+\end{center}
+where $\ldots$ is any other part of the formula. 
+
+We should not think of this formula as specifying *interaction* between \texttt{varb} and terms in the model but rather as specifying separate coefficients for the terms in the model for each node of the graph. 
+
+That being said, formulas like this would likely yield too many regression coefficients to estimate well.  
+
+
+## 
+
+Maybe different coefficients for each kind of node (ie mortality or head count) would be good enough.
+
+\vspace{12pt}
+\tiny
+```{r}
+layer <- gsub("[0-9]", "", as.character(redata$varb))
+redata <- data.frame(redata, layer = layer)
+unique(layer)
+```
+
+\vspace{12pt}
+\normalsize
+Maybe
+\begin{center}
+  \texttt{y $\sim$ varb + layer:(...)}
+\end{center}
+is good enough? But formulas like this would still yield too many regression coefficients to estimate well. 
+
+
+## 
+
+In aster models regression coefficients *for* a node of the graph also influence all *earlier* nodes of the graph (predecessor, predecessor of predecessor, predecessor of predecessor of predecessor, etc.) 
+
+So maybe it would be good enough to only have separate coefficients for the layer of the graph consisting of terminal nodes? 
+
+\vspace{12pt}
+```{r}
+fit <- as.numeric(layer == "hdct") 
+redata <- data.frame(redata, fit = fit)
+unique(fit)
+```
+
+
+##
+
+Maybe
+\begin{center}
+  \texttt{y $\sim$ varb + fit:(...)}
+\end{center}
+is good enough. 
+
+We called the variable we just made up \texttt{fit} which is short for Darwinian fitness. 
+
+The regression coefficients in terms specified by $\ldots$ have a direct relationship with expected Darwinian fitness (or a surrogate of Darwinian fitness). 
+
+And that is usually what is wanted in life history analysis. 
+
+
+## 
+
+We now fit our first aster model.
+
+\vspace{12pt}
+\tiny
+```{r}
+aout <- aster(resp ~ varb + layer : (nsloc + ewloc) + 
+							fit : pop, pred, fam, varb, id, root, data = redata)
+summary(aout)
+```
+
+
+## 
+
+The regression coefficients are of little interest. 
+
+The main interest is in what model among those that have a scientific interpretation fits the best.
+
+\vspace{12pt}
+\tiny
+```{r astermodeltests, cache = TRUE}
+aout.smaller <- aster(resp ~ varb + 
+  fit : (nsloc + ewloc + pop), 
+  pred, fam, varb, id, root, data = redata)
+aout.bigger <- aster(resp ~ varb + 
+  layer : (nsloc + ewloc + pop), 
+  pred, fam, varb, id, root, data = redata)
+anova(aout.smaller, aout, aout.bigger)
+```
+
+
+## 
+
+Despite the largest model fitting the best, we choose the middle model because that one tells us something about fitness directly that the other one does not.
+
+The argument for doing this is because we are interested in modeling fitness, and the distribution of fitness (actually best surrogate of fitness in their data) is not very different between the two models. 
+
+The distribution of other components of fitness (other than the final one) may differ quite a lot, but that was not the question of scientific interest. 
+
+
+##
+
+So what do these models say about the distribution of fitness?
+
+\vspace{12pt}
+\tiny
+```{r}
+## we will go over this later
+pop <- levels(redata$pop)
+nind <- length(unique(redata$id))
+nnode <- nlevels(redata$varb)
+npop <- length(pop)
+amat <- array(0, c(nind, nnode, npop))
+amat.ind <- array(as.character(redata$pop), 
+  c(nind, nnode, npop))
+amat.node <- array(as.character(redata$varb), 
+  c(nind, nnode, npop))
+amat.fit <- grepl("hdct", amat.node)
+amat.fit <- array(amat.fit, 
+  c(nind, nnode, npop))
+amat.pop <- array(pop, c(npop, nnode, nind))
+amat.pop <- aperm(amat.pop)
+amat[amat.pop == amat.ind & amat.fit] <- 1
+pout <- predict(aout,  varvar = varb, idvar = id, 
+  root = root, se.fit = TRUE, amat = amat)
+pout.bigger <- predict(aout.bigger, varvar = varb, 
+  idvar = id, root = root, se.fit = TRUE, amat = amat)
+```
+
+
+##
+
+The first interesting thing about these *predictions* (actually point estimates of parameters with standard errors) is that the point estimates are exactly the same for the two models.
+
+\vspace{12pt}
+\tiny
+```{r}
+pout$fit
+pout.bigger$fit
+all.equal(pout$fit, pout.bigger$fit)
+```
+
+\vspace{12pt}
+\normalsize
+And why is that?  These are submodel canonical statistics (components of $M^Ty$).  Thus by the observed-equals-expected property of exponential families their MLE are equal to their observed values and hence equal to each other. 
+
+So that is certainly not a reason to prefer one model to the other. If the estimated means are exactly the same how about estimated asymptotic variances?
+
+
+##
+
+The asymptotic variance matrix of these canonical statistics is actually diagonal for each model. 
+
+The reason is that different populations of origin have different individuals in the sample, and only individuals from one population contribute to estimating one of these canonical statistics. 
+
+Thus it is enough to look at the asymptotic standard errors (all the covariances are zero).
+
+\vspace{12pt}
+\tiny
+```{r}
+pout$se.fit
+pout.bigger$se.fit
+```
+
+\vspace{12pt}
+\normalsize
+We see that they are not that different.
+
+
+##
+
+If we were interested in the effect of population on the different components of fitness, then the P-value 0.00016 does indicate that the model \texttt{aout.bigger} fits the data better.
+
+The model \texttt{aout.bigger} has different population effects in different *layers* of the graph does show a statistically significant difference in the way the components of fitness combine to make up fitness in the various population of origin groups. 
+
+But if we are only interested in overall fitness rather than the separate components, then there is hardly any difference in the two models.
+
+
+## Estimating expected Darwinian fitness
+
+Hypothesis tests using the R function \texttt{anova} are fairly straightforward. 
+
+Confidence intervals using the R function \texttt{predict} for estimates of expected Darwinian fitness are anything but straightforward. 
+
+Among other issues, aster models have six  different parameterizations, all of which can be of scientific interest in some applications.
+
+
+##
+
+\begin{center}
+\includegraphics[angle=270, width=0.75\textwidth]{transforms.pdf}
+\end{center}
+
+
+## 
+
+The result of \texttt{predict(aout)} is the maximum likelihood estimate of the saturated model mean value parameter vector $\mu$. 
+
+If we want to say how bad or good our estimators are, then we need confidence intervals (or perhaps just standard errors).
+
+\vspace{12pt}
+\tiny
+```{r}
+pout <- predict(aout, se.fit = TRUE)
+```
+
+\vspace{12pt}
+\normalsize
+The components of \texttt{predict(aout)} are
+\begin{itemize}
+  \item The component \texttt{fit} gives the estimators (the same vector that was returned when predict was invoked with no optional arguments).
+  \item The component \texttt{se.fit} gives the corresponding standard errors.
+  \item The component \texttt{gradient} gives the derivative of the map from regression coefficients to predictions.
+\end{itemize}
+
+
+##
+
+These are asymptotic (large sample size, approximate) estimated standard deviations of the components of $\hat\mu$ derived using the usual theory of maximum likelihood estimation.
+
+In any event, suppose the parameter of interest is given by $h(\beta)$. Then this parameter has an estimator with the following asymptotic distribution
+$$
+  \sqrt{n}(h(\hat\beta) - h(\beta)) \to N\left(0, \nabla h(\beta)\Sigma^{-1} \{\nabla h(\beta)\}^T \right).
+$$
+
+
+##
+
+Below are confidence bounds for approximate 95% confidence intervals (not corrected for simultaneous coverage) for each of the components of the response vector. 
+
+\vspace{12pt}
+\tiny
+```{r}
+low <- pout$fit - qnorm(0.975) * pout$se.fit
+hig <- pout$fit + qnorm(0.975) * pout$se.fit
+```
+
+\vspace{12pt}
+\normalsize
+These are of no scientific interest whatsoever. The question of scientific interest addressed by confidence intervals was about (best surrogate of) fitness of a *typical* individual in each population.  Thus we only want 
+
+\vspace{12pt}
+\tiny
+```{r}
+nlevels(redata$pop)
+```
+
+\vspace{12pt}
+\normalsize
+confidence intervals, one for each population. What do we mean by *typical* individuals?
+
+
+##
+
+Those that are directly comparable. Those that the same in all respects except for population. 
+
+Thus we have to make up covariate data for hypothetical individuals that are comparable like this and get estimated mean values for them.
+
+\vspace{12pt}
+\tiny
+```{r}
+dat <- data.frame(nsloc = 0, ewloc = 0, pop = levels(redata$pop), 
+  root = 1, ld02 = 1, ld03 = 1, ld04 = 1, fl02 = 1, fl03 = 1, 
+  fl04 = 1, hdct02 = 1, hdct03 = 1, hdct04 = 1)
+dat
+```
+
+
+## 
+
+The components of the response vector are ignored in prediction so we can give them arbitrary values. Somewhat annoyingly, they have to be possible values because \texttt{predict.aster.formula} will check.
+
+We now wrangle this new data into a format to be used by \texttt{predict.aster}.
+
+\tiny
+\vspace{12pt}
+```{r}
+renewdata <- reshape(dat, varying = list(vars), 
+  direction = "long", timevar = "varb", times = as.factor(vars), 
+  v.names = "resp")
+layer <- gsub("[0-9]", "", as.character(renewdata$varb))
+renewdata <- data.frame(renewdata, layer = layer)
+fit <- as.numeric(layer == "hdct")
+renewdata <- data.frame(renewdata, fit = fit)
+head(renewdata)
+```
+
+
+##
+
+Now we have predictions for these variables 
+
+\vspace{12pt}
+\tiny
+```{r}
+names(renewdata)
+pout <- predict(aout, newdata = renewdata, varvar = varb, 
+  idvar = id, root = root, se.fit = TRUE)
+sapply(pout, length)
+```
+
+\vspace{12pt}
+\normalsize
+Why do we need the arguments \texttt{varvar}, \texttt{idvar}, and \texttt{root} when we did not before? More bad design (Charlie Geyer's words, not mine). 
+
+
+##
+
+So now we can make 63 not corrected for simultaneous coverage confidence intervals, one for each of the 9 nodes of the graph for each of these 7 hypothetical individuals (one per population). These too are of no scientific interest whatsoever. But we are getting closer.
+
+What is of scientific interest is confidence intervals for Darwinian fitness for these 7 individuals. Fitness (best surrogate of) in these data is the lifetime headcount which is 
+\begin{center}
+  \texttt{hdct02 + hdct03 + hdct04}
+\end{center}
+
+The effects of other components of fitness is already counted in head count. You cannot have nonzero head count if you are dead or if you had no flowers, so that is already accounted for.
+
+
+## 
+
+We now obtain estimates of $\mu$ for each hypothetical individual, different rows for different individuals.
+
+\vspace{12pt}
+\tiny
+```{r}
+nnode <- length(vars)
+preds <- matrix(pout$fit, ncol = nnode) 
+dim(preds)
+
+rownames(preds) <- unique(as.character(renewdata$pop))
+colnames(preds) <- unique(as.character(renewdata$varb))
+preds
+```
+
+
+##
+
+We now obtain estimated expected Darwinian fitness for typical individuals belonging to each population.
+
+\vspace{12pt}
+\tiny
+```{r}
+preds_hdct <- preds[ , grepl("hdct", colnames(preds))]
+rowSums(preds_hdct)
+```
+
+
+## 
+
+These are the desired estimates of expected fitness, but they do not come with standard errors because there is no simple way to get the standard errors for sums from the standard errors for the summands (when the summands are not independent, which is the case here). 
+
+So we have to proceed indirectly. We have to tell \texttt{predict.aster.formula} what functions of mean values we want and let it figure out the standard errors (which it can do). It only figures out for linear functions.
+
+If $\hat\mu$ is the result of \texttt{predict.aster.formula} without the optional argument \texttt{amat}, then when the optional argument \texttt{amat} is given it does parameter estimates with standard errors for a new parameter
+$$
+  \hat\zeta = A^T\hat\mu,
+$$
+where $A$ is a known matrix (the \texttt{amat} argument). 
+
+
+##
+
+The argument \texttt{amat} is a three dimensional array. The first dimension is the number of individuals (in \texttt{newdata} if provided, and otherwise in the original data). The second dimension is the number of nodes in the graph. The third dimension is the number of parameters we want point estimates and standard errors for.
+
+\vspace{12pt}
+\tiny
+```{r}
+npop <- nrow(dat) 
+nnode <- length(vars)
+amat <- array(0, c(npop, nnode, npop))
+dim(amat)
+```
+
+
+## 
+
+We want only the means for the $k$th individual to contribute to $\zeta$.  And we want to add only the head count entries.
+
+\vspace{12pt}
+\tiny
+```{r}
+foo <- grepl("hdct", vars)
+for (k in 1:npop) amat[k, foo, k] <- 1
+```
+
+
+## Standard Errors
+
+We now obtain estimates of expected Darwinian fitness and its standard error using \texttt{predict.aster}.
+
+\vspace{12pt}
+\tiny
+```{r}
+pout.amat <- predict(aout, newdata = renewdata, varvar = varb, 
+  idvar = id, root = root, se.fit = TRUE, amat = amat)
+
+## predict.aster
+pout.amat$fit
+
+## computation by hand
+rowSums(preds_hdct)
+```
+
+
+##
+
+Here are the estimated standard errors corresponding to estimates of expected Darwinian fitness for hypothetical typical individuals belonging to each population.
+
+\vspace{12pt}
+\tiny
+```{r}
+mean_value <- cbind(pout.amat$fit, pout.amat$se.fit)
+rownames(mean_value) <- unique(as.character(renewdata$pop))
+colnames(mean_value) <- c("estimates", "std. err.")
+round(mean_value, 3)
+```
+
+
+
+## Conditional modeling parameters
+
+We can obtain estimates of submodel conditional mean-value parameters (ie mean survival for each ancestral line).
+
+\vspace{12pt}
+\tiny
+```{r}
+pout_cond <- predict(aout, newdata = renewdata, varvar = varb, 
+  idvar = id, root = root, se.fit = TRUE, 
+  model.type = "unconditional", parm.type = "mean.value")
+
+nnode <- length(vars)
+preds_cond <- matrix(pout_cond$fit, ncol = nnode) 
+rownames(preds_cond) <- pop
+colnames(preds_cond) <- vars
+preds_cond[, 1:6]
+```
+
+##
+
+We display the average survival and flowering rates for each ancestral line.
+
+\vspace{12pt}
+\tiny
+```{r}
+rowMeans(preds_cond[, 1:3])
+rowMeans(preds_cond[, 4:6])
+```
+
+\vspace{12pt}
+\normalsize
+We can compare with the estimates of expected Darwinian fitness (or the best surrogate of) for each ancestral line.
+
+\vspace{12pt}
+\tiny
+```{r}
+rowSums(preds_hdct)
+```
+
+<!-- ## -->
+
+<!-- ```{r} -->
+<!-- pout_cond <- predict(aout.bigger, newdata = renewdata, varvar = varb,  -->
+<!--   idvar = id, root = root, se.fit = TRUE,  -->
+<!--   model.type = "unconditional", parm.type = "mean.value") -->
+<!-- pout_cond$fit -->
+
+<!-- nnode <- length(vars) -->
+<!-- preds_cond <- matrix(pout_cond$fit, ncol = nnode)  -->
+<!-- rownames(preds_cond) <- pop -->
+<!-- colnames(preds_cond) <- vars -->
+<!-- preds_cond[, 1:6] -->
+<!-- ``` -->
+
+
+## Zero-inflated Poisson model
+
+Let's now compare with a zero-inflated Poisson model. The response for this model will be the sum of all head counts. 
+
+\vspace{12pt}
+\tiny
+```{r}
+foo <- redata %>% filter(fit == 1) %>% group_by(id) %>% 
+  summarise(fitness = sum(resp), pop = unique(pop), 
+            ewloc = unique(ewloc), nsloc = unique(nsloc))
+head(foo)
+```
+
+
+## 
+
+\tiny
+```{r}
+foo %>% pull(fitness) %>% hist(., main = "Distribution of fitness", breaks = 20)
+```
+
+##
+
+Recall the \texttt{zeroinfl} function in the \texttt{pscl} package.
+
+\vspace{12pt}
+\tiny
+```{r, message=FALSE, warning=FALSE}
+library(pscl)
+m <- zeroinfl(fitness ~ pop + ewloc + nsloc, data = foo)
+summary(m)
+```
+
+
+##
+
+Estimates of fitness are nearly identical.
+
+\vspace{12pt}
+\tiny
+```{r}
+preds_hdct_0infl <- predict(m, 
+  newdata = data.frame(pop = pop, ewloc = 0, nsloc = 0), 
+  type = "response")
+
+cbind(rowSums(preds_hdct), preds_hdct_0infl)
+```
+
+
+<!-- ##  -->
+
+<!-- ```{r} -->
+<!-- preds_hdct_prob <- predict(m,  -->
+<!--   newdata = data.frame(pop = pop, ewloc = 0, nsloc = 0),  -->
+<!--   type = "prob") -->
+
+<!-- mu <- preds_hdct_prob %*% 1:18 -->
+<!-- mu2 <- preds_hdct_prob %*% (1:18)^2 -->
+<!-- sqrt(mu2 - mu^2) -->
+<!-- ``` -->
+
+##
+
+We will consider a nonparametric bootstrap to estimate standard errors of mean-value parameter estimates from a zero-inflated Poisson model.
+
+\vspace{12pt}
+\tiny
+```{r}
+library(parallel)
+```
+
+```{r zeroinfl_boot, cache = TRUE}
+set.seed(13)
+RNGkind("L'Ecuyer-CMRG")
+nCores <- detectCores() - 2
+B <- 1e4
+system.time({out <- do.call(rbind, mclapply(1:B, mc.cores = nCores, 
+                               function(j){
+    m <- zeroinfl(fitness ~ pop + ewloc + nsloc, 
+                  data = foo[sample(1:nrow(foo), replace = TRUE), ])
+    predict(m, newdata = data.frame(pop = pop, ewloc = 0, nsloc = 0), 
+            type = "response")
+  })
+)})
+```
+
+
+##
+
+The aster model comes with useful lower standard errors.
+
+\vspace{12pt}
+\tiny
+```{r}
+cbind(preds_hdct_0infl, sqrt(diag(var(out))))
+mean_value
+```
+
+
+##
+
+For completeness we now consider a parametric bootstrap which will assume that the zero-inflated Poisson model is the data-generating process.
+
+\vspace{12pt}
+\tiny
+```{r zeroinfl_paraboot, cache = TRUE}
+set.seed(13)
+RNGkind("L'Ecuyer-CMRG")
+B <- 1e4
+m <- zeroinfl(fitness ~ pop + ewloc + nsloc, data = foo)
+pred_prob <- 1 - predict(m, type = "zero")
+pred_lambda <- predict(m, type = "count")
+system.time({out <- do.call(rbind, mclapply(1:B, mc.cores = nCores, 
+                               function(j){
+  bar <- foo
+  bar$resp <- rbinom(nrow(foo), size = 1, prob = pred_prob) * 
+    rpois(nrow(foo), lambda = pred_lambda)
+  m <- zeroinfl(resp ~ pop + ewloc + nsloc, data = bar)
+  predict(m, newdata = data.frame(pop = pop, ewloc = 0, nsloc = 0), 
+          type = "response")
+  })
+)})
+```
+
+
+##
+
+The aster model comes with useful lower standard errors, but the parametric bootstrap procedure is more competitive.
+
+\vspace{12pt}
+\tiny
+```{r}
+cbind(preds_hdct_0infl, sqrt(diag(var(out))))
+mean_value
+```
+
+
+
+## Herbivory and pollination analysis
+
+The goal is to understand the tradeoffs between herbivory (plant eaten by deer) and pollination (necessary for reproducing) for plants that grow in the wild.
+
+\vspace{12pt}
+
+When plants are close together they are thought attract both deer and pollinators.
+
+\vspace{12pt}
+
+Tradeoffs are unknown.
+
+
+##
+
+Aster graph: 
+
+\tiny
+$$1 \rightarrow y_1 (Pois) \rightarrow y_2 (Ber) \rightarrow y_3 (Ber) \rightarrow y_4 (Ber) \rightarrow y_5(Ber) \rightarrow y_6(Pois) \rightarrow y_6(Ber)$$
+where 
+
+| node | varb |
+| ---- | ---- |
+| $y_1$ | flCt |
+| $y_2$ | flCtNotConsumed |
+| $y_3$ | flCtUndamaged |
+| $y_4$ | capsuleCt |
+| $y_5$ | isHarvested |
+| $y_6$ | ovuleCt |
+| $y_7$ | embryoCt |
+
+\normalsize
+The key covariate is nn5Dist. This is the distance to the plant's 5th nearest neighbor. 
+
+
+## 
+
+Deer herbivory:
+
+| node | varb |
+| ---- | ---- |
+| $y_2$ | flCtNotConsumed |
+
+\vspace{12pt}
+
+Pollination variables:
+
+| node | varb |
+| ---- | ---- |
+| $y_4$ | capsuleCt |
+| $y_6$ | ovuleCt |
+| $y_7$ | embryoCt |
+
+\vspace{12pt}
+The isHarvested variable ($y_5$) indicates which plants had ovules and embryos counted. 
+
+
+## 
+
+\begin{center}
+\includegraphics[angle=270, width=0.75\textwidth]{transforms.pdf}
+\end{center}
+
+##
+
+Conditional and mean-value parameters are related,
+$$
+  \xi_j = \frac{\mu_j}{\mu_{p(j)}}, \qquad \mu_j = \xi_j\mu_{p(j)}.
+$$
+Thus, the unconditional mean-value parameter for embryo count (surrogate of fitness) can be decomposed as
+$$
+  \mu_7 =  \xi_7\xi_6\xi_4\xi_3\xi_2\xi_1,
+$$
+where $\xi_5$ is removed because it is a part of the data collection but not the biological process. 
+
+
+##
+We now load in the data and perform basic wrangling
+
+\vspace{12pt}
+\tiny
+```{r, warning=FALSE,message=FALSE}
+data = read.csv("remLilium2021Data30Nov2022.csv")
+
+## remove some sites
+data = data[data$site != "lf",]
+data = data[data$site != "wrrx",]
+
+## convert structural NAs to 0s
+data[is.na(data$nCapsulesHarvested), "nCapsulesHarvested"] = 0
+data[is.na(data$ovuleCt), "ovuleCt"] = 0
+data[is.na(data$embryoCt), "embryoCt"] = 0
+
+## change name for convenience
+names(data)[names(data) == "nCapsulesHarvested"] = "isHarvested"
+```
+
+## aster graphical quantities
+
+```{r}
+## predecessor
+pred = c(0, 1, 2, 3, 4, 5, 6)
+
+## Specify distribution families of each node: 
+# 1 for Bernoulli
+# 2 for Poisson 
+fam = c(2, 1, 1, 1, 1, 2, 1)
+
+## nodes
+vars = c("flCt","flCtNotConsumed","flCtUndamaged",
+         "capsuleCt","isHarvested","ovuleCt",
+         "embryoCt")
+```
+
+
+## reshape data and more wrangling 
+
+Take log transform and scale distance variable for computational stability.
+
+\vspace{12pt}
+\tiny
+```{r}
+## Log-transform distances and scale
+test = data %>% mutate(
+  nn5Dist_s = log(nn5Dist) / 10,
+  nn5DistNotConsumed = replace_na(nn5DistNotConsumed, 1)
+) %>%
+  mutate(nn5DistNotConsumed_s = log(nn5DistNotConsumed) / 10)
+
+## Wide-to-long transformation
+redata = reshape(test, varying = list(vars), direction = "long",
+    timevar = "varb", times = as.factor(vars), v.names = "resp")
+
+# add root node and indicator for fitness
+redata = data.frame(redata, root = 1)
+redata$fit = as.numeric(redata$varb == "embryoCt")
+redata$Nid = as.numeric(gsub("[^0-9.-]", "", redata$id))
+
+# indicate deer herbivory node
+redata$Deer = as.numeric(redata$varb == "flCtNotConsumed")
+
+# indicate pollination nodes
+redata$Pollination =
+  as.numeric(is.element(redata$varb,
+    c("capsuleCt", "isHarvested", "ovuleCt", "embryoCt")))
+```
+
+## 
+
+Fit some candidate aster models that are linear in transformed distance
+
+\vspace{12pt}
+\tiny
+```{r}
+## distance to nearest neighbor only with fitness
+m1_small1 = aster(resp ~ -1 + varb + fit:nn5Dist_s,
+              pred, fam, varb, id, root, data = redata)
+
+## allow relationship between distance to change for 
+## deer herbivory
+m1_small2 = aster(resp ~ -1 + varb + Deer:nn5Dist_s 
+                  + fit:nn5Dist_s,
+              pred, fam, varb, id, root, data = redata)
+
+## final model
+## allow relationship between distance to change for 
+## deer herbivory and pollination
+m1 = aster(resp ~ -1 + varb + fit:nn5Dist_s + 
+             Deer:nn5Dist_s + Pollination:nn5Dist_s, 
+             pred, fam, varb, id, root, data = redata)
+
+aster_AIC <- function(mod) {
+  return(mod$deviance + 2 * length(mod$coefficients))
+}
+
+c(aster_AIC(m1_small1), aster_AIC(m1_small2), aster_AIC(m1))
+```
+
+
+
+
+
+##
+\tiny
+
+```{r, echo = FALSE,warning=FALSE,message=FALSE}
+fitness_landscape =
+  function(model,
+           covariate = "nn5Dist_s",
+           lower = NULL,
+           upper = NULL,
+           observation = FALSE,
+           scale_back = FALSE,
+           obs_upr = NULL,
+           modname = NULL) {
+    "
+  Plot 1-d fitness landscape, i.e. landscape w.r.t. one of nn5Dist and
+    nn5DistNotConsumed.
+
+  @param model: an aster model object to produce landscape on
+  @param covariate: string of value either 'nn5Dist_s' or 'nn5DistNotConsumed_s'
+    ,default to 'nn5Dist_s'
+  @param lower: numeric, data points with covariate value smaller than this are
+    ignored
+  @param upper: numeric, data points with covariate value larger than this are
+    ignored
+  @param observation: logic, indicating whether data points are included in
+    plots, default to FALSE
+  @param scale_back: logic, indicating whethr the plot is in log scale(FALSE)
+    or original scale(TRUE), default to FALSE
+  @param obs_upr: logic, if observation = TRUE, data points with covariate
+    value larger than this will not be plotted
+
+  @return nothing, just make plots
+  "
+    # Make fake individuals
+    nInd <- 50
+    lwr <-
+      if (is.null(lower))
+        min(unique(model$data[, covariate]))
+      else
+        lower
+    upr <-
+      if (is.null(upper))
+        max(unique(model$data[, covariate]))
+      else
+        upper
+    cand.nnA <- seq(from = lwr,
+                    to = upr,
+                    length = nInd)
+    cand <- as.data.frame(cand.nnA)
+    colnames(cand) <- covariate
+    cand$root <- 1
+    blah <- data[1:nInd, colnames(data) %in% vars]
+    cand <- cbind(cand, blah)
+    cand$id <- data[1:nInd, "id"]
+
+    # Transform fake data into long format
+    cand_long <-
+      reshape(
+        cand,
+        varying = list(vars),
+        direction = "long",
+        timevar = "varb",
+        times = as.factor(vars),
+        v.names = "resp"
+      )
+
+    cand_long <- data.frame(cand_long)
+    cand_long$fit <- as.numeric(cand_long$varb == "embryoCt")
+    cand_long$Nid <- as.numeric(gsub("[^0-9.-]", "", cand_long$id))
+
+    cand_long$Deer <-
+      as.numeric(cand_long$varb == "flCtNotConsumed")
+    cand_long$Pollination <- as.numeric(is.element(
+      cand_long$varb,
+      c("capsuleCt", "isHarvested", "ovuleCt", "embryoCt")
+    ))
+
+    # Get conditional mean value parameters
+    pred <-
+      predict(
+        model,
+        cand_long,
+        varvar = varb,
+        idvar = id,
+        root = root,
+        se.fit = TRUE,
+        model.type = "conditional",
+        is.always.parameter = TRUE,
+        info.tol = 1e-10
+      )
+
+    xi_parm <- pred$fit
+    xi_parm_se <- pred$se.fit
+    names(xi_parm) <- paste0(cand_long$id, ".", cand_long$varb)
+    names(xi_parm_se) <- paste0(cand_long$id, ".", cand_long$varb)
+
+    xi_parm_grad <- pred$gradient
+    rownames(xi_parm_grad) <-
+      paste0(cand_long$id, ".", cand_long$varb)
+    colnames(xi_parm_grad) <- names(model$coefficients)
+
+    # Expected fitness
+    Ids <- unique(cand_long$id)
+    exp_fitness <- rep(0, nInd)
+    names(exp_fitness) <- Ids
+    for (id in Ids) {
+      exp_fitness[id] <-
+        prod(xi_parm[grep(paste0(id, "\\."), names(xi_parm))][-5])
+    }
+
+    # Get covariance matrix of xi
+    xi_parm_var <-
+      xi_parm_grad %*% solve(model$fisher) %*% t(xi_parm_grad)
+
+    # Delta Method
+    var_expfit <- rep(0, nInd)
+    names(var_expfit) <- Ids
+    for (id in Ids) {
+      ind <- paste0(id, "\\.")
+      xi <- xi_parm[grep(ind, names(xi_parm))][-5]
+      var <- xi_parm_var[grep(ind, rownames(xi_parm_var))[-5],
+                         grep(ind, colnames(xi_parm_var))[-5]]
+      grad <-
+        c(prod(xi[-1]),
+          prod(xi[-2]),
+          prod(xi[-3]),
+          prod(xi[-4]),
+          prod(xi[-5]),
+          prod(xi[-6]))
+      var_expfit[id] <- t(grad) %*% var %*% grad
+    }
+    # Make plots
+    se_expfit <- sqrt(var_expfit)
+    xlabel <-
+      if (covariate == "nn5Dist_s")
+        "log(nnA)/10"
+      else
+        "log(nnB)/10"
+    cand_block <-
+      cand %>% mutate(
+        exp_fitness,
+        exp_fitness,
+        lower = exp_fitness - 2 * se_expfit,
+        upper = exp_fitness + 2 * se_expfit
+      )
+    if (scale_back == TRUE) {
+      cand_block[, as.character(covariate)] <-
+        exp(10 * cand_block[, as.character(covariate)])
+      xlabel <- if (covariate == "nn5Dist_s")
+        "nnA"
+      else
+        "nnB"
+    }
+    plt <-
+      ggplot(data = cand_block) +
+      geom_line(mapping = aes(x = cand_block[, as.character(covariate)],
+                              y = exp_fitness)) +
+      geom_ribbon(mapping = aes(x = cand_block[, as.character(covariate)],
+                                ymin = lower, ymax = upper), alpha = 0.5)
+    if (observation == TRUE) {
+      obs <-
+        test %>% filter((!!sym(covariate)) > lwr &
+                          (!!sym(covariate)) < upr)
+      if (!is.null(obs_upr)) {
+        obs <- obs %>% filter(fecundity < obs_upr)
+      }
+      if (scale_back == TRUE) {
+        plt <-
+          plt +
+          geom_point(data = obs,
+                     mapping = aes(x = exp(10 * obs[, as.character(covariate)]),
+                                   y = obs[, "fecundity"]))
+      } else {
+        plt <-
+          plt +
+          geom_point(data = obs,
+                     mapping = aes(x = obs[, as.character(covariate)],
+                                   y = obs[, "fecundity"]))
+      }
+    }
+    plttitle <-
+      if (!is.null(modname))
+        modname
+      else
+        substr(format(model$formula), start = 20,
+               stop = nchar(format(model$formula)))
+                
+    plt <-
+      plt + labs(
+        x = xlabel,
+        y = "Expected fitness",
+        title = plttitle
+      )
+    #if (scale_back == FALSE) {
+    #  plt <- plt + annotate(
+    #    geom = "text",
+    #    x = c(0.1, 0.2, 0.3),
+    #    y = max(exp_fitness + 2 * se_expfit) + 5,
+    #    label = c("2.718282", "7.389056", "20.085537")
+    #  )
+    #}
+    plt <- plt +
+      theme_minimal() +
+      scale_x_continuous(minor_breaks = NULL) +
+      scale_y_continuous(minor_breaks = NULL)
+    plt
+  }
+```
+
+```{r}
+fitness_landscape(m1,
+                  lower = quantile(log(data$nn5Dist) / 10, 0.025),
+                  upper = quantile(log(data$nn5Dist) / 10, 0.975),
+                  modname = "Linear model")
+```
+
+## Quadratic model
+
+We now add quadratic terms for distance to each one of the model formulas for the nodes.
+
+\vspace{12pt}
+\tiny
+```{r}
+m1_quad =
+  aster(resp ~ -1 + varb + fit:nn5Dist_s + Deer:nn5Dist_s + 
+          Pollination:nn5Dist_s + 
+          fit:I(nn5Dist_s^2) + Deer:I(nn5Dist_s^2) + 
+          Pollination:I(nn5Dist_s^2),
+    pred, fam, varb, id, root, data = redata)
+
+c(aster_AIC(m1), aster_AIC(m1_quad))
+```
+
+
+## 
+
+\tiny
+```{r}
+fitness_landscape(m1_quad,
+                  lower = quantile(log(data$nn5Dist) / 10, 0.025),
+                  upper = quantile(log(data$nn5Dist) / 10, 0.975),
+                  modname = "Quadratic model")
+```
+
+
+
+
+
+## Conditional landscapes 
+
+We now want to investigate how components of fitness contribute to the fitness landscape.
+
+\vspace{12pt}
+In particular we want to investigate how herbivory and pollination change with nearest neighbor distance.
+
+```{r, echo=FALSE,warning=FALSE,message=FALSE}
+conditional_fitness_landscape <-
+  function(model,
+           covariate = "nn5Dist_s",
+           lower = NULL,
+           upper = NULL,
+           observation = FALSE,
+           scale_back = FALSE) {
+    "
+  Plot conditional landscapes, i.e. landscapes of each node of the aster graph.
+
+  @param model: an aster model object to produce landscape on
+  @param covariate: string of value either 'nn5Dist_s' or 'nn5DistNotConsumed_s'
+    ,default to 'nn5Dist_s'
+  @param lower: numeric, data points with covariate value smaller than this are
+    ignored
+  @param upper: numeric, data points with covariate value larger than this area
+    ignored
+  @param observation: logic, indicating whether data points are included in
+    plots, default to FALSE
+  @param scale_back: logic, indicating whethr the plot is in log scale(FALSE)
+    or original scale(TRUE), default to FALSE
+
+  @return nothing, just make plots
+  "
+
+    # Make fake individuals
+    nInd <- 50
+    lwr <-
+      if (is.null(lower))
+        min(unique(model$data[, covariate]))
+      else
+        lower
+    upr <-
+      if (is.null(upper))
+        max(unique(model$data[, covariate]))
+      else
+        upper
+    cand.nnA <- seq(from = lwr,
+                    to = upr,
+                    length = nInd)
+    cand <- as.data.frame(cand.nnA)
+    colnames(cand) <- covariate
+    cand$root <- 1
+    blah <- data[1:nInd, colnames(data) %in% vars]
+    cand <- cbind(cand, blah)
+    cand$id <- data[1:nInd, "id"]
+
+    # Transform fake data into long format
+    cand_long <-
+      reshape(
+        cand,
+        varying = list(vars),
+        direction = "long",
+        timevar = "varb",
+        times = as.factor(vars),
+        v.names = "resp"
+      )
+
+    cand_long <- data.frame(cand_long)
+    cand_long$fit <- as.numeric(cand_long$varb == "embryoCt")
+    cand_long$Nid <- as.numeric(gsub("[^0-9.-]", "", cand_long$id))
+
+    cand_long$Deer <- as.numeric(cand_long$varb == "flCtNotConsumed")
+    cand_long$Pollination <- as.numeric(is.element(
+      cand_long$varb,
+      c("capsuleCt", "isHarvested", "ovuleCt", "embryoCt")
+    ))
+    cand_long$Rtail <-
+      as.numeric(cand_long$nn5Dist_s > quantile(cand_long$nn5Dist_s, 0.975))
+    cand_long$Ltail <-
+      as.numeric(cand_long$nn5Dist_s < quantile(cand_long$nn5Dist_s, 0.025))
+    
+    # Get conditional mean value parameters
+    pred <-
+      predict(
+        model,
+        cand_long,
+        varvar = varb,
+        idvar = id,
+        root = root,
+        se.fit = TRUE,
+        model.type = "conditional",
+        is.always.parameter = TRUE,
+        info.tol = 1e-10
+      )
+
+    xi_parm <- pred$fit
+    xi_parm_se <- pred$se.fit
+
+    names(xi_parm) <- paste0(cand_long$id, ".", cand_long$varb)
+    names(xi_parm_se) <- paste0(cand_long$id, ".", cand_long$varb)
+
+    conditional_exp <- matrix(xi_parm, nrow = 50)
+    rownames(conditional_exp) <- cand$id
+    colnames(conditional_exp) <- paste0(vars, ".exp")
+
+    conditional_exp_se <- matrix(xi_parm_se, nrow = 50)
+    rownames(conditional_exp_se) <- cand$id
+    colnames(conditional_exp_se) <- paste0(vars, ".exp_se")
+
+
+    cand_block <- cbind(cand, conditional_exp, conditional_exp_se)
+
+    xlabel <- if (covariate == "nn5Dist_s")
+      "log(nnA)/10"
+    else
+      "log(nnB)/10"
+
+    if (scale_back == TRUE) {
+      cand_block[, as.character(covariate)] <-
+        exp(10 * cand_block[, as.character(covariate)])
+      xlabel <- if (covariate == "nn5Dist_s")
+        "nnA"
+      else
+        "nnB"
+    }
+    generate_plot <- function(node) {
+      plt <-
+        ggplot(data = cand_block) +
+        geom_line(mapping = aes(x = cand_block[, as.character(covariate)],
+                                y = cand_block[, paste0(node, ".exp")])) +
+        geom_ribbon(
+          mapping = aes(
+            x = cand_block[, as.character(covariate)],
+            ymin = cand_block[, paste0(node, ".exp")] -
+              2 * cand_block[, paste0(node, ".exp_se")],
+            ymax = cand_block[, paste0(node, ".exp")] +
+              2 * cand_block[, paste0(node, ".exp_se")]
+          ),
+          alpha = 0.5
+        )
+      if (observation == TRUE) {
+        obs <-
+          test %>% filter((!!sym(covariate)) > lwr &
+                            (!!sym(covariate)) < upr)
+        if (scale_back == TRUE) {
+          plt <-
+            plt +
+            geom_point(data = obs,
+                       mapping = aes(x = exp(10 *
+                                               obs[, as.character(covariate)]),
+                                     y = obs[, "fecundity"]))
+        } else {
+          plt <-
+            plt +
+            geom_point(data = obs,
+                       mapping = aes(x = obs[, as.character(covariate)],
+                                     y = obs[, "fecundity"]))
+        }
+      }
+      plt <-
+        plt + labs(x = xlabel,
+                   y = "Cond. Expectation",
+                   title = as.character(node))  +
+        #annotate(
+        #  geom = "text",
+        #  x = c(0.1, 0.2, 0.3),
+        #  y = (max(cand_block[, paste0(node, ".exp")] +
+        #             2 * cand_block[, paste0(node, ".exp_se")])) * 1,
+        #  label = c("2.718282", "7.389056", "20.085537")
+        #) +
+        theme_minimal() +
+        scale_x_continuous(minor_breaks = NULL) +
+        scale_y_continuous(minor_breaks = NULL)
+      
+      plt
+    }
+    lapply(vars[-5], generate_plot)
+  }
+```
+
+
+\vspace{12pt}
+\tiny
+```{r}
+res = conditional_fitness_landscape(m1_quad,
+  lower = quantile(log(data$nn5Dist) / 10, 0.025),
+  upper = quantile(log(data$nn5Dist) / 10, 0.975))
+```
+
+
+## Flower count
+
+```{r}
+res[[1]]
+```
+
+
+## Deer herbivory survival
+
+```{r}
+res[[2]]
+```
+
+
+## Flower capsule count
+
+```{r}
+res[[4]]
+```
+
+
+## Flower ovules count
+
+```{r}
+res[[5]]
+```
+
+
+## Flower embryo count
+
+```{r}
+res[[6]]
+```
+
+
+## Aster and ZIP comparison via simulation
+
+In this analysis we will demonstrate some cases where fitting with zero-inflated Poisson (ZIP) opposed to aster can lead analyses astray. 
+
+\vspace{5pt}
+
+```{r, warning=FALSE, message=FALSE}
+library(aster2)
+```
+
+
+##
+
+We will consider a data-generating process where the first component of fitness $(y_1)$ is normally distributed and then rounded. Fitness $(y_2)$ is Bernoulli distributed.  The sample size of $y_2$ is $y_1$. The aster graph is:
+
+\begin{center}
+1 -> y1 (normal rounded) -> y2 (Ber)
+\end{center}
+
+We create data for this simulation. Our data generating process will $y_1$ and $y_2$ to be quadratic and convex in $x$.
+
+
+##
+
+\tiny
+```{r}
+# set seed for reproducibility
+set.seed(13)
+
+# sample size
+n = 2e3
+
+# single covariate
+x = seq(from = -1, to = 1, length = n)
+
+# mean-value parameters
+mus = 4 + 8*x^2
+probs = 1/(1 + exp(2 - 3*x^2))
+
+# generate data
+y1 = round(rnorm(n = n, mean = mus))
+y2 = sapply(1:n, function(j){
+  rbinom(n=1, size = y1[j], probs[j])
+}) 
+```
+
+##
+
+Observed fitness and true mean fitness are plotted below
+
+
+```{r, echo = FALSE}
+fit_data = data.frame(x = x, y2 = y2, 
+                      fit_true = mus*probs) %>% 
+  rename("true fitness" = fit_true, 
+         "observed fitness" = y2) %>% 
+  pivot_longer(col = `observed fitness`:`true fitness`, 
+               names_to = "fitness")
+ggplot(fit_data) +
+  aes(x = x, y = value, color = fitness) + 
+  geom_point() + 
+  theme_minimal() + 
+  labs(main = "Fitness across x")
+```
+
+
+##
+
+\vspace{5pt}
+We now collect our data. We create an additional y1.sd variable for aster fitting. The two-parameter normal distribution is modeled using a dependency group.
+
+\vspace{12pt}
+\tiny
+```{r}
+dat = data.frame(y1 = y1, 
+                 y1.sd = y1^2,
+                 y2 = y2, 
+                 x = as.numeric(x))
+```
+
+
+## ZIP modeling
+
+We will first model fitness as ZIP. A quadratic model for the counts and the zeros was selected.
+
+\vspace{12pt}
+\tiny
+```{r}
+## ZIP fitting
+m1_zip = zeroinfl(y2 ~ x, data = dat)
+m2_zip = zeroinfl(y2 ~ poly(x,2), data = dat)
+pchisq(2*(m2_zip$loglik - m1_zip$loglik), df = 2, lower = FALSE)
+m2_zip_small = zeroinfl(y2 ~ poly(x,2)|1, data = dat)
+pchisq(2*(m2_zip$loglik - m2_zip_small$loglik), df = 2, lower = FALSE)
+
+## get estimates of fitness
+mu_zip = predict(m2_zip, type = "response")
+```
+
+
+## Asterdata object
+
+Aster modeling with dependency group requires software from the \texttt{aster2} package. We first create an \texttt{asterdata} object.
+
+\vspace{5pt}
+\tiny
+```{r}
+## aster data object
+vars = c("y1", "y1.sd", "y2")
+pred = c(0, 0, 1)
+code = c(3, 3, 2)
+group = c(0, 1, 0)
+families = list("poisson", "bernoulli", "normal.location.scale")
+aster_data = asterdata(data = dat, vars = vars, pred = pred, 
+                       group = group, code = code, 
+                       families = families)
+```
+
+
+## Aster modeling
+
+
+We now consider an aster model. The aster model will model both components of fitness as separate quadratic models as indicated by our ZIP fit above. Modeling of the variance requires \texttt{aster2} software.
+
+\vspace{12pt}
+\tiny
+```{r}
+fit_ind = as.numeric(aster_data$redata$varb == "y2")
+rates_ind = as.numeric(aster_data$redata$varb == "y1")
+modmat = model.matrix(resp ~ varb + 
+                        rates_ind:(x + I(x^2)) +
+                        fit_ind:(x + I(x^2)), 
+                      data = aster_data$redata)
+tau_hat = crossprod(modmat, aster_data$redata$resp)
+beta_hat = transformUnconditional(tau_hat, modmat, 
+                                  aster_data, from = "tau", 
+                                  to = "beta")
+phi_hat = modmat %*% beta_hat
+
+## get estimates of fitness and mean-value 
+## parameters for other nodes
+mu_aster = transformSaturated(phi_hat, aster_data, 
+                              from = "phi", to = "mu")
+```
+
+
+## 
+
+
+The figure on the next slide depicts the scaled estimation bias 
+$$\frac{\hat{\mu}_i - \mu_i}{\mu_i}$$
+for aster and ZIP across $x$. ZIP's bias is routinely in excess of 5\% of true fitness.
+
+##
+
+```{r, echo = FALSE}
+fit_true = mus * probs
+dat_bias_scaled = data.frame(x = x, 
+  aster = (mu_aster[(n*2+1):(n*3)] - fit_true)/fit_true, 
+  zip = (mu_zip - fit_true)/fit_true) %>% 
+  pivot_longer(cols = aster:zip, names_to = "model")
+ggplot(dat_bias_scaled) + 
+  aes(x = x, y = value, color = model) + 
+  geom_line() + 
+  theme_minimal() + 
+  labs(title = "Bias as a percentage of fitness across x", 
+       ylab = "percentage")
+```
+
+
+## 
+
+```{r, echo = FALSE}
+fit_true = mus * probs
+dat_fit_landscape = data.frame(x = x, 
+  fit_true = fit_true,
+  aster = mu_aster[(n*2+1):(n*3)], 
+  zip = mu_zip) %>% 
+  pivot_longer(cols = fit_true:zip, names_to = "model")
+ggplot(dat_fit_landscape) + 
+  aes(x = x, y = value, color = model) + 
+  geom_line() + 
+  theme_minimal() + 
+  labs(title = "Fitness landscapes", 
+       ylab = "fitness")
+```
+
+
+
+

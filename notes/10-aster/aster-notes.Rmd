@@ -1,0 +1,497 @@
+---
+title: "Aster Model Notes"
+author: "Daniel J. Eck"
+date: ""
+output: pdf_document
+header-includes: 
+ - \usepackage{amsthm}
+ - \usepackage{amsmath}
+ - \usepackage{amsfonts}
+ - \usepackage{amscd}
+ - \usepackage{amssymb}
+ - \usepackage{natbib}
+ - \usepackage{url}
+ - \usepackage{tikz}
+ - \usepackage{pgfplots}
+urlcolor: blue   
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+\allowdisplaybreaks
+
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\inner}[1]{\langle #1 \rangle}
+
+
+# Introduction to aster models
+
+Aster models are a class of statistical models designed for life history analyses of a plant or animal in which one main goal is to determine how genotypes (often discussed in terms of expressed phenotypic traits rather than genomic profiles) are associated with Darwinian fitness (total offspring produced by an individual over its lifespan).
+
+Aster models allow for joint analysis of data on survival and reproduction over multiple years, allow for variables having different probability distributions, and correctly account for the dependence of variables on earlier variables. These models generalize both generalized linear models and survival analysis. The joint distribution is factorized as a product of conditional distributions, each an exponential family with the conditioning variable being the sample size of the conditional distribution. The model may be heterogeneous, each conditional distribution being from a different exponential family. 
+
+We will illustrate the utility of aster models with an analysis of data taken from an experimental study of \emph{Echinacea angustifolia} ([aster plants](http://echinaceaproject.org/)) sampled from remnant prairie populations in western Minnesota. For each individual planted, at each census, we  record whether or not it is  alive,  whether or not it flowers, and its number of flower heads. These data are complicated, especially when recorded for several years, but simple conditional models may suffice. We consider mortality status, dead or alive, to be Bernoulli given the preceding mortality status. Similarly, flowering status given mortality status is also Bernoulli. Given flowering, the number of flower heads may have a zero-truncated Poisson distribution. Figure 1 shows the graphical model for a single individual. Arrows go from parent nodes to child nodes. Nodes  are labeled by their associated variables. The only root node is associated with the constant variable 1. $M_j$ is the mortality status in year $2001+j$. $F_j$ is the flowering status in year $2001+j$. $H_j$ is the flower head count in year $2001+j$.The $M_j$ and $F_j$ are Bernoulli conditional on their parent variables being one, and zero otherwise. The $H_j$ are zero-truncated Poisson conditional on their parent variables being one, and zero otherwise.
+
+\vspace*{2cm}
+
+\begin{figure}
+\begin{tikzpicture}
+\put(100,50){\makebox(0,0){$1$}}
+\put(150,50){\makebox(0,0){$M_1$}}
+\put(200,50){\makebox(0,0){$M_2$}}
+\put(250,50){\makebox(0,0){$M_3$}}
+\put(112.5,50){\vector(1,0){25}}
+\put(162.5,50){\vector(1,0){25}}
+\put(212.5,50){\vector(1,0){25}}
+\put(150,0){\makebox(0,0){$F_1$}}
+\put(200,0){\makebox(0,0){$F_2$}}
+\put(250,0){\makebox(0,0){$F_3$}}
+\put(150,37.5){\vector(0,-1){25}}
+\put(200,37.5){\vector(0,-1){25}}
+\put(250,37.5){\vector(0,-1){25}}
+\put(150,-50){\makebox(0,0){$H_1$}}
+\put(200,-50){\makebox(0,0){$H_2$}}
+\put(250,-50){\makebox(0,0){$H_3$}}
+\put(150,-12.5){\vector(0,-1){25}}
+\put(200,-12.5){\vector(0,-1){25}}
+\put(250,-12.5){\vector(0,-1){25}}
+\end{tikzpicture}
+\label{fig:astergraph}
+\end{figure}
+
+\vspace*{2cm}
+
+
+Aster models are graphical model in which the joint density is a product of conditionals as in equation \eqref{eq:factor} below. Variables in an aster model are denoted by $X_j$, where $j$ runs over the nodes of a graph. These graphical models follow six assumptions which are: 
+
+- \textbf{A1} The graph is acyclic.
+
+- \textbf{A2} In the graph of lines every connected component forms a  dependence group. A dependence group can be thought of as a "switch" indicating a path, among multiple possible paths, taken by the individual.
+
+- \textbf{A3} Every node in a dependence group with more than one node has the same predecessor (there is an arrow from the predecessor to each node in the group). Every dependence group consisting of exactly one node has at most one predecessor. 
+
+- \textbf{A4} The joint distribution is the product of conditional distributions, one conditional distribution for each dependence group. 
+
+- \textbf{A5} Predecessor is sample size, meaning each conditional distribution is the distribution of the sum of $N$ independent and identically distributed random vectors, where $N$ is the value of the predecessor, the sum of zero terms being zero. 
+
+- \textbf{A6} The conditional distributions are exponential families having the components of the response vector for the dependence group as their canonical statistics. 
+
+Assumptions A5 and A6 mean for an arrow $X_k \to X_j$ that $X_j$ is the sum of independent and identically distributed random variables from the exponential family for the arrow and there are $X_k$ terms in the sum (the sum of zero terms is zero). These assumptions imply that the joint distribution of the aster model is an exponential family. Three of these assumptions have a clear biological meaning as well. Assumptions A1 through A3 restricts an individual from revisiting life stages that have come to pass. Assumption A5 implies that dead individuals remain dead and have no offspring though the course of the study.
+
+# Theory
+
+## Factorization
+
+Let $F$ and $J$ respectively denote root and nonroot nodes. Aster models have very special chain graph structure determined by a partition $\cal{G}$ of $J$ and a function $p:G\to J\cup F$. For each $G\in\cal{G}$ there is an arrow from $p(G)$ to each element of $G$ and a line between each pair of elements of $G$. For any set $S$, let $X_S$ denote the vector whose components are $X_j,j\in S$. The graph determines a factorization
+\begin{equation} \label{eq:factor}
+  f(X_J|X_F) = \prod_{G\in\cal{G}} f(X_G|X_{p(G)}).
+\end{equation}
+We can extend the theory to allow for the elements of $X_G$ to be conditionally dependent given $X_{p(G)}$. Nodes exhibiting this type of dependence are said to constitute a dependency group. An example of this is when an organism may progress down different unique trajectories coded via a multinomial distribution. 
+
+Note that in life history analyses, the $X_G$ terms in the factorization \eqref{eq:factor} collect nodes for all individuals in the study.
+
+## Unconditional distributions
+
+In this section we will derive the loglikelihood for an aster model in an unconditional parameterization. We take each of the conditional distributions in \eqref{eq:factor} to be an exponential family having canonical statistic vector $X_G$ that is the sum of $X_{p(G)}$ independent and identically  distributed random variables, possibly from a different family for each $G$. Conditionally, $X_{p(G)}=0$ implies that $X_G=0_G$ almost surely. The log likelihood for the whole family has the form
+\begin{equation} \label{eq:cond}
+  \sum_{G\in\cal{G}}\left\{\sum_{j\in G} X_j\theta_j - X_{p(G)}c_G(\theta_G)\right\} 
+    = \sum_{j\in J} X_j\theta_j - \sum_{G\in\cal{G}} X_{p(G)} c_G(\theta_G),
+\end{equation}
+where $\theta_G$ is the canonical parameter vector for the $G$th conditional family, having components $\theta_j$, $j \in G$, and $c_G$ is the cumulant function for that family that satisfies
+\begin{align*}
+  E_{\theta_G}(X_G|X_{p(G)}) &= X_{p(G)} \nabla c_G(\theta_G) \\
+  \text{Var}_{\theta_G}(X_G|X_{p(G)}) &= X_{p(G)} \nabla^2 c_G(\theta_G).
+\end{align*}
+
+Collecting terms with the same $X_j$ in \eqref{eq:cond}, we obtain a convenient form for the joint density
+\begin{equation} \label{eq:uncond}
+  \sum_{j\in J} X_j\left\{\theta_j - \sum_{G \in p^{-1}(\{j\})}c_G(\theta_G)\right\} 
+    - \sum_{G \in p^{-1}(F)} X_{p(G)}c_G(\theta_G),
+\end{equation}
+and we can take
+\begin{align*}
+  \phi_j &= \theta_j - \sum_{G \in p^{-1}(\{j\})} c_G(\theta_G), \qquad j \in J, \\
+  c(\phi) &= \sum_{G \in p^{-1}(F)} X_{p(G)}c_G(\theta_G),
+\end{align*}
+where the $X_{p(G)}$ terms that form $c(\phi)$ are at the root nodes, and hence are nonrandom, so that $c(\phi)$ is a deterministic cumulant function. Thus, \eqref{eq:uncond} can be written as 
+\begin{equation} \label{eq:phi}
+  l(\phi) = \inner{X, \phi} - c(\phi),
+\end{equation}
+and we are back where we started! The aster model in the $\phi$ parameterization has the same log likelihood as the generic exponential families that we have studied throughout this course. We refer to $\phi$ as a saturated aster model unconditional canonical parameter vector. Note that the system of equations 
+$$
+  \phi_j = \theta_j - \sum_{G \in p^{-1}(\{j\})} c_G(\theta_G), \qquad j \in J,
+$$
+can be solved for the $\theta_j$ in terms of the $\phi_j$ in one pass through the equations in any order that finds $\theta_j$ for children before parents. Thus switching from $\theta$ to $\phi$ determines an invertible change of parameters. This change of parameterizations is refered to as the aster transform. An example of this is given in Section 2.5 of this [technical report](https://core.ac.uk/download/pdf/211365666.pdf).
+
+
+## Aster submodels and parameterizations
+
+The aster model with log likelihood \eqref{eq:phi} is not useful because it is saturated, there is a parameter for every individual and every node in the aster graph. We can consider affine submodels of the form
+$$
+  \phi = a + M\beta
+$$
+where $a$ is a known offset vector and $M$ is a known model matrix. In these notes we will ignore the offset vector unless otherwise specified and only consider liner submodels of the form
+$$
+  \phi = M\beta.
+$$
+This results in a new exponential family with canonical statistic $Y = M^TX$ and unconditional submodel canonical parameter vector $\beta$. We can write the log likelihood for this submodel as
+$$
+  l(\beta) = \inner{Y, \beta} - c_\text{sub}(\beta)
+$$
+where $c_\text{sub} = c(M\beta)$. The exponential family form allows us to conveniently obtain the maximum likelihood estimator for our canonical parameter vector $\beta$ using conventional software. 
+
+Like the exponential families that we motivated throughout this course there are a plethora of aster model parameterizations. We already saw the unconditional saturated aster model canonical parameter vector $\phi$ and corresponding submodel parameter vector $\beta$. We also motivated the conditional aster model canonical parameter vector $\theta$, and we noted that $\phi$ and $\theta$ are invertible parameterizations. We also have the conditional saturated aster  model mean-value parameter vector $\xi$, the unconditional saturated aster model mean-value parameter vector $\mu$, and the unconditional aster sub model mean-value parameter vector $\tau$. A depiction of these parameterizations and their relationships between each other is given below. Primary interest will be given to unconditional aster model parameterizations.
+
+
+\begin{center}
+\includegraphics[angle=270, width=0.75\textwidth]{transforms.pdf}
+\end{center}
+
+
+## Asymptotic properties and inference
+
+Since we have a log likelihood in the form of a canonical exponential family submodel
+$$
+  l(\beta) = \inner{Y, \beta} - c_\text{sub}(\beta),
+$$
+we can obtain a maximum likelihood estimator $\hat\beta$ such that 
+$$
+  \sqrt{n}(\hat\beta - \beta) \to N(0, \Sigma^{-1})
+$$
+where $\Sigma$ is the Fisher information matrix corresponding to $l(\beta)$. The \texttt{aster} package \citep{geyer2019package} provides estimates of $\hat\beta$ and $\widehat{\Sigma}$. 
+
+In scientific applications $\mu$, or a function of $\mu$, will be the parameter of interest. In many aster analyses one seeks to estimate expected Darwinian fitness (total number of offspring produced by individuals) as a function of covariates. One may estimate a proxy for expected Darwinian fitness when one does not have this information recorded. The sum of flower head counts $\sum_j H_j$ can be taken as a proxy in the motivating \emph{E. angustifolia} example. In any event, suppose the parameter of interest is given by $h(\beta)$. Then this parameter has an estimator with the following asymptotic distribution
+$$
+  \sqrt{n}(h(\hat\beta) - h(\beta)) \to N\left(0, \nabla h(\beta)\Sigma^{-1} \{\nabla h(\beta)\}^T \right).
+$$
+
+
+# Echinacea example
+
+The Echinacea Data for are found in the R dataset \texttt{echinacea} in the R package \texttt{aster} \citep{geyer2019package}. We see a part of this data below.
+
+## Initial data processing
+
+
+```{r}
+library(aster)
+data(echinacea)
+head(echinacea)
+names(echinacea)
+```
+
+The variables that correspond to nodes of the graph are, in the order they are numbered in the graph 
+
+```{r}
+vars = c("ld02", "ld03", "ld04", "fl02", "fl03", 
+					"fl04", "hdct02", "hdct03", "hdct04")
+```
+
+The graphical structure is specified by a vector that gives for each node the index (not the name) of the predecessor node or zero if the predecessor is an initial node.
+
+```{r}
+pred = c(0, 1, 2, 1, 2, 3, 4, 5, 6)
+```
+
+This says the predecessor of the first node given by the \texttt{vars} vector is initial (because \texttt{pred[1] == 0}), the predecessor of the second node given by the \texttt{vars} vector is the first node given by the \texttt{vars} vector (because \texttt{pred[2] == 1}), and so forth. Let's check to see if this makes sense. 
+
+```{r}
+foo = rbind(vars, c("initial", vars)[pred + 1]) 
+rownames(foo) = c("successor", "predecessor")
+foo
+```
+
+That's right.
+
+The last part of the specification of the graph is given by a corresponding vector of integers coding families (distributions). The default is to use the codes:  1 = Bernoulli, 2 = Poisson, 3 =zero-truncated Poisson. Optionally, the integer codes specify families given by an optional argument \texttt{famlist} to functions in the \texttt{aster} package, and this can specify other distributions besides those in the default coding.
+
+```{r}
+fam = c(1, 1, 1, 1, 1, 1, 3, 3, 3)
+rbind(vars, fam)
+```
+
+There is one more step before we can fit models. The R function \texttt{aster} which fits aster models wants the data in long rather than wide format, the former having one line per node of the graph rather than one per individual.
+
+```{r}
+redata = reshape(echinacea, varying = list(vars), 
+									direction = "long", timevar = "varb", 
+									times = as.factor(vars), v.names = "resp")
+redata = data.frame(redata, root = 1)
+head(redata)
+```
+
+All of the variables in \texttt{echinacea} that are named in \texttt{vars} are gone. They are packed into the variable \texttt{resp}. Which components of \texttt{resp} correspond to which components of \texttt{vars} is shown by the new variable \texttt{varb}.
+
+```{r}
+levels(redata$varb)
+```
+
+Now we have all of the response variables (components of fitness) collected into a single vector \texttt{resp} and we have learned what \texttt{varb} is. What about the other variables?
+
+We defined \texttt{root} ourselves. When the predecessor of a node is initial, then the corresponding component of \texttt{root} gives the value of the predecessor. Other components of \texttt{root} are ignored. We set them all to one. The \texttt{id} variable is seldom (if ever) used. It tells what individual (what row of the original data frame \texttt{echinacea}) a row of reshape came from. The variables \texttt{nsloc} (north-south location) and \texttt{ewloc} (east-west location) give the position each individual was located in the experimental plot. The variable \texttt{pop} gives the ancestral populations: each individual was grown from seed taken from a surviving population in a prairie remnant in western Minnesota near the Echinacea Project field site.
+
+```{r}
+levels(redata$pop)
+```
+
+
+## Fitting aster models
+
+We will now discuss fitting aster models. Different families for different nodes of the graph means it makes no sense to have terms of the regression formula applying to different nodes. In particular, it makes no sense to have one *intercept* for all nodes. To in effect get a different *intercept* for each node in the graph, include \texttt{varb} in the formula
+\begin{center}
+  \texttt{y $\sim$ varb + ...}
+\end{center}
+The categorical variable \texttt{varb} gets turned into as many dummy variables as there are nodes in the graph, one is dropped, and the *intercept* dummy variable (all components = 1) is added; the effect is to provide a different intercept for each node.
+
+Similar thinking says we want completely different regression coefficients of all kinds of predictors for each node of the graph. That would lead us to formulas like
+\begin{center}
+  \texttt{y $\sim$ varb + varb:(...)}
+\end{center}
+where $\ldots$ is any other part of the formula. We should not think of this formula as specifying *interaction* between \texttt{varb} and *everything else* (whatever that may mean) but rather as specifying separate coefficients for *everything else* for each node of the graph. That being said, formulas like this would yield too many regression coefficients to estimate well.  We can do better! Maybe we do not really need different regression coefficients for each node. Maybe coefficients different for each kind of node (whatever that may mean) would be enough.
+
+```{r}
+layer = gsub("[0-9]", "", as.character(redata$varb))
+unique(layer)
+
+redata = data.frame(redata, layer = layer)
+with(redata, class(layer))
+```
+
+Maybe
+\begin{center}
+  \texttt{y $\sim$ varb + layer:(...)}
+\end{center}
+is good enough? But formulas like this would still yield too many regression coefficients to estimate well. We can do better!
+
+In aster models (and this is really where the explanation gets dumbed down to the point of being wrong) regression coefficients *for* a node of the graph also influence all *earlier* nodes of the graph (predecessor, predecessor of predecessor, predecessor of predecessor of predecessor, etc.) So maybe it would be good enough to only have separate coefficients for the layer of the graph consisting of terminal nodes? 
+
+```{r}
+fit = as.numeric(layer == "hdct") 
+unique(fit)
+
+redata = data.frame(redata, fit = fit)
+with(redata, class(fit))
+```
+
+Maybe
+\begin{center}
+  \texttt{y $\sim$ varb + fit:(...)}
+\end{center}
+is good enough? We called the variable we just made up \texttt{fit} which is short for Darwinian fitness. The regression coefficients in terms specified by $\ldots$ have a direct relationship with expected Darwinian fitness (or a surrogate of Darwinian fitness). And that is usually what is wanted in life history analysis. We now fit our first aster model.
+
+```{r}
+aout = aster(resp ~ varb + layer : (nsloc + ewloc) + 
+							fit : pop, pred, fam, varb, id, root, data = redata)
+summary(aout)
+```
+
+The regression coefficients are of little interest. The main interest is in what model among those that have a scientific interpretation fits the best.
+
+```{r astermodeltests, cache = TRUE}
+aout.smaller = aster(resp ~ varb + 
+  fit : (nsloc + ewloc + pop), 
+  pred, fam, varb, id, root, data = redata)
+aout.bigger = aster(resp ~ varb + 
+  layer : (nsloc + ewloc + pop), 
+  pred, fam, varb, id, root, data = redata)
+anova(aout.smaller, aout, aout.bigger)
+```
+
+Despite the largest model fitting the best, we choose the middle model because that one tells us something about fitness directly that the other one does not.
+
+The argument for doing this is because we are interested in modeling fitness, and the distribution of fitness (actually best surrogate of fitness in their data) is not very different between the two models. The distribution of other components of fitness (other than the final one) may differ quite a lot, but that was not the question of scientific interest (see the end of [this slide deck](https://www.stat.umn.edu/geyer/8931aster/slides/s4.pdf)). So what do these models say about the distribution of fitness?
+
+```{r}
+## we will go over this later
+pop = levels(redata$pop)
+nind = length(unique(redata$id))
+nnode = nlevels(redata$varb)
+npop = length(pop)
+amat = array(0, c(nind, nnode, npop))
+amat.ind = array(as.character(redata$pop), 
+  c(nind, nnode, npop))
+amat.node = array(as.character(redata$varb), 
+  c(nind, nnode, npop))
+amat.fit = grepl("hdct", amat.node)
+amat.fit = array(amat.fit, 
+  c(nind, nnode, npop))
+amat.pop = array(pop, c(npop, nnode, nind))
+amat.pop = aperm(amat.pop)
+amat[amat.pop == amat.ind & amat.fit] = 1
+pout = predict(aout,  varvar = varb, idvar = id, 
+  root = root, se.fit = TRUE, amat = amat)
+pout.bigger = predict(aout.bigger, varvar = varb, 
+  idvar = id, root = root, se.fit = TRUE, amat = amat)
+```
+
+The first interesting thing about these *predictions* (actually point estimates of parameters with standard errors) is that the point estimates are exactly the same for the two models.
+
+```{r}
+pout$fit
+pout.bigger$fit
+all.equal(pout$fit, pout.bigger$fit)
+```
+
+And why is that?  These are submodel canonical statistics (components of $M^Ty$).  Thus by the observed-equals-expected property of exponential families their MLE are equal to their observed values and hence equal to each other. So that is certainly not a reason to prefer one model to the other. If the estimated means are exactly the same how about estimated asymptotic variances?
+
+The asymptotic variance matrix of these canonical statistics is actually diagonal for each model. The reason is that different populations of origin have different individuals in the sample, and only individuals from one population contribute to estimating one of these canonical statistics. Thus it is enough to look at the asymptotic standard errors (all the covariances are zero).
+
+```{r}
+pout$se.fit
+pout.bigger$se.fit
+```
+
+We see that they are not that different.
+
+If we were interested in the effect of population on the different components of fitness, then the P-value 0.00016 does indicate that the model \texttt{aout.bigger}, which has different population effects in different *layers* of the graph, does show a statistically significant difference in the way the components of fitness combine to make up fitness in the various population of origin groups. But if we are only interested in overall fitness rather than the separate components, then there is hardly any difference in the two models.
+
+
+## Estimating expected Darwinian fitness
+
+Hypothesis tests using the R function \texttt{anova} are fairly straightforward. Confidence intervals using the R function \texttt{predict} for estimates of expected Darwinian fitness are anything but straightforward. Part of this is bad design. The \texttt{predict} function has some aspects of its user interface that are clumsy and hard to use (Charlie's words, not mine). The R package \texttt{aster2} fixes these issues (and does lots more) but is still incomplete. But the other part of what makes confidence intervals is just the inherent complexity of aster models. Among other issues, aster models have six  different parameterizations, all of which can be of scientific interest in some application, not necessarily in your application, not necessarily all in any one application.
+
+The result of \texttt{predict(aout)} is the maximum likelihood estimate of the saturated model mean value parameter vector $\mu$. If we want to say how bad or good our estimators are, then we need confidence intervals (or perhaps just standard errors).
+
+```{r}
+pout = predict(aout, se.fit = TRUE)
+```
+
+The components of \texttt{predict(aout)} are
+\begin{itemize}
+  \item The component \texttt{fit} gives the estimators (the same vector that was returned when predict was invoked with no optional arguments).
+  \item The component \texttt{se.fit} gives the corresponding standard errors.
+  \item The component \texttt{gradient} gives the derivative of the map from regression coefficients to predictions.
+\end{itemize}
+
+These are asymptotic (large sample size, approximate) estimated standard deviations of the components of $\hat\mu$ derived using the usual theory of maximum likelihood estimation.
+
+```{r}
+low = pout$fit - qnorm(0.975) * pout$se.fit
+hig = pout$fit + qnorm(0.975) * pout$se.fit
+```
+
+The above are confidence bounds for approximate 95% confidence intervals (not corrected for simultaneous coverage) for each of the components of the response vector. These are of no scientific interest whatsoever. The question of scientific interest addressed by confidence intervals was about (best surrogate of) fitness of a typical individual in each population.  Thus we only want 
+
+```{r}
+nlevels(redata$pop)
+```
+
+confidence intervals, one for each population. What do we mean by *typical* individuals?  Those that are directly comparable. Those that the same in all respects except for population. Thus we have to make up covariate data for hypothetical individuals that are comparable like this and get estimated mean values for them.
+
+```{r}
+dat = data.frame(nsloc = 0, ewloc = 0, pop = levels(redata$pop), 
+  root = 1, ld02 = 1, ld03 = 1, ld04 = 1, fl02 = 1, fl03 = 1, 
+  fl04 = 1, hdct02 = 1, hdct03 = 1, hdct04 = 1)
+dat
+```
+
+The components of the response vector are ignored in prediction so we can give them arbitrary values. Somewhat annoyingly, they have to be possible values because \texttt{predict.aster.formula} will check.
+
+```{r}
+renewdata = reshape(dat, varying = list(vars), 
+  direction = "long", timevar = "varb", times = as.factor(vars), 
+  v.names = "resp")
+layer = gsub("[0-9]", "", as.character(renewdata$varb))
+renewdata = data.frame(renewdata, layer = layer)
+fit = as.numeric(layer == "hdct")
+renewdata = data.frame(renewdata, fit = fit)
+```
+
+Now we have predictions for these variables 
+
+```{r}
+names(renewdata)
+pout = predict(aout, newdata = renewdata, varvar = varb, 
+  idvar = id, root = root, se.fit = TRUE)
+sapply(pout, length)
+```
+
+Why do we need the arguments \texttt{varvar}, \texttt{idvar}, and \texttt{root} when we did not before? More bad design (Charlie's words, not mine). So now we can make 63 not corrected for simultaneous coverage confidence intervals, one for each of the 9 nodes of the graph for each of these 7 hypothetical individuals (one per population). These too are of no scientific interest whatsoever. But we are getting closer.
+
+What is of scientific interest is confidence intervals for Darwinian fitness for these 7 individuals. Fitness (best surrogate of) in these data is the lifetime headcount which is 
+\begin{center}
+  \texttt{hdct02 + hdct03 + hdct04}
+\end{center}
+where the variable names here are meant to indicate the actual variables. What about the other components of fitness? Don't they contribute too? Yes, they do.  But their effect is already counted in the head count. You cannot have nonzero head count if you are dead or if you had no flowers, so that is already accounted for.
+
+We now obtain estimates of $\mu$ for each hypothetical individual, different rows for different individuals.
+
+```{r}
+nnode = length(vars)
+preds = matrix(pout$fit, ncol = nnode) 
+dim(preds)
+
+rownames(preds) = unique(as.character(renewdata$pop))
+colnames(preds) = unique(as.character(renewdata$varb))
+preds
+```
+We now obtain estimated expected Darwinian fitness for typical individuals belonging to each population.
+
+```{r}
+preds_hdct = preds[ , grepl("hdct", colnames(preds))]
+rowSums(preds_hdct)
+```
+
+These are the desired estimates of expected fitness, but they do not come with standard errors because there is no simple way to get the standard errors for sums from the standard errors for the summands (when the summands are not independent, which is the case here). So we have to proceed indirectly. We have to tell \texttt{predict.aster.formula} what functions of mean values we want and let it figure out the standard errors (which it can do). It only figures out for linear functions.
+
+If $\hat\mu$ is the result of \texttt{predict.aster.formula} without the optional argument \texttt{amat}, then when the optional argument \texttt{amat} is given it does parameter estimates with standard errors for a new parameter
+$$
+  \hat\zeta = A^T\hat\mu,
+$$
+where $A$ is a known matrix (the \texttt{amat} argument). The argument \texttt{amat} is a three dimensional array. The first dimension is the number of individuals (in \texttt{newdata} if provided, and otherwise in the original data). The second dimension is the number of nodes in the graph. The third dimension is the number of parameters we want point estimates and standard errors for.
+
+```{r}
+npop = nrow(dat) 
+nnode = length(vars)
+amat = array(0, c(npop, nnode, npop))
+dim(amat)
+```
+
+We want only the means for the $k$th individual to contribute to $\zeta$.  And we want to add only the head count entries.
+
+```{r}
+foo = grepl("hdct", vars)
+for (k in 1:npop) amat[k, foo, k] = 1
+```
+
+We now obtain estimates of expected Darwinian fitness and its standard error using \texttt{predict.aster}.
+
+```{r}
+pout.amat = predict(aout, newdata = renewdata, varvar = varb, 
+  idvar = id, root = root, se.fit = TRUE, amat = amat)
+
+## predict.aster
+pout.amat$fit
+
+## computation by hand
+rowSums(preds_hdct)
+```
+
+Here are the estimated standard errors corresponding to estimates of expected Darwinian fitness for hypothetical typical individuals belonging to each population.
+
+```{r}
+foo = cbind(pout.amat$fit, pout.amat$se.fit)
+rownames(foo) = unique(as.character(renewdata$pop))
+colnames(foo) = c("estimates", "std. err.")
+round(foo, 3)
+```
+
+
+
+
+# Acknowledgments
+
+\noindent These notes borrow materials from \cite{geyer2007aster}, \cite{shaw2008unifying}, \cite{eck2017statistical}, \cite{eck2020combining}, and Charlie Geyer's course slides
+
+
+\bibliographystyle{plainnat}
+\bibliography{../note_sources}
+
+
+
+

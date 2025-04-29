@@ -6,9 +6,9 @@ See the Syllabus for more details. See the notes directory for course notes.
 
 # News
 
-* Aster model notes and additional resources posted.
+* Homework 7 due on Wednesday, 05/07 at 11:59 PM.
 
-* Homework 6 due on Monday, 04/28 at 11:59 PM.
+* Multivariate regression notes posted.
 
 * Link to stat528materials R package is [here](https://github.com/DEck13/stat528materials).
 

@@ -1,0 +1,91 @@
+---
+title: 'Homework on Aster Models'
+author: "your name"
+date: "Due on: May 7th at 11:59 PM"
+output: pdf_document
+header-includes: 
+ - \usepackage{amsthm}
+ - \usepackage{amsmath}
+ - \usepackage{amsfonts}
+ - \usepackage{amscd}
+ - \usepackage{amssymb}
+ - \usepackage{natbib}
+ - \usepackage{url}
+ - \usepackage{tikz}
+ - \usepackage{pgfplots}
+urlcolor: blue  
+---
+
+\allowdisplaybreaks
+
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\inner}[1]{\langle #1 \rangle}
+\newcommand{\yobs}{y_{\text{obs}}}
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+**Problem 1** [80 points]: We are going to analyze fitness for a population of yellow monkey flowers, \emph{Mimulus guttatus}. The dataset comes from [Lowry and Willis (2010)](https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.1000500) and the study in which the data is obtained investigates the role of chromosomal inversions in adaptation and speciation. Phenotypic traits and covariates are recorded for 2313 \emph{M. guttatus}. Complete the following: 
+
+**part a** [10 points]: These plants either survive or die. Conditional on survival these plants then reproduce. Reproduction is taken to be Darwinian fitness. All surviving plants have non-zero reproduction. Write out the graphical structure corresponding to a life history of \emph{M. guttatus}. Include the distributions specifying the relationships between nodes in the graph.
+
+**part b** [10 points]: Load the \texttt{Mguttatus} data set (the \texttt{Mguttatus.rda} file, located in the same directory as this assignment), and run the provided code below:
+
+\begin{verbatim}
+data = Mguttatus
+redata = Mguttatus.redata
+vars = quantities$vars
+pred = quantities$pred
+group = quantities$group
+code = quantities$code
+fam = quantities$fam
+nnode = length(vars)
+n = nrow(redata) / nnode
+families = quantities$families
+root = redata$root
+fit = redata$fit
+varvar = quantities$varvar
+idvar = quantities$idvar
+\end{verbatim}
+
+**part c** [20 points]: Fit the main effects only aster model including terms for genetic background (\texttt{gen\_bac}), site (\texttt{site}), inversion (\texttt{inversion}), and type (\texttt{type}). Note that your call to \texttt{aster} will require you to specify the following arguments: \texttt{varvar = varvar, idvar = idvar, data = redata, root = root}, i.e. the hard work has already been done for you.
+
+**part d** [20 points]: Obtain estimates of expected Darwinian fitness for all unique factor-level combinations of the variables used to fit the main effects only aster model. The code below will come in handy for creating the unique factor-level combinations:
+
+\begin{verbatim}
+test = data$redata
+a = levels(test$gen_bac)
+b = levels(test$site)
+c = levels(test$inversion)
+d = levels(test$type)
+fred = expand.grid(a = a, b = b, c = c, d = d)
+colnames(fred) = c("gen_bac","site","inversion","type")
+fred$sur_flw = 1
+fred$flws = 1
+\end{verbatim}
+
+**part e** [10 points]: Report which 5 combinations of phenotypic traits are estimated to have the highest expected Darwinian fitness, and report which 5 combinations of phenotypic traits are estimated to have the lowest expected Darwinian fitness.
+
+**part f** [10 points]: Read through [Lowry and Willis (2010)](https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.1000500) and briefly explain in your own words reasons for why these researchers chose to study \emph{M. guttatus} (as opposed to some other plant) in their analysis.
+
+
+\vspace*{1cm}
+
+
+**Problem 2** [20 points]: In the Aster model notes it was stated that the system of equations 
+$$
+  \phi_j = \theta_j - \sum_{G \in p^{-1}(\{j\})} c_G(\theta_G), \qquad j \in J,
+$$
+determine an invertible change of parameters. Argue that this is true. There are linked references in the Aster model notes that may be helpful.
+
+
+

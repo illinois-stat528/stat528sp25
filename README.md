@@ -6,7 +6,7 @@ See the Syllabus for more details. See the notes directory for course notes.
 
 # News
 
-* Homework 7 due on Wednesday, 05/07 at 11:59 PM.
+* Final exam posted. It is due on May 15 at 11:59 pm.
 
 * Multivariate regression notes posted.
 

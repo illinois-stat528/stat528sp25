@@ -30,7 +30,8 @@ betahat_sep = rbind(coef(m_mpg),
       coef(m_wt))
 betahat_sep
 betahat_sep - t(betahat)
-
+all.equal(betahat_sep,t(betahat))
+all.equal(unname(betahat_sep), unname(t(betahat)))
 
 ## fitted values Yhat
 head(X)

@@ -22,7 +22,7 @@ knitr::opts_chunk$set(echo = TRUE)
 \newcommand{\inner}[1]{\langle #1 \rangle}
 
 
-This is your take-home final exam for STAT 528. It is due on May 10th at 11:59 PM. All work must be your own, and you are not allowed to consult with other students in the course. You are allowed to use Chat GPT, or any other large language model, but know that if your conclusions conflict with the work that you have done then there will be point deductions. Submit your exam in a final exam directory called `final`. This exam will consist of three problems: 
+This is your take-home final exam for STAT 528. It is due on May 15th at 11:59 PM. All work must be your own, and you are not allowed to consult with other students in the course. You are allowed to use Chat GPT, or any other large language model, but know that if your conclusions conflict with the work that you have done then there will be point deductions. Submit your exam in a final exam directory called `final`. This exam will consist of three problems: 
 
 
 
